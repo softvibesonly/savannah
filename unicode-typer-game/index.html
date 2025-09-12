@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preload" href="./fonts/STIXTwoMath-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="./fonts/LatinModernMath-Regular.otf" as="font" type="font/otf" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
+  <title>Unicode Typer – Learn Unicode Hex Input</title>
+  <!--
+    The base styles live in style.css.  
+    Keep the markup lean and let CSS and JavaScript drive the experience.  
+    All interactive logic is encapsulated in script.js. 
+    The game runs entirely client‑side without any external dependencies, so this can be hosted anywhere (static queen)
+  -->
+  <style>
+    /* Visually dim rows the user has completed in Stage 1 */
+    .symbol-table tr.completed {
+      background-color: rgba(0,0,0,0.10); /* subtle darker row */
+    }
+    /* Keep the active row clearly visible even if completed */
+    .symbol-table tr.completed.highlight {
+      background-color: rgba(0,0,0,0.16);
+    }
+  </style>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Onboarding modal appears on first load.  It explains how to use
+       the game and lets the player choose a symbol pack and audio
+       preferences.  The modal covers the entire viewport when
+       visible. -->
+  <div id="onboarding" class="modal hidden">
+    <div class="modal-content">
+      <h1>Welcome to Unicode Typer</h1>
+      <p>
+        This interactive game teaches you to type Unicode mathematical
+        and statistical symbols using the macOS <strong>Unicode Hex Input</strong>
+        method.        
+        To type a symbol, hold the Option (⌥) key and enter the four‑digit hexadecimal code associated with the symbol (when you are using the Unicode Hex Input keyboard on Mac).
+      </p>
+      <p>
+        <strong>Note:</strong> You do not need to have that keyboard setup or added to your Mac in order to play this game. However you will definitely need a keyboard or at least a working option key.
+      </p>
+      <p>
+        Select a symbol pack to get started and choose whether you’d like audio feedback.
+      </p>
+      <p>
+        As you progress, the game employs active recall, spaced repetition, scaffolding techniques, Dekker's Method, gradient descent, anti-probabilistic adversarial testing, and the AdamW Optimizer to help you commit the codes to memory.
+      </p>
+      <div class="form-row">
+        <div class="form-group grow">
+          <label for="pack-select">Symbol pack:</label>
+          <select id="pack-select"></select>
+        </div>
+        <div class="form-group shrink">
+          <label for="order-select">Order:</label>
+          <select id="order-select">
+            <option value="random">Random</option>
+            <option value="sequential">Sequential</option>
+          </select>
+        </div>
+        <div class="form-group shrink">
+          <label for="stage1-size-select">Stage 1 starting size:</label>
+          <select id="stage1-size-select" title="Changes will apply on the next game restart."></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="audio-toggle" checked>
+          Enable audio feedback
+        </label>
+      </div>
+      <button id="start-button" class="primary-button">Start Learning</button>
+    </div>
+  </div>
+
+  <!-- Settings modal allows the user to adjust preferences at any
+       time.  It can be invoked via the gear icon in the game UI.
+       The modal reuses much of the onboarding markup. -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2 class="settings-title">Settings</h2>
+      <p class="settings-tip">If you get stuck at any point, remember that you can always hover over the covered answers (????) to reveal the correct unicode input for a hint!</p>
+    <div class="form-row">
+      <div class="form-group grow">
+        <label for="settings-pack-select">Symbol pack:</label>
+        <select id="settings-pack-select"></select>
+      </div>
+      <div class="form-group shrink">
+        <label for="settings-order-select">Order:</label>
+        <select id="settings-order-select" class="inline">
+          <option value="random">Random</option>
+          <option value="sequential">Sequential</option>
+        </select>
+      </div>
+      <div class="form-group shrink">
+        <label for="settings-stage1-size-select">Stage 1 starting size:</label>
+        <select id="settings-stage1-size-select" class="inline" title="Changes will apply on the next game restart."></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="settings-font-select">Symbol font:</label>
+      <select id="settings-font-select"></select>
+    </div>
+    <div class="form-group">
+      <div class="section-label">Symbols in this Pack</div>
+      <div id="pack-overview-container">
+        <table id="pack-overview-table" class="overview-table"></table>
+      </div>
+    </div>
+    <div class="form-group inline-controls">
+      <label class="inline">
+        <input type="checkbox" id="settings-audio-toggle" checked>
+        Enable audio feedback
+      </label>
+      <label class="inline spacer">
+        <input type="checkbox" id="settings-show-all-toggle">
+        Show All Symbols for Current Round
+      </label>
+      <label class="inline">
+        <input type="checkbox" id="settings-show-new-symbols-toggle" checked>
+        Show New Symbols Immediately
+        <span class="js-tooltip-icon" data-tooltip="
+- When this option is checked, new symbols will appear in the current round immediately
+- When this option is off, new symbols will be added to the game but will appear gradually in later rounds
+- Note: The game uses the state of this toggle at the moment a symbol is added or removed
+        ">?</span>
+      </label>
+    </div>
+    <div class="form-group inline-controls">
+      <label class="inline">
+        <input type="checkbox" id="settings-debug-toggle">
+        Enable Debug Mode
+      </label>
+    </div>
+    <button id="close-settings" class="primary-button">Close</button>
+    </div>
+  </div>
+
+  <!-- Pattern interrupt overlay used between rounds.  
+       Displays a colourful abstract image accompanied by a distinct sound to
+       reset the user’s working memory. The overlay fades in and
+       out automatically. -->
+  <div id="pattern-interrupt" class="interrupt hidden">
+    <img id="interrupt-image" src="" alt="Abstract swirl" />
+  </div>
+
+  <!-- Top bar containing the option key indicator, progress display
+       and settings button.  This bar remains fixed at the top of
+       the viewport during play. -->
+  <header id="top-bar" class="hidden">
+    <div class="top-left">
+      <div id="option-indicator" class="indicator" title="Option key state">⌥</div>
+      <span class="option-instruction">Hold Down Option To Begin</span>
+    </div>
+    <div id="progress-display" class="top-center"></div>
+    <div class="top-right">
+      <button id="settings-button" class="icon-button with-label" title="Settings / Help">
+        <span class="icon-button-label">Help</span>
+        <!-- simple shitty gear icon drawn with SVG to avoid external dependencies -->
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l0 0a2 2 0 1 1-2.83 2.83l0 0a1.65 1.65 0 0 0-1.82.33l0 0a1.65 1.65 0 0 0-.5 1.31V22a2 2 0 1 1-4 0v0a1.65 1.65 0 0 0-.5-1.31l0 0a1.65 1.65 0 0 0-1.82-.33l0 0a2 2 0 1 1-2.83-2.83l0 0a1.65 1.65 0 0 0 .33-1.82l0 0a1.65 1.65 0 0 0-1.31-.5H2a2 2 0 1 1 0-4h0a1.65 1.65 0 0 0 1.31-.5l0 0a1.65 1.65 0 0 0 .33-1.82l0 0a2 2 0 1 1 2.83-2.83l0 0a1.65 1.65 0 0 0 1.82-.33l0 0a1.65 1.65 0 0 0 .5-1.31V2a2 2 0 1 1 4 0v0a1.65 1.65 0 0 0 .5 1.31l0 0a1.65 1.65 0 0 0 1.82.33l0 0a2 2 0 1 1 2.83 2.83l0 0a1.65 1.65 0 0 0-.33 1.82l0 0a1.65 1.65 0 0 0 1.31.5H22a2 2 0 1 1 0 4h0a1.65 1.65 0 0 0-1.31.5z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- The main container where game stages are rendered.  Its
+       contents are dynamically populated by script.js. -->
+  <main id="game-container" class="hidden"></main>
+  <!-- Lightweight debug panel (shown only when Debug Mode is enabled in Settings) -->
+  <section id="debug-panel" class="hidden" aria-live="polite"></section>
+  <div id="round-extend-toast" class="hidden" aria-live="polite">(Auto-adjust): A new round has been added</div>
+  <div id="challenge-toast" class="hidden" aria-live="polite">We get it, you want a challenge (New Round Added 😈)</div>
+  <footer id="game-footer">
+    <div class="footer-left">
+      <button id="debug-skip-round" class="primary-button small">Skip to Next Round</button>
+    </div>
+    <div class="footer-center">
+      <button id="skip-button" class="primary-button small">Skip to Next Stage</button>
+    </div>
+    <div class="footer-right">
+      <div id="round-counter" class="footer-counter" aria-live="polite"></div>
+      <div id="exposure-counter" class="footer-counter" aria-live="polite"></div>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>

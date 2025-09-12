@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Savannah's Wikipedia Competitor</title>
+  <meta name="description" content="Resume, code demos, and writing" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,opsz,wght@0,14..32,400..900;1,14..32,400..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Script -->
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="page-bg" aria-hidden="true"></div>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site">
+    <div class="container header">
+      <div class="header-left">
+        <details class="contact" id="contactDetails">
+          <summary aria-controls="contactPanel" aria-expanded="false">Contact me</summary>
+          <div id="contactPanel" class="contact-panel" role="region" aria-label="Contact information">
+            <div class="muted" style="margin-bottom:8px">I'm reachable via:</div>
+            <a href="mailto:xxxx@gmail.com" class="contact-link" data-tone>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="1.5"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+              xxxx@gmail.com
+            </a>
+            <div>
+            <a href="https://github.com/your-username" target="_blank" rel="noopener" class="contact-link" data-tone>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.38 7.86 10.9.58.1.8-.26.8-.57v-2c-3.2.72-3.87-1.37-3.87-1.37-.53-1.36-1.3-1.72-1.3-1.72-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.22 1.79 1.22 1.04 1.78 2.74 1.26 3.41.96.1-.75.41-1.26.75-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.3 1.2-3.11-.12-.29-.52-1.47.11-3.06 0 0 .98-.31 3.2 1.19A11.1 11.1 0 0 1 12 6.8c.99 0 2-.13 2.94-.38 2.22-1.5 3.2-1.19 3.2-1.19.63 1.59.23 2.77.11 3.06.75.81 1.2 1.85 1.2 3.1 0 4.44-2.69 5.41-5.25 5.69.42.36.8 1.07.8 2.17v3.22c0 .31.21.68.82.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z" fill="currentColor"/></svg>
+              GitHub
+            </a>
+          </div>
+            <a href="https://www.linkedin.com/in/your-handle" target="_blank" rel="noopener" class="contact-link" data-tone>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="4.5" cy="4.5" r="2.5" stroke="currentColor"/><rect x="3" y="9" width="3" height="12" fill="currentColor"/><path d="M10 9h3v2.2c.5-1 1.8-2.2 3.9-2.2 3 0 4.1 1.9 4.1 5V21h-3v-6.2c0-1.9-.7-3-2.2-3-1.6 0-2.8 1.2-2.8 3.4V21h-3V9Z" fill="currentColor"/></svg>
+              LinkedIn
+            </a>
+            <div>
+            <a href="www.test.com">
+              <!-- Minimalist pigeon icon — 16x16, solid silhouette with eye cutout -->
+            <svg xmlns="http://www.w3.org/2000/svg"
+                width="16" height="16" viewBox="0 0 16 16"
+                aria-hidden="true" role="img">
+              <mask id="pigeon16_mask">
+                <!-- White = visible; Black = transparent cutout -->
+                <rect width="16" height="16" fill="black"/>
+                <!-- Body (soft ellipse) -->
+                <ellipse cx="7.6" cy="10.1" rx="5.2" ry="3.8" fill="white"/>
+                <!-- Head -->
+                <circle cx="11.4" cy="5.1" r="1.45" fill="white"/>
+                <!-- Neck bridge (subtle thickening between head & body) -->
+                <rect x="9.2" y="6.0" width="2.6" height="2.2" rx="1.1" fill="white"/>
+                <!-- Beak (small wedge) -->
+                <polygon points="12.9,5.2 12.05,5.6 12.05,4.8" fill="white"/>
+                <!-- Tail (minimal fin) -->
+                <polygon points="3.2,9.1 1.6,8.0 2.6,10.6" fill="white">
+                <!-- Eye cutout -->
+                <circle cx="11.2" cy="4.8" r="0.35" fill="black"/>
+              </mask>
+
+              <!-- Paint the silhouette in currentColor; mask defines the pigeon shape -->
+              <rect width="16" height="16" fill="currentColor" mask="url(#pigeon16_mask)"/>
+            </svg>
+            Carrier Pigeon
+            </a>
+          </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="header-mid">
+        <div class="title" aria-live="polite">
+          <h1>
+            <a href="#home">Code · Research · Writing · Educational Tools</a>
+          </h1>
+          <div class="subtitle" title="Pending FDA Approval">Savannah Harlan's Edible Homepage</div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="settings">
+          <button class="settings-btn" id="settingsBtn" aria-haspopup="true" aria-expanded="false" data-tone>
+          <!-- Perfectly symmetrical gear icon (12 teeth) 
+           NOT EVEN GONNA LIE: GPT-5 HAD TO DO THIS AND THERE WAS NO WAY I COULD DO THIS MYSELF lmao did they fine-tune this girl on a million SVG training examples or what bc this is wild
+      
+          -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24" height="24" viewBox="0 0 24 24"
+            aria-hidden="true" role="img"
+          >
+            <!-- Mask defines the actual gear silhouette: outer ring + teeth, minus inner hole -->
+            <mask id="gearMask12">
+              <!-- White = visible | Black = cutout -->
+              <!-- Outer body -->
+              <circle cx="12" cy="12" r="9" fill="white"/>
+
+              <!-- Teeth (12 identical rounded rectangles, rotated around the center) -->
+              <g fill="white" transform="translate(12 12)">
+                <!-- One tooth template at the top, then rotated in 30° steps -->
+                <!-- Tooth geometry chosen for perfect symmetry and crisp rendering -->
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(30)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(60)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(90)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(120)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(150)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(180)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(210)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(240)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(270)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(300)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(330)"/>
+              </g>
+
+              <!-- Inner hole (cutout) -->
+              <circle cx="12" cy="12" r="5" fill="black"/>
+            </mask>
+
+            <!-- Paint the gear in currentColor; mask punches the exact silhouette -->
+            <rect width="24" height="24" fill="currentColor" mask="url(#gearMask12)"/>
+          </svg>
+            <span class="label">Settings</span>
+          </button>
+          <div class="menu" id="settingsMenu" role="menu" aria-label="Settings menu">
+            <div id="pagesGroup"></div>
+            <div class="group" aria-label="Preferences">
+              <button class="menuitem" id="muteBtn" role="menuitemcheckbox" aria-checked="false">🔈 UI sounds</button>
+              <button class="menuitem" id="motionBtn" role="menuitemcheckbox" aria-checked="false">✨ Motion effects</button>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px;">
+                <span>Theme</span>
+                <div style="display:flex; gap:6px;">
+                  <button class="menuitem" data-theme-opt="auto">Auto</button>
+                  <button class="menuitem" data-theme-opt="light">Light</button>
+                  <button class="menuitem" data-theme-opt="dark">Dark</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+    <section id="home">
+      <img src="assets/images/profile-photo.jpg" alt="A photo of Savannah" class="profile-photo">
+      <h2>Welcome</h2>
+      <p class="home-text">Hey there, my name’s Savannah. I am currently a master’s student at the Munk School of Global Affairs and Public Policy and an AI safety researcher at Trajectory Labs. This page hosts some of my work like: writings, research, text posts, and educational tools/programs that I built to help students and everyone understand concepts.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+        <a href="#projects" class="btn" data-tone>View projects</a>
+        <a href="#resume" class="btn" data-tone>Download resume</a>
+        <a href="#blog" class="btn" data-tone>Read the blog</a>
+      </div>
+      <div class="interest-list-container">
+        <p class="home-text">While I am focused most broadly on AI governance and tech policy, I also have a strong, technical, interdisciplinary interest in these other adjacent areas:</p>
+
+        <div class="interest-list">
+
+          <div class="interest-category reveal-on-scroll">
+            <h3>Statistics and Data Science</h3>
+            <ul class="interest-details">
+              <li>Data analysis and visualization</li>
+              <li>Statistical Inference and Model Building (MLE, MAP)</li>
+              <li>Predictive modeling and Uncertainty Quantification</li>
+              <li>Conjugate priors, predictive distributions, Monte Carlo</li>
+            </ul>
+          </div>
+
+          <div class="interest-category reveal-on-scroll">
+            <h3>ML Theory and Research</h3>
+            <ul class="interest-details">
+              <li>Alignment and Safety</li>
+              <li>Mechanistic Interpretability</li>
+              <li>Scaling Laws and Forecasting</li>
+              <li>Bayesian Learning (incl. PAC-Bayes)</li>
+              <li>Synthetic Data</li>
+            </ul>
+          </div>
+
+          <div class="interest-category reveal-on-scroll">
+            <h3>Math</h3>
+            <ul class="interest-details">
+              <li>Mathematical Optimization and Numerical Methods</li>
+              <li>Linear Algebra</li>
+              <li>Calculus of Optimization</li>
+            </ul>
+          </div>
+
+          <div class="interest-category reveal-on-scroll">
+            <h3>Economics</h3>
+            <ul class="interest-details">
+              <li>Welfare Analysis (unemployment, universal basic income)</li>
+              <li>Macroeconomics</li>
+              <li>Labour Economics (automation impacts, wage stability)</li>
+            </ul>
+          </div>
+
+          <div class="interest-category reveal-on-scroll">
+            <h3>Political Science</h3>
+            <ul class="interest-details">
+              <li>Power Structures and Hierarchy</li>
+              <li>Political Economy</li>
+              <li>Electoral and Governance systems</li>
+            </ul>
+          </div>
+
+          <div class="interest-category reveal-on-scroll">
+            <h3>Law</h3>
+            <ul class="interest-details">
+              <li>Intellectual Property Law</li>
+              <li>Constitutional Law</li>
+              <li>Legal Theory/Legal Studies</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+
+    </section>
+
+    <section id="resume">
+      <h2>Resume</h2>
+      <p class="muted">Put your <span class="kbd">assets/resume.pdf</span> in the repo and update the link below.</p>
+      <p><a class="btn" href="assets/resume.pdf" target="_blank" rel="noopener" data-tone>Open PDF</a></p>
+      <details>
+        <summary class="pill" style="cursor:pointer">Inline preview (optional)</summary>
+        <div style="margin-top:12px; border:1px solid var(--border); border-radius:12px; overflow:hidden; aspect-ratio: 16/10; background: color-mix(in oklab, var(--bg) 95%, transparent);">
+          <object data="assets/resume.pdf" type="application/pdf" width="100%" height="100%">
+            <p>Your browser couldn't display the PDF. This is probably for the best. <a href="assets/resume.pdf">Download instead</a>.</p>
+          </object>
+        </div>
+      </details>
+    </section>
+
+    <section id="projects">
+      <h2>Projects & Demos</h2>
+      <p class="lead">Small, focused, interactive pieces. Each card links to a dedicated page or repo.</p>
+      <div class="grid" id="projectsGrid"></div>
+    </section>
+
+    <section id="blog">
+      <h2>Blog</h2>
+      <p class="lead">Thoughts on ML, design systems, accessibility, and tooling.</p>
+      <div id="posts"></div>
+    </section>
+
+    <section id="contact">
+      <h2>Contact</h2>
+      <p>Email is best. I'm also on GitHub and LinkedIn.</p>
+      <p>
+        <a href="mailto:xxxx@gmail.com" class="btn" data-tone>Email me</a>
+        <a href="https://github.com/your-username" target="_blank" rel="noopener" class="btn" data-tone>GitHub</a>
+        <a href="https://www.linkedin.com/in/your-handle" target="_blank" rel="noopener" class="btn" data-tone>LinkedIn</a>
+      </p>
+    </section>
+
+
+    <section id="useful-tools">
+      <h2 class="useful-tools-title">Other Useful Websites and Tools</h2>
+      <p class="useful-tools-subtitle" style="margin-bottom: 32px;">A few of my favorite resources from around the web that I'd love to share.</p>
+      
+      <div class="grid" id="toolsGrid">
+        
+        <!-- Tool 1: Note Frequencies -->
+        <a href="https://muted.io/note-frequencies/" target="_blank" rel="noopener" class="card tool-card">
+          <div class="tool-icon-box">
+            <!-- SVG icon will go here -->
+             <img src="assets/images/note-frequencies-site-card.png" alt="Musical note and waveform icon">
+          </div>
+          <h3 class="tool-title">Note Frequencies</h3>
+          <p class="muted">A simple, clean utility to convert musical notes to their Hz values for programmatic audio work.</p>
+        </a>
+
+        <!-- Tool 2: Danielle Navarro's Blog -->
+        <a href="https://blog.djnavarro.net/" target="_blank" rel="noopener" class="card tool-card">
+          <div class="tool-icon-box">
+            <!-- SVG icon will go here -->
+             <img src="assets/images/danielle-navaro-artblog-card.png" alt="Programmatically generated art by DJ Navarro.">
+          </div>
+          <h3 class="tool-title">DJ Navarro's Art Blog</h3>
+          <p class="muted">Beautiful generative art and thoughtful writing from an incredible Australian stats professor and artist.</p>
+        </a>
+        
+        <!-- Tool 3: GoblinTools -->
+        <a href="https://goblin.tools/" target="_blank" rel="noopener" class="card tool-card">
+          <div class="tool-icon-box">
+            <!-- SVG icon will go here -->
+             <img src="assets/images/goblintools-site-card.png" alt="A group of goblins raving in the precambrian period.">
+          </div>
+          <h3 class="tool-title">GoblinTools</h3>
+          <p class="muted">A set of small, single-task tools to help neurodivergent people with tasks like breakdown and tone analysis.</p>
+        </a>
+
+        <!-- Tool 4: Alex's Github Pages Site) -->
+        <a href="https://alexg28.github.io/portfolio/" class="card tool-card">
+          <div class="tool-icon-box">
+            <!-- SVG icon will go here -->
+             <img src="assets/images/alexg28-github-site-card.png" alt="An artichoke from the future? I think?.">
+          </div>
+          <h3 class="tool-title">Alex Gyumushyan's Site</h3>
+          <p class="muted">The github pages site for one of my good friends who's a terrific coder.</p>
+        </a>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="container">
+    <div class="grid">
+      <div class="card" style="grid-column: span 12; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <div>
+          <div class="muted">© <span id="year"></span> Savannah. All rights reserved.</div>
+          <div class="muted">Built with semantic HTML, modern CSS, and tiny vanilla JS. No frameworks.</div>
+        </div>
+        <div class="social" style="display:flex;align-items:center;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <a href="#home" aria-label="Go to top" data-tone>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5m0 0-7 7m7-7 7 7" stroke="currentColor" stroke-width="1.5"/></svg>
+            </a>
+            <a href="/rss.xml" aria-label="RSS" data-tone>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-4-8a14 14 0 0 1 14 14h4A18 18 0 0 0 2 8Zm0-6a20 20 0 0 1 20 20h-4A16 16 0 0 0 2 2Z" fill="currentColor"/></svg>
+            </a>
+            <button id="themeToggle" class="toggle" aria-label="Toggle dark mode" title="Toggle dark mode" data-tone>
+              <span class="knob" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

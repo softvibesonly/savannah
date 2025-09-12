@@ -1,0 +1,2262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Predictive Distributions and Fisher Information</title>
+  <!-- Load Chart.js for plotting -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.4;
+      margin: 20px;
+      max-width: 1000px;
+    }
+    h1 {
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+    h2 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .control-row label {
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+    }
+    .control-row input[type=number],
+    .control-row input[type=text] {
+      margin-left: 5px;
+      padding: 2px 4px;
+      font-size: 14px;
+    }
+    .control-row button {
+      padding: 4px 8px;
+      font-size: 14px;
+    }
+    .data-area {
+      /* A scrolling text area for data, parameter and predictive samples.  */
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      min-height: 80px;
+      max-height: 200px;
+      padding: 5px;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      font-family: monospace;
+    }
+    .stats-table {
+      font-size: 13px;
+      border-collapse: collapse;
+      margin-top: 5px;
+    }
+    .stats-table th, .stats-table td {
+      border: 1px solid #ddd;
+      padding: 4px 8px;
+      text-align: right;
+    }
+    .stats-table th {
+      background-color: #f0f0f5;
+      font-weight: bold;
+    }
+    canvas {
+      /* Restrict Chart.js canvas dimensions to a sensible height */
+      width: 100% !important;
+      height: 280px !important;
+      max-height: 280px;
+    }
+    #scoreFI p {
+      margin: 2px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Interactive Exploration of Predictive Distributions, Score Functions and Fisher Information</h1>
+  <p>This interactive tool lets you explore how a prior distribution and observed data combine to yield a posterior distribution for an unknown parameter, and how sampling from that posterior induces a predictive distribution for new observations. You can also inspect the score function and the Fisher Information associated with each model.</p>
+
+  <!-- Model selection and prior parameter controls -->
+  <h2>1. Choose a model and set the prior parameters</h2>
+  <div class="control-row">
+    <label for="modelSelect"><strong>Model:</strong>
+      <select id="modelSelect">
+        <option value="betaBinomial">Bernoulli data with Beta prior (Beta-Binomial predictive)</option>
+        <option value="poissonGamma">Poisson data with Gamma prior (Negative Binomial predictive)</option>
+        <option value="expGamma">Exponential data with Gamma prior (Lomax predictive)</option>
+        <option value="normalNormal">Normal data with Normal prior (Normal predictive)</option>
+      </select>
+    </label>
+    <div id="priorInputs" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+    <button id="randomParamsBtn" title="Randomise prior parameters">Random parameters</button>
+  </div>
+
+  <!-- Distribution specific parameter inputs for likelihood visualization (updated dynamically) -->
+  <div id="modelParamInputs" class="control-row"></div>
+
+  <!-- Controls for exploring the prior distribution's CDF and shading the area under the curve -->
+  <div id="priorLikControls" class="control-row"></div>
+
+  <!-- Canvas for visualising the prior and likelihood functions side‑by‑side -->
+  <canvas id="priorLikCanvas"></canvas>
+  <div id="priorLikInfo" style="font-size:13px; margin-bottom:10px;"></div>
+
+  <!-- Data generation and editing -->
+  <h2>2. Generate or edit observed data</h2>
+  <div class="control-row">
+    <!-- Button to generate a single observation and append to the current dataset -->
+    <button id="generateOneDataBtn" title="Generate one new observation and append">Generate one</button>
+    <label>Generate n data points:
+      <input type="number" id="genDataN" min="1" value="10" style="width:70px;">
+    </label>
+    <button id="generateDataBtn">Generate data</button>
+    <button id="clearDataBtn">Clear data</button>
+    <button id="sortDataBtn" title="Toggle sort order">Sort ascending</button>
+    <span id="dataCount">n = 0</span>
+  </div>
+  <div id="dataArea" class="data-area" contenteditable="true" spellcheck="false" aria-label="Data points"></div>
+  <table id="dataStats" class="stats-table"></table>
+  <!-- Controls for data statistics table: toggle additional means and set decimal precision -->
+  <div id="dataTableControls" class="control-row" style="margin-bottom:5px;">
+    <label><input type="checkbox" id="dataShowMeans"> Show generalized means</label>
+    <label>Decimals: <input type="number" id="dataStatsDecimals" min="0" max="10" value="4" style="width:60px;"></label>
+  </div>
+
+  <!-- Posterior distribution plot and summary -->
+  <h2>3. Posterior distribution from prior + data</h2>
+  <canvas id="posteriorCanvas"></canvas>
+
+  <!-- Controls and information for interacting with the posterior plot -->
+  <div id="posteriorControls" class="control-row" style="margin-top:5px;">
+    <label><input type="checkbox" id="posteriorShowCDF"> Show CDF</label>
+    <label>Probability:
+      <input type="number" id="posteriorCdfValue" min="0" max="1" step="0.01" value="0.5" style="width:60px;">
+    </label>
+    <input type="range" id="posteriorCdfSlider" min="0" max="1" step="0.01" value="0.5" style="width:150px;">
+    <label>Tail:
+      <select id="posteriorCdfTail">
+        <option value="left" selected>Left</option>
+        <option value="right">Right</option>
+      </select>
+    </label>
+  </div>
+  <div id="posteriorInfo" style="font-size:13px; margin-bottom:10px;"></div>
+  <table id="posteriorStats" class="stats-table"></table>
+
+  <!-- Parameter sampling -->
+  <h2>4. Sample from the posterior parameter distribution</h2>
+  <div class="control-row">
+    <!-- Generate a single parameter sample and append -->
+    <button id="drawOneParamBtn" title="Draw one parameter sample and append">Draw one</button>
+    <label>Draw m samples:
+      <input type="number" id="paramM" min="1" value="1" style="width:70px;">
+    </label>
+    <button id="drawParamBtn">Draw parameter samples</button>
+    <button id="clearParamBtn">Clear parameter samples</button>
+    <span id="paramCount">m = 0</span>
+    <label>Decimals: <input type="number" id="paramSampleDecimals" min="0" max="10" value="3" style="width:60px;"></label>
+  </div>
+  <div id="paramArea" class="data-area" contenteditable="true" spellcheck="false" aria-label="Parameter samples"></div>
+  <table id="paramStats" class="stats-table"></table>
+  <!-- Controls for parameter statistics table -->
+  <div id="paramTableControls" class="control-row" style="margin-bottom:5px;">
+    <label><input type="checkbox" id="paramShowMeans"> Show generalized means</label>
+    <label>Decimals: <input type="number" id="paramStatsDecimals" min="0" max="10" value="4" style="width:60px;"></label>
+  </div>
+  <canvas id="paramCanvas"></canvas>
+
+  <!-- Predictive sampling -->
+  <h2>5. Sample new observations from the predictive distribution</h2>
+  <div class="control-row">
+    <!-- Button to draw a single predictive sample and append -->
+    <button id="drawOnePredBtn" title="Draw one predictive sample and append">Draw one</button>
+    <label>Draw m samples:
+      <input type="number" id="predM" min="1" value="1" style="width:70px;">
+    </label>
+    <button id="drawPredBtn">Draw predictive samples</button>
+    <button id="clearPredBtn">Clear predictive samples</button>
+    <span id="predCount">m = 0</span>
+    <label>Decimals: <input type="number" id="predSampleDecimals" min="0" max="10" value="3" style="width:60px;"></label>
+  </div>
+  <div id="predArea" class="data-area" contenteditable="true" spellcheck="false" aria-label="Predictive samples"></div>
+  <table id="predStats" class="stats-table"></table>
+  <!-- Controls for predictive statistics table -->
+  <div id="predTableControls" class="control-row" style="margin-bottom:5px;">
+    <label><input type="checkbox" id="predShowMeans"> Show generalized means</label>
+    <label>Decimals: <input type="number" id="predStatsDecimals" min="0" max="10" value="4" style="width:60px;"></label>
+  </div>
+  <canvas id="predCanvas"></canvas>
+
+  <!-- Score function and Fisher Information -->
+  <h2>6. Score Function & Fisher Information</h2>
+  <div id="scoreFI"></div>
+
+  <script>
+    // Utility functions for random number generation and PDF/PMF calculations
+    // Box-Muller transform for normal samples
+    function normalSample(mu, sigma) {
+      let u1 = Math.random();
+      let u2 = Math.random();
+      let z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      return mu + sigma * z0;
+    }
+    // Exponential sample with rate lambda
+    function exponentialSample(lambda) {
+      return -Math.log(1 - Math.random()) / lambda;
+    }
+    // Gamma sample using Marsaglia and Tsang algorithm
+    function gammaSample(shape, rate) {
+      // shape > 0, rate > 0
+      if (shape < 1) {
+        // Use augmentation method for shape < 1
+        let c = 1 / shape;
+        let d = (1 - shape) * Math.pow(shape, shape / (1 - shape));
+        while (true) {
+          let u = Math.random();
+          let v = Math.random();
+          let x = d * u / v;
+          if (Math.pow(v, 1 - shape) * Math.exp(-x) <= 1) {
+            return x / rate;
+          }
+        }
+      } else {
+        // Marsaglia and Tsang method
+        let d = shape - 1 / 3;
+        let c = 1 / Math.sqrt(9 * d);
+        while (true) {
+          let x = normalSample(0, 1);
+          let v = 1 + c * x;
+          if (v <= 0) continue;
+          v = v * v * v;
+          let u = Math.random();
+          if (u < 1 - 0.0331 * Math.pow(x, 4)) {
+            return d * v / rate;
+          }
+          if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) {
+            return d * v / rate;
+          }
+        }
+      }
+    }
+    // Beta sample via gamma samples
+    function betaSample(a, b) {
+      const x = gammaSample(a, 1);
+      const y = gammaSample(b, 1);
+      return x / (x + y);
+    }
+    // Poisson sample using Knuth's method (works well for λ up to ~20); for larger λ use normal approximation
+    function poissonSample(lambda) {
+      if (lambda < 30) {
+        let L = Math.exp(-lambda);
+        let k = 0;
+        let p = 1;
+        do {
+          k++;
+          p *= Math.random();
+        } while (p > L);
+        return k - 1;
+      } else {
+        // Normal approximation for large lambda
+        let sample = normalSample(lambda, Math.sqrt(lambda));
+        return Math.max(0, Math.round(sample));
+      }
+    }
+    // Simple combination function (n choose k)
+    function combination(n, k) {
+      if (k < 0 || k > n) return 0;
+      k = Math.min(k, n - k);
+      let num = 1;
+      let den = 1;
+      for (let i = 1; i <= k; i++) {
+        num *= (n - (i - 1));
+        den *= i;
+      }
+      return num / den;
+    }
+    // PDF functions
+    function betaPdf(x, a, b) {
+      if (x < 0 || x > 1) return 0;
+      // Using gamma function ratio may overflow; compute log
+      return Math.pow(x, a - 1) * Math.pow(1 - x, b - 1) / (gammaFunc(a) * gammaFunc(b) / gammaFunc(a + b));
+    }
+    function gammaPdf(x, a, b) {
+      if (x < 0) return 0;
+      return Math.pow(b, a) * Math.pow(x, a - 1) * Math.exp(-b * x) / gammaFunc(a);
+    }
+    function normalPdf(x, mu, sigma) {
+      const coeff = 1 / (Math.sqrt(2 * Math.PI) * sigma);
+      const exponent = -Math.pow(x - mu, 2) / (2 * sigma * sigma);
+      return coeff * Math.exp(exponent);
+    }
+    // Gamma function using Lanczos approximation
+    function gammaFunc(z) {
+      const p = [
+        676.5203681218851,
+        -1259.1392167224028,
+        771.32342877765313,
+        -176.61502916214059,
+        12.507343278686905,
+        -0.13857109526572012,
+        9.9843695780195716e-6,
+        1.5056327351493116e-7
+      ];
+      if (z < 0.5) {
+        return Math.PI / (Math.sin(Math.PI * z) * gammaFunc(1 - z));
+      }
+      z -= 1;
+      let x = 0.99999999999980993;
+      for (let i = 0; i < p.length; i++) {
+        x += p[i] / (z + i + 1);
+      }
+      let t = z + p.length - 0.5;
+      return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+    }
+
+    // Global state variables
+    let currentModel = 'betaBinomial';
+    // Observed data array (unsorted)
+    let dataArray = [];
+    // Sorting state: 0 = unsorted (original insertion order), 1 = ascending, 2 = descending
+    let sortState = 0;
+    let unsortedData = [];
+    // Parameter samples array
+    let paramSamples = [];
+    // Predictive samples array
+    let predSamples = [];
+    // Chart.js instances
+    let posteriorChart = null;
+    let paramChart = null;
+    let predChart = null;
+
+    // Additional global variables for new interactive features
+    let priorLikChart = null;          // Chart instance for prior vs likelihood
+    let posteriorXs = [];              // x values used in posterior plot
+    let posteriorYs = [];              // corresponding pdf values for posterior
+    let posteriorCDF = [];             // cumulative distribution of posterior pdf
+    let posteriorStatsObj = {mean:0, median:0, mode:0}; // store posterior mean/median/mode for hover info
+    let posteriorHoverX = null;        // last x position hovered over in posterior chart
+    let paramSampleDecimals = 3;       // decimal precision for parameter samples display
+    let predSampleDecimals = 3;        // decimal precision for predictive samples display
+
+    // Global references to the posterior plot event handlers.  These are used
+    // to remove previous mouse event listeners when replotting the posterior
+    // distribution.  Without storing references to the old handlers, addEventListener
+    // would accumulate multiple listeners leading to duplicate processing and
+    // interfering with pointer events.  When plotPosterior() is called, new
+    // handlers will be created and stored here.
+    let posteriorMouseMoveHandler = null;
+    let posteriorMouseLeaveHandler = null;
+
+    // On page load: set up prior inputs for initial model
+    document.addEventListener('DOMContentLoaded', function () {
+      // Create prior inputs
+      updatePriorInputs();
+      // Add event listeners
+      document.getElementById('modelSelect').addEventListener('change', function (e) {
+        currentModel = e.target.value;
+        updatePriorInputs();
+        clearAllData();
+        updatePosteriorPlot();
+      });
+      document.getElementById('randomParamsBtn').addEventListener('click', randomizePriorParameters);
+      document.getElementById('generateDataBtn').addEventListener('click', generateData);
+      // Generate one new data point on click
+      document.getElementById('generateOneDataBtn').addEventListener('click', function() {
+        // Temporarily set genDataN to 1 and call generateData
+        const oldVal = parseInt(document.getElementById('genDataN').value) || 1;
+        document.getElementById('genDataN').value = 1;
+        generateData();
+        // Restore original n value for subsequent uses
+        document.getElementById('genDataN').value = oldVal;
+      });
+      document.getElementById('clearDataBtn').addEventListener('click', function() { clearData(); updatePosteriorPlot(); });
+      document.getElementById('sortDataBtn').addEventListener('click', toggleSort);
+      document.getElementById('dataArea').addEventListener('input', function() {
+        parseDataArea();
+      });
+      document.getElementById('drawParamBtn').addEventListener('click', function() {
+        const m = parseInt(document.getElementById('paramM').value) || 1;
+        drawParameterSamples(m);
+      });
+      // Draw a single parameter sample when clicking the dedicated button
+      document.getElementById('drawOneParamBtn').addEventListener('click', function() {
+        drawParameterSamples(1);
+      });
+      document.getElementById('clearParamBtn').addEventListener('click', function() {
+        clearParamSamples();
+      });
+      document.getElementById('paramArea').addEventListener('input', function() {
+        parseParamArea();
+      });
+      document.getElementById('drawPredBtn').addEventListener('click', function() {
+        const m = parseInt(document.getElementById('predM').value) || 1;
+        drawPredictiveSamples(m);
+      });
+      // Draw a single predictive sample on button click
+      document.getElementById('drawOnePredBtn').addEventListener('click', function() {
+        drawPredictiveSamples(1);
+      });
+      document.getElementById('clearPredBtn').addEventListener('click', function() {
+        clearPredSamples();
+      });
+      document.getElementById('predArea').addEventListener('input', function() {
+        parsePredArea();
+      });
+      // Initial update
+      updatePosteriorPlot();
+
+      // Set up controls for CDF shading of the prior distribution
+      updatePriorLikControls();
+      // Draw initial likelihood/prior visualisation
+      updateLikelihoodPlot();
+
+      // Set up listeners for posterior interactivity controls
+      const postShow = document.getElementById('posteriorShowCDF');
+      const postTail = document.getElementById('posteriorCdfTail');
+      const postVal = document.getElementById('posteriorCdfValue');
+      const postSlider = document.getElementById('posteriorCdfSlider');
+      // When toggling the CDF shading, recompute the shading immediately
+      if (postShow) {
+        postShow.addEventListener('change', function() {
+          updatePosteriorCdfShading();
+        });
+      }
+      // When the tail direction changes, recompute shading
+      if (postTail) {
+        postTail.addEventListener('change', function() {
+          updatePosteriorCdfShading();
+        });
+      }
+      // Synchronise and update shading when the posterior CDF controls change
+      if (postVal && postSlider) {
+        postVal.addEventListener('input', function() {
+          let v = parseFloat(postVal.value);
+          if (isNaN(v)) v = 0;
+          if (v < 0) v = 0;
+          if (v > 1) v = 1;
+          postVal.value = v;
+          postSlider.value = v;
+          updatePosteriorCdfShading();
+        });
+        postSlider.addEventListener('input', function() {
+          const v = parseFloat(postSlider.value);
+          postVal.value = v;
+          updatePosteriorCdfShading();
+        });
+      }
+
+      // Bind changes on the decimal inputs and showMeans checkboxes to update
+      const dataDec = document.getElementById('dataStatsDecimals');
+      const dataToggle = document.getElementById('dataShowMeans');
+      if (dataDec) {
+        dataDec.addEventListener('input', function() {
+          updateDataStats();
+        });
+      }
+      if (dataToggle) {
+        dataToggle.addEventListener('change', function() {
+          updateDataStats();
+        });
+      }
+      const paramDec = document.getElementById('paramStatsDecimals');
+      const paramToggle = document.getElementById('paramShowMeans');
+      if (paramDec) {
+        paramDec.addEventListener('input', function() {
+          updateParamStats();
+        });
+      }
+      if (paramToggle) {
+        paramToggle.addEventListener('change', function() {
+          updateParamStats();
+        });
+      }
+      const predDec = document.getElementById('predStatsDecimals');
+      const predToggle = document.getElementById('predShowMeans');
+      if (predDec) {
+        predDec.addEventListener('input', function() {
+          updatePredStats();
+        });
+      }
+      if (predToggle) {
+        predToggle.addEventListener('change', function() {
+          updatePredStats();
+        });
+      }
+      // Bind sample decimal inputs to update sample displays
+      const paramSampleDec = document.getElementById('paramSampleDecimals');
+      if (paramSampleDec) {
+        paramSampleDec.addEventListener('input', function() {
+          updateParamArea();
+        });
+      }
+      const predSampleDec = document.getElementById('predSampleDecimals');
+      if (predSampleDec) {
+        predSampleDec.addEventListener('input', function() {
+          updatePredArea();
+        });
+      }
+    });
+
+    // Update prior input fields according to selected model
+    function updatePriorInputs() {
+      const container = document.getElementById('priorInputs');
+      container.innerHTML = '';
+      if (currentModel === 'betaBinomial') {
+        container.innerHTML = `
+          <label>α: <input type="number" id="priorAlpha" min="0.1" step="0.1" value="2"></label>
+          <label>β: <input type="number" id="priorBeta" min="0.1" step="0.1" value="2"></label>
+        `;
+      } else if (currentModel === 'poissonGamma') {
+        container.innerHTML = `
+          <label>α (shape): <input type="number" id="priorAlpha" min="0.1" step="0.1" value="2"></label>
+          <label>β (rate): <input type="number" id="priorBeta" min="0.1" step="0.1" value="1"></label>
+        `;
+      } else if (currentModel === 'expGamma') {
+        container.innerHTML = `
+          <label>α (shape): <input type="number" id="priorAlpha" min="0.1" step="0.1" value="2"></label>
+          <label>β (rate): <input type="number" id="priorBeta" min="0.1" step="0.1" value="1"></label>
+        `;
+      } else if (currentModel === 'normalNormal') {
+        container.innerHTML = `
+          <label>μ₀: <input type="number" id="priorMu0" step="0.1" value="0"></label>
+          <label>σ₀ (prior sd): <input type="number" id="priorSigma0" min="0.1" step="0.1" value="1"></label>
+          <label>σ (data sd): <input type="number" id="dataSigma" min="0.1" step="0.1" value="1"></label>
+        `;
+      }
+
+      // After setting the prior input fields, attach listeners so that changes immediately
+      // update the posterior and prior/likelihood visualisations 
+      // This ensures that adjusting the hyperparameters influences downstream calculations.
+      attachPriorParamListeners();
+      // Update distribution‑specific model parameter inputs and likelihood/CDF controls
+      updateModelParams();
+      updateLikelihoodPlot();
+    }
+
+    // Generate random prior parameter values
+    function randomizePriorParameters() {
+      if (currentModel === 'betaBinomial') {
+        const a = 0.5 + Math.random() * 4.5; // between 0.5 and 5
+        const b = 0.5 + Math.random() * 4.5;
+        document.getElementById('priorAlpha').value = a.toFixed(2);
+        document.getElementById('priorBeta').value = b.toFixed(2);
+      } else if (currentModel === 'poissonGamma' || currentModel === 'expGamma') {
+        const a = 0.5 + Math.random() * 4.5;
+        const b = 0.5 + Math.random() * 4.5;
+        document.getElementById('priorAlpha').value = a.toFixed(2);
+        document.getElementById('priorBeta').value = b.toFixed(2);
+      } else if (currentModel === 'normalNormal') {
+        const mu0 = -5 + Math.random() * 10;
+        const sigma0 = 0.5 + Math.random() * 4.5;
+        const sigma = 0.5 + Math.random() * 4.5;
+        document.getElementById('priorMu0').value = mu0.toFixed(2);
+        document.getElementById('priorSigma0').value = sigma0.toFixed(2);
+        document.getElementById('dataSigma').value = sigma.toFixed(2);
+      }
+      updatePosteriorPlot();
+    }
+
+    // Generate synthetic observed data from the model
+    function generateData() {
+      const n = parseInt(document.getElementById('genDataN').value) || 0;
+      if (n <= 0) return;
+      // We do not clear existing data here. 
+      // Each call appends new observations to the existing dataset.
+      // Existing unsortedData holds the current original-order data.  sortState remains unchanged.
+      // Get prior parameters
+      if (currentModel === 'betaBinomial') {
+        const a = parseFloat(document.getElementById('priorAlpha').value);
+        const b = parseFloat(document.getElementById('priorBeta').value);
+        // Sample true p from the prior and generate Bernoulli observations
+        const pTrue = betaSample(a, b);
+        for (let i = 0; i < n; i++) {
+          const x = Math.random() < pTrue ? 1 : 0;
+          unsortedData.push(x);
+        }
+      } else if (currentModel === 'poissonGamma') {
+        const a = parseFloat(document.getElementById('priorAlpha').value);
+        const b = parseFloat(document.getElementById('priorBeta').value);
+        // Draw latent rate λ and generate Poisson observations
+        const lambdaTrue = gammaSample(a, b);
+        for (let i = 0; i < n; i++) {
+          unsortedData.push(poissonSample(lambdaTrue));
+        }
+      } else if (currentModel === 'expGamma') {
+        const a = parseFloat(document.getElementById('priorAlpha').value);
+        const b = parseFloat(document.getElementById('priorBeta').value);
+        // Draw latent rate λ and generate exponential observations
+        const lambdaTrue = gammaSample(a, b);
+        for (let i = 0; i < n; i++) {
+          unsortedData.push(exponentialSample(lambdaTrue));
+        }
+      } else if (currentModel === 'normalNormal') {
+        const mu0 = parseFloat(document.getElementById('priorMu0').value);
+        const sigma0 = parseFloat(document.getElementById('priorSigma0').value);
+        const dataSigma = parseFloat(document.getElementById('dataSigma').value);
+        // Draw latent true mean and generate normal observations
+        const muTrue = normalSample(mu0, sigma0);
+        for (let i = 0; i < n; i++) {
+          unsortedData.push(normalSample(muTrue, dataSigma));
+        }
+      }
+      // Mirror unsortedData into dataArray for parsing consistency
+      dataArray = unsortedData.slice();
+      updateDataArea();
+      updatePosteriorPlot();
+    }
+
+    // Clear observed data
+    function clearData() {
+      dataArray = [];
+      unsortedData = [];
+      sortState = 0;
+      updateDataArea();
+      updatePosteriorPlot();
+    }
+
+    // Clear all data and samples (used when model changes)
+    function clearAllData() {
+      clearData();
+      clearParamSamples();
+      clearPredSamples();
+    }
+
+    // Parse the text inside the data area and update dataArray
+    function parseDataArea() {
+      const text = document.getElementById('dataArea').innerText;
+      const nums = text
+        .split(/\s|,|;|\n|\r/)
+        .map(x => x.trim())
+        .filter(x => x.length > 0)
+        .map(x => Number(x))
+        .filter(x => !isNaN(x));
+      dataArray = nums;
+      unsortedData = dataArray.slice();
+      sortState = 0;
+      updateDataArea();
+      updatePosteriorPlot();
+    }
+
+    // Update the data area display based on current sorting state
+    function updateDataArea() {
+      let displayList;
+      if (sortState === 1) {
+        displayList = unsortedData.slice().sort((a, b) => a - b);
+      } else if (sortState === 2) {
+        displayList = unsortedData.slice().sort((a, b) => b - a);
+      } else {
+        displayList = unsortedData.slice();
+      }
+      // Display numbers separated by spaces
+      document.getElementById('dataArea').innerText = displayList.join(' ');
+      document.getElementById('dataCount').innerText = 'n = ' + unsortedData.length;
+      updateDataStats();
+    }
+
+    // Toggle sorting state
+    function toggleSort() {
+      sortState = (sortState + 1) % 3;
+      const sortButton = document.getElementById('sortDataBtn');
+      if (sortState === 0) {
+        sortButton.innerText = 'Sort ascending';
+      } else if (sortState === 1) {
+        sortButton.innerText = 'Sort descending';
+      } else {
+        sortButton.innerText = 'Original order';
+      }
+      updateDataArea();
+    }
+
+    // Update descriptive statistics table for observed data
+    function updateDataStats() {
+      const table = document.getElementById('dataStats');
+      const n = unsortedData.length;
+      if (n === 0) {
+        table.innerHTML = '';
+        return;
+      }
+      // Compute mean, median, mode, MLE (data parameter estimate)
+      const sorted = unsortedData.slice().sort((a, b) => a - b);
+      const mean = sorted.reduce((a, b) => a + b, 0) / n;
+      const median = (n % 2 === 1) ? sorted[Math.floor(n / 2)] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+      // Mode: find value that appears most often (simple approach)
+      let mode = sorted[0];
+      let maxCount = 1;
+      let currentVal = sorted[0];
+      let currentCount = 1;
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === currentVal) {
+          currentCount++;
+          if (currentCount > maxCount) {
+            maxCount = currentCount;
+            mode = currentVal;
+          }
+        } else {
+          currentVal = sorted[i];
+          currentCount = 1;
+        }
+      }
+      // MLE estimate depends on model
+      let mleVal;
+      let mleLabel;
+      if (currentModel === 'betaBinomial') {
+        // Parameter p MLE = sample mean
+        mleVal = mean;
+        mleLabel = 'p̂ (MLE)';
+      } else if (currentModel === 'poissonGamma') {
+        // λ MLE = sample mean
+        mleVal = mean;
+        mleLabel = 'λ̂ (MLE)';
+      } else if (currentModel === 'expGamma') {
+        // For exponential with rate λ, MLE λ̂ = 1/mean
+        mleVal = mean > 0 ? 1 / mean : 0;
+        mleLabel = 'λ̂ (MLE)';
+      } else if (currentModel === 'normalNormal') {
+        // For normal mean, MLE μ̂ = sample mean
+        mleVal = mean;
+        mleLabel = 'μ̂ (MLE)';
+      }
+      // Determine user preferences for additional means and decimal precision
+      const showMeans = document.getElementById('dataShowMeans')?.checked;
+      const decInput = document.getElementById('dataStatsDecimals');
+      let decs = parseInt(decInput?.value);
+      if (isNaN(decs) || decs < 0) decs = 4;
+      // Helper to format with specified decimals without trailing zeros
+      function fmt(val) {
+        if (typeof val !== 'number' || isNaN(val)) return '';
+        return parseFloat(val.toFixed(decs)).toString();
+      }
+      // Compute min and max
+      const minVal = sorted[0];
+      const maxVal = sorted[sorted.length - 1];
+      // Compute generalized means if requested
+      let rms, l1mean, gmean, hmean;
+      if (showMeans) {
+        // root mean square
+        const sumSq = sorted.reduce((acc, v) => acc + v * v, 0);
+        rms = Math.sqrt(sumSq / n);
+        // mean absolute value
+        const sumAbs = sorted.reduce((acc, v) => acc + Math.abs(v), 0);
+        l1mean = sumAbs / n;
+        // geometric mean (only defined for positive numbers)
+        if (sorted.every(v => v > 0)) {
+          const logSum = sorted.reduce((acc, v) => acc + Math.log(v), 0);
+          gmean = Math.exp(logSum / n);
+        } else {
+          gmean = NaN;
+        }
+        // harmonic mean (only defined for non‑zero positive numbers)
+        if (sorted.every(v => v > 0)) {
+          const sumInv = sorted.reduce((acc, v) => acc + 1 / v, 0);
+          hmean = n / sumInv;
+        } else {
+          hmean = NaN;
+        }
+      }
+      // Build table rows
+      let html = '<tr><th>Statistic</th><th>Value</th></tr>';
+      html += `<tr><td>Mean</td><td>${fmt(mean)}</td></tr>`;
+      html += `<tr><td>Median</td><td>${fmt(median)}</td></tr>`;
+      html += `<tr><td>Mode</td><td>${fmt(mode)}</td></tr>`;
+      html += `<tr><td>${mleLabel}</td><td>${fmt(mleVal)}</td></tr>`;
+      html += `<tr><td>Min</td><td>${fmt(minVal)}</td></tr>`;
+      html += `<tr><td>Max</td><td>${fmt(maxVal)}</td></tr>`;
+      if (showMeans) {
+        html += `<tr><td>Root mean square</td><td>${isNaN(rms) ? 'n/a' : fmt(rms)}</td></tr>`;
+        html += `<tr><td>Mean absolute value</td><td>${isNaN(l1mean) ? 'n/a' : fmt(l1mean)}</td></tr>`;
+        html += `<tr><td>Geometric mean</td><td>${isNaN(gmean) ? 'n/a' : fmt(gmean)}</td></tr>`;
+        html += `<tr><td>Harmonic mean</td><td>${isNaN(hmean) ? 'n/a' : fmt(hmean)}</td></tr>`;
+      }
+      table.innerHTML = html;
+    }
+
+    // Format number for display
+    function formatNumber(x) {
+      if (typeof x !== 'number' || isNaN(x)) return '';
+      const abs = Math.abs(x);
+      if (abs >= 1e4 || (abs > 0 && abs < 1e-3)) {
+        return x.toExponential(3);
+      } else {
+        return parseFloat(x.toFixed(4)).toString();
+      }
+    }
+
+    // Compute posterior parameters and update posterior plot and statistics
+    function updatePosteriorPlot() {
+      const n = unsortedData.length;
+      // Prior parameters from inputs
+      let a, b;
+      let mu0, sigma0, sigma;
+      // Posterior parameters
+      let postParams = {};
+      if (currentModel === 'betaBinomial') {
+        a = parseFloat(document.getElementById('priorAlpha').value);
+        b = parseFloat(document.getElementById('priorBeta').value);
+        const k = unsortedData.reduce((acc, val) => acc + val, 0);
+        postParams.a = a + k;
+        postParams.b = b + n - k;
+      } else if (currentModel === 'poissonGamma') {
+        a = parseFloat(document.getElementById('priorAlpha').value);
+        b = parseFloat(document.getElementById('priorBeta').value);
+        const sumX = unsortedData.reduce((acc, val) => acc + val, 0);
+        postParams.a = a + sumX;
+        postParams.b = b + n;
+      } else if (currentModel === 'expGamma') {
+        a = parseFloat(document.getElementById('priorAlpha').value);
+        b = parseFloat(document.getElementById('priorBeta').value);
+        const sumX = unsortedData.reduce((acc, val) => acc + val, 0);
+        postParams.a = a + n;
+        postParams.b = b + sumX;
+      } else if (currentModel === 'normalNormal') {
+        mu0 = parseFloat(document.getElementById('priorMu0').value);
+        sigma0 = parseFloat(document.getElementById('priorSigma0').value);
+        sigma = parseFloat(document.getElementById('dataSigma').value);
+        // Posterior variance
+        const tau0 = sigma0 * sigma0;
+        const tau = sigma * sigma;
+        const precisionPost = 1 / tau0 + n / tau;
+        const varPost = 1 / precisionPost;
+        const meanPost = varPost * (mu0 / tau0 + (n > 0 ? unsortedData.reduce((a,b)=>a+b,0) / tau : 0));
+        postParams.mean = meanPost;
+        postParams.var = varPost;
+        postParams.sigma = sigma;
+        postParams.tau0 = tau0;
+        postParams.tau = tau;
+      }
+      // Update posterior statistics table
+      updatePosteriorStats(postParams);
+      // Plot posterior distribution
+      plotPosterior(postParams);
+      // Update score function and Fisher information
+      updateScoreFI(postParams);
+    }
+
+    // Update posterior statistics table
+    function updatePosteriorStats(params) {
+      const table = document.getElementById('posteriorStats');
+      table.innerHTML = '';
+      if (currentModel === 'betaBinomial') {
+      // Compute mean, variance, median, mode of Beta
+        const a = params.a;
+        const b = params.b;
+        const mean = a / (a + b);
+        const variance = (a * b) / ((a + b) * (a + b) * (a + b + 1));
+        // median approximation
+        const median = (a > 1 && b > 1) ? ( (a - 1/3) / (a + b - 2/3) ) : mean;
+        // mode
+        const mode = (a > 1 && b > 1) ? ((a - 1) / (a + b - 2)) : mean;
+        table.innerHTML = `
+          <tr><th></th><th>Mean</th><th>Variance</th><th>Median</th><th>Mode</th></tr>
+          <tr><td>Posterior (Beta)</td><td>${formatNumber(mean)}</td><td>${formatNumber(variance)}</td><td>${formatNumber(median)}</td><td>${formatNumber(mode)}</td></tr>
+        `;
+        // Store summary statistics globally for interactive distance calculations
+        posteriorStatsObj = { mean: mean, median: median, mode: mode };
+      } else if (currentModel === 'poissonGamma') {
+        const a = params.a;
+        const b = params.b;
+        // Posterior mean and variance for Gamma(a,b) where b is rate
+        const mean = a / b;
+        const variance = a / (b * b);
+        // Mode of Gamma: (a-1)/b when a > 1 else undefined -> use mean
+        const mode = (a > 1) ? ((a - 1) / b) : mean;
+        // Median approximation: b * ( (a - 1/3) / (b) )? Actually median ≈ a/b * (1 - 1/(9a))^3
+        const median = mean * Math.pow(1 - 1/(9 * a), 3);
+        table.innerHTML = `
+          <tr><th></th><th>Mean</th><th>Variance</th><th>Median (approx)</th><th>Mode</th></tr>
+          <tr><td>Posterior (Gamma)</td><td>${formatNumber(mean)}</td><td>${formatNumber(variance)}</td><td>${formatNumber(median)}</td><td>${formatNumber(mode)}</td></tr>
+        `;
+        posteriorStatsObj = { mean: mean, median: median, mode: mode };
+      } else if (currentModel === 'expGamma') {
+        // Same as Gamma posterior
+        const a = params.a;
+        const b = params.b;
+        const mean = a / b;
+        const variance = a / (b * b);
+        const mode = (a > 1) ? ((a - 1)/b) : mean;
+        const median = mean * Math.pow(1 - 1/(9 * a), 3);
+        table.innerHTML = `
+          <tr><th></th><th>Mean</th><th>Variance</th><th>Median (approx)</th><th>Mode</th></tr>
+          <tr><td>Posterior (Gamma)</td><td>${formatNumber(mean)}</td><td>${formatNumber(variance)}</td><td>${formatNumber(median)}</td><td>${formatNumber(mode)}</td></tr>
+        `;
+        posteriorStatsObj = { mean: mean, median: median, mode: mode };
+      } else if (currentModel === 'normalNormal') {
+        const mean = params.mean;
+        const variance = params.var;
+        const std = Math.sqrt(variance);
+        table.innerHTML = `
+          <tr><th></th><th>Mean</th><th>Variance</th><th>Std Dev</th></tr>
+          <tr><td>Posterior (Normal)</td><td>${formatNumber(mean)}</td><td>${formatNumber(variance)}</td><td>${formatNumber(std)}</td></tr>
+        `;
+        posteriorStatsObj = { mean: mean, median: mean, mode: mean };
+      }
+    }
+
+    // Plot posterior distribution using Chart.js
+    function plotPosterior(params) {
+      const canvas = document.getElementById('posteriorCanvas');
+      // Determine data points for plot
+      let xs = [];
+      let ys = [];
+      let label = '';
+      // Domain boundaries
+      let xMin, xMax;
+      if (currentModel === 'betaBinomial') {
+        xMin = 0;
+        xMax = 1;
+        label = 'Beta PDF';
+        const a = params.a;
+        const b = params.b;
+        const steps = 200;
+        for (let i = 0; i <= steps; i++) {
+          const x = xMin + (xMax - xMin) * i / steps;
+          xs.push(x);
+          ys.push(betaPdf(x, a, b));
+        }
+      } else if (currentModel === 'poissonGamma' || currentModel === 'expGamma') {
+        // Gamma posterior of rate λ
+        const a = params.a;
+        const b = params.b;
+        // Choose xMin = 0, xMax around mean + 5*sd
+        const mean = a / b;
+        const sd = Math.sqrt(a) / b;
+        xMin = 0;
+        xMax = Math.max(mean + 4 * sd, mean * 5);
+        label = 'Gamma PDF';
+        const steps = 200;
+        for (let i = 0; i <= steps; i++) {
+          const x = xMin + (xMax - xMin) * i / steps;
+          xs.push(x);
+          ys.push(gammaPdf(x, a, b));
+        }
+      } else if (currentModel === 'normalNormal') {
+        const mu = params.mean;
+        const varPost = params.var;
+        const sd = Math.sqrt(varPost);
+        xMin = mu - 4 * sd;
+        xMax = mu + 4 * sd;
+        label = 'Normal PDF';
+        const steps = 200;
+        for (let i = 0; i <= steps; i++) {
+          const x = xMin + (xMax - xMin) * i / steps;
+          xs.push(x);
+          ys.push(normalPdf(x, mu, sd));
+        }
+      }
+      // Store global copies of x and y values for hover computations
+      posteriorXs = xs.slice();
+      posteriorYs = ys.slice();
+      // Compute CDF of posterior pdf for cumulative probability calculations
+      posteriorCDF = [];
+      let totalArea = 0;
+      for (let i = 1; i < xs.length; i++) {
+        const dx = xs[i] - xs[i - 1];
+        totalArea += (ys[i] + ys[i - 1]) * dx / 2;
+      }
+      let accum = 0;
+      posteriorCDF.push(0);
+      for (let i = 1; i < xs.length; i++) {
+        const dx = xs[i] - xs[i - 1];
+        const area = (ys[i] + ys[i - 1]) * dx / 2;
+        accum += area;
+        posteriorCDF.push(Math.min(1, accum / (totalArea > 0 ? totalArea : 1)));
+      }
+      // Destroy previous chart if exists
+      if (posteriorChart) {
+        posteriorChart.destroy();
+      }
+      // Prepare datasets: main pdf, shading (initially zeros), vertical line (initially empty)
+      const shadingData = ys.map(() => 0);
+      const lineData = [];
+      // Explicitly set canvas dimensions to avoid runaway growth
+      canvas.height = 280;
+      canvas.width = canvas.parentElement ? canvas.parentElement.clientWidth : 800;
+      posteriorChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: xs,
+          datasets: [
+            {
+              label: label,
+              data: ys,
+              borderColor: 'rgba(54,162,235,1)',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: false
+            },
+            {
+              label: 'CDF Shading',
+              data: shadingData,
+              backgroundColor: 'rgba(100,200,100,0.2)',
+              borderColor: 'rgba(100,200,100,0.5)',
+              borderWidth: 1,
+              pointRadius: 0,
+              fill: true
+            },
+            {
+              label: 'Hover Line',
+              data: lineData,
+              borderColor: 'rgba(200,100,100,0.8)',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: false,
+              parsing: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: 'linear',
+              title: {
+                display: true,
+                text: (currentModel === 'betaBinomial') ? 'p' : (currentModel === 'normalNormal' ? 'μ' : 'λ'),
+                font: { size: 14 }
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Density',
+                font: { size: 14 }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: false
+            }
+          }
+        }
+      });
+      updatePosteriorCdfShading();
+
+      /* After constructing the posterior chart, initialise the CDF shading based on the current
+         probability and tail controls.  This ensures that the shading reflects the user's
+         specified probability even before interacting with the plot.  The shading will be
+         cleared if the CDF toggle is off.
+         Attach mousemove and mouseleave listeners for interactive hover effects.  Use
+         addEventListener instead of assigning directly to the on* properties, since Chart.js
+         may internally override those properties. To avoid accumulating multiple listeners
+         on subsequent calls, remove any previously registered handlers stored in the
+         global variables and then register new ones.
+         Remove existing handlers if present. Use the chart's internal canvas (posteriorChart.canvas)
+         if available; otherwise use the DOM canvas.
+         Determine the element on which to attach event listeners.  Chart.js wraps the canvas
+         inside a parent div which captures pointer events, so we bind listeners to that
+         parent rather than the raw canvas. If a previous chart exists, we remove its
+         listeners from the prior element. */
+      const targetCanvas = (posteriorChart && posteriorChart.canvas) ? posteriorChart.canvas : canvas;
+      const targetElement = (posteriorChart && posteriorChart.canvas && posteriorChart.canvas.parentNode) ? posteriorChart.canvas.parentNode : targetCanvas;
+      if (posteriorMouseMoveHandler) targetElement.removeEventListener('mousemove', posteriorMouseMoveHandler);
+      if (posteriorMouseLeaveHandler) targetElement.removeEventListener('mouseleave', posteriorMouseLeaveHandler);
+      // Define new handler functions and store them globally.  Use the same targetCanvas for
+      // both removal and addition to ensure listeners are attached to the correct element.
+      posteriorMouseMoveHandler = function(evt) {
+        // Use the bounding rect of the chart's canvas to convert mouse position to x‑value.
+        const rect = targetCanvas.getBoundingClientRect();
+        const pixelX = evt.clientX - rect.left;
+        // Only update if the pointer is within the chart area (including axes)
+        if (pixelX >= 0 && pixelX <= rect.width) {
+          const xVal = posteriorChart.scales.x.getValueForPixel(pixelX);
+          updatePosteriorHover(xVal);
+        }
+      };
+      posteriorMouseLeaveHandler = function(evt) {
+        posteriorHoverX = null;
+        if (posteriorChart) {
+          const hoverDs = posteriorChart.data.datasets[2];
+          if (hoverDs) hoverDs.data = [];
+          updatePosteriorCdfShading();
+        }
+        const infoDiv = document.getElementById('posteriorInfo');
+        if (infoDiv) infoDiv.innerHTML = '';
+      };
+      // Attach to the parent element that captures pointer events
+      targetElement.addEventListener('mousemove', posteriorMouseMoveHandler);
+      targetElement.addEventListener('mouseleave', posteriorMouseLeaveHandler);
+
+      // Show an initial hover line and information at the posterior mean when the plot is first drawn.
+      // This provides immediate feedback to the user and serves as a fallback in case mouse
+      // events are not captured by the canvas.  The hover will update with actual
+      // interaction when the user moves the mouse over the plot.
+      if (posteriorStatsObj && !isNaN(posteriorStatsObj.mean)) {
+        updatePosteriorHover(posteriorStatsObj.mean);
+      }
+    }
+
+    // Update score function and Fisher information display
+    function updateScoreFI(params) {
+      const container = document.getElementById('scoreFI');
+      container.innerHTML = '';
+      const n = unsortedData.length;
+      // If no data, show nothing
+      if (n === 0) {
+        container.innerHTML = '<p>Please enter or generate data to view the score function and Fisher Information.</p>';
+        return;
+      }
+      // Compute sample summaries
+      const sumX = unsortedData.reduce((a,b) => a + b, 0);
+      const mean = sumX / n;
+      let formulaScore = '';
+      let formulaFI = '';
+      let scoreVal = 0;
+      let fiVal = 0;
+      if (currentModel === 'betaBinomial') {
+        // Score for Bernoulli p: S(p) = k/p - (n-k)/(1-p)
+        const k = sumX;
+        const pHat = k / n;
+        scoreVal = (k / pHat) - ((n - k) / (1 - pHat));
+        // FI: n/(p(1-p))
+        fiVal = n / (pHat * (1 - pHat));
+        formulaScore = 'Score (Bernoulli, evaluated at p̂): S(p̂) = k/p̂ - (n-k)/(1-p̂) = 0';
+        formulaFI = 'Fisher Information: I(p̂) = n / [p̂(1 - p̂)]';
+      } else if (currentModel === 'poissonGamma') {
+        // Score for Poisson λ: S(λ) = Σx_i/λ - n
+        const lambdaHat = mean;
+        scoreVal = sumX / lambdaHat - n;
+        fiVal = n / lambdaHat;
+        formulaScore = 'Score (Poisson, at λ̂): S(λ̂) = Σx_i/λ̂ - n = 0';
+        formulaFI = 'Fisher Information: I(λ̂) = n / λ̂';
+      } else if (currentModel === 'expGamma') {
+        // Score for exponential rate λ: S(λ) = n/λ - Σx_i
+        const lambdaHat = n / sumX;
+        scoreVal = n / lambdaHat - sumX;
+        fiVal = n / (lambdaHat * lambdaHat);
+        formulaScore = 'Score (Exponential rate, at λ̂): S(λ̂) = n/λ̂ - Σx_i = 0';
+        formulaFI = 'Fisher Information: I(λ̂) = n / λ̂²';
+      } else if (currentModel === 'normalNormal') {
+        // Score for mean μ: S(μ) = Σ(x_i - μ) / σ²; Evaluate at μ̂ = sample mean gives 0
+        const dataSigma = parseFloat(document.getElementById('dataSigma').value);
+        const muHat = mean;
+        scoreVal = unsortedData.reduce((a,b) => a + (b - muHat), 0) / (dataSigma * dataSigma);
+        fiVal = n / (dataSigma * dataSigma);
+        formulaScore = 'Score (Normal mean, at μ̂): S(μ̂) = Σ(x_i - μ̂)/σ² = 0';
+        formulaFI = 'Fisher Information: I(μ̂) = n / σ²';
+      }
+      // Compose a richer explanation with general formulas and specific evaluations
+      let html = '';
+      if (currentModel === 'betaBinomial') {
+        html += `<p><strong>Score function S(p):</strong> S(p) = k/p − (n − k)/(1 − p)</p>`;
+        html += `<p>The score function is the derivative of the log‑likelihood with respect to the Bernoulli success probability p. Here k is the number of successes and n the number of trials.</p>`;
+        html += `<p><strong>Fisher Information I(p):</strong> I(p) = n/[p(1−p)]</p>`;
+      } else if (currentModel === 'poissonGamma') {
+        html += `<p><strong>Score function S(λ):</strong> S(λ) = Σx_i/λ − n</p>`;
+        html += `<p>The Poisson score is the derivative of the log‑likelihood with respect to the rate λ, where Σx_i is the sum of observed counts.</p>`;
+        html += `<p><strong>Fisher Information I(λ):</strong> I(λ) = n/λ</p>`;
+      } else if (currentModel === 'expGamma') {
+        html += `<p><strong>Score function S(λ):</strong> S(λ) = n/λ − Σx_i</p>`;
+        html += `<p>For exponential observations with rate λ, the score function compares the total number of observations n with the total observed time Σx_i.</p>`;
+        html += `<p><strong>Fisher Information I(λ):</strong> I(λ) = n/λ²</p>`;
+      } else if (currentModel === 'normalNormal') {
+        html += `<p><strong>Score function S(μ):</strong> S(μ) = Σ(x_i − μ)/σ²</p>`;
+        html += `<p>In the normal model with known variance σ², the score with respect to the mean μ sums deviations of the data from μ and scales by σ².</p>`;
+        html += `<p><strong>Fisher Information I(μ):</strong> I(μ) = n/σ²</p>`;
+      }
+      // Append numeric evaluations
+      html += `<p><strong>Score evaluated at the MLE:</strong> ${formatNumber(scoreVal)}</p>`;
+      html += `<p><strong>Fisher Information evaluated at the MLE:</strong> ${formatNumber(fiVal)}</p>`;
+      container.innerHTML = html;
+    }
+
+    // Draw parameter samples from posterior distribution
+    function drawParameterSamples(m) {
+      // guard against invalid sample size
+      if (!m || m <= 0) return;
+      try {
+        // Compute posterior parameters based on the current model and data
+        const n = unsortedData.length;
+        let postParams = {};
+        if (currentModel === 'betaBinomial') {
+          const a = parseFloat(document.getElementById('priorAlpha').value);
+          const b = parseFloat(document.getElementById('priorBeta').value);
+          const k = unsortedData.reduce((acc,val) => acc + val, 0);
+          postParams.a = a + k;
+          postParams.b = b + n - k;
+          for (let i = 0; i < m; i++) {
+            paramSamples.push(betaSample(postParams.a, postParams.b));
+          }
+        } else if (currentModel === 'poissonGamma') {
+          const a = parseFloat(document.getElementById('priorAlpha').value);
+          const b = parseFloat(document.getElementById('priorBeta').value);
+          const sumX = unsortedData.reduce((acc,val) => acc + val, 0);
+          postParams.a = a + sumX;
+          postParams.b = b + n;
+          for (let i = 0; i < m; i++) {
+            paramSamples.push(gammaSample(postParams.a, postParams.b));
+          }
+        } else if (currentModel === 'expGamma') {
+          const a = parseFloat(document.getElementById('priorAlpha').value);
+          const b = parseFloat(document.getElementById('priorBeta').value);
+          const sumX = unsortedData.reduce((acc,val) => acc + val, 0);
+          postParams.a = a + n;
+          postParams.b = b + sumX;
+          for (let i = 0; i < m; i++) {
+            paramSamples.push(gammaSample(postParams.a, postParams.b));
+          }
+        } else if (currentModel === 'normalNormal') {
+          const mu0 = parseFloat(document.getElementById('priorMu0').value);
+          const sigma0 = parseFloat(document.getElementById('priorSigma0').value);
+          const dataSigma = parseFloat(document.getElementById('dataSigma').value);
+          const tau0 = sigma0 * sigma0;
+          const tau = dataSigma * dataSigma;
+          const precisionPost = 1 / tau0 + n / tau;
+          const varPost = 1 / precisionPost;
+          const sumData = unsortedData.reduce((acc,val) => acc + val, 0);
+          const meanPost = varPost * (mu0 / tau0 + (n > 0 ? sumData / tau : 0));
+          const sdPost = Math.sqrt(varPost);
+          for (let i = 0; i < m; i++) {
+            paramSamples.push(normalSample(meanPost, sdPost));
+          }
+        }
+      } catch (err) {
+        // capture any error and report to user via paramArea
+        paramSamples.push(NaN);
+        const area = document.getElementById('paramArea');
+        area.innerText = area.innerText + '\nError generating samples: ' + err.message;
+      }
+      // update UI after generating samples
+      updateParamArea();
+    }
+
+    // Update parameter samples area and statistics
+    function updateParamArea() {
+      const area = document.getElementById('paramArea');
+      // Format values according to selected decimal precision
+      const decInput = document.getElementById('paramSampleDecimals');
+      let decs = parseInt(decInput?.value);
+      if (isNaN(decs) || decs < 0) decs = paramSampleDecimals;
+      paramSampleDecimals = decs;
+      const formatted = paramSamples.map(v => {
+        if (typeof v !== 'number' || isNaN(v)) return '';
+        return parseFloat(v.toFixed(decs)).toString();
+      });
+      area.innerText = formatted.join(' ');
+      document.getElementById('paramCount').innerText = 'm = ' + paramSamples.length;
+      updateParamStats();
+      plotParamSamples();
+    }
+
+    // Parse parameter area manual edits
+    function parseParamArea() {
+      const text = document.getElementById('paramArea').innerText;
+      const nums = text.split(/\s|,|;|\n|\r/)
+        .map(x => x.trim())
+        .filter(x => x.length > 0)
+        .map(x => Number(x))
+        .filter(x => !isNaN(x));
+      paramSamples = nums;
+      document.getElementById('paramCount').innerText = 'm = ' + paramSamples.length;
+      updateParamStats();
+      plotParamSamples();
+    }
+
+    // Clear parameter samples
+    function clearParamSamples() {
+      paramSamples = [];
+      updateParamArea();
+    }
+
+    // Update parameter statistics
+    function updateParamStats() {
+      const table = document.getElementById('paramStats');
+      const m = paramSamples.length;
+      if (m === 0) {
+        table.innerHTML = '';
+        return;
+      }
+      const sorted = paramSamples.slice().sort((a,b) => a - b);
+      const mean = sorted.reduce((a,b) => a + b, 0) / m;
+      const median = (m % 2 === 1) ? sorted[Math.floor(m/2)] : (sorted[m/2-1] + sorted[m/2]) / 2;
+      // Mode: approximate by binning (for continuous values mode is approximate). We'll bin into 10 bins. Change later to optimize look
+      let modeVal = sorted[0];
+      if (currentModel === 'betaBinomial' || currentModel === 'normalNormal' || currentModel === 'poissonGamma' || currentModel === 'expGamma') {
+        const bins = 10;
+        const minVal = sorted[0];
+        const maxVal = sorted[sorted.length - 1];
+        const binWidth = (maxVal - minVal) / bins;
+        const counts = Array(bins).fill(0);
+        for (const v of sorted) {
+          const idx = Math.min(bins - 1, Math.floor((v - minVal) / binWidth));
+          counts[idx]++;
+        }
+        let maxC = 0;
+        let modeIdx = 0;
+        for (let i = 0; i < bins; i++) {
+          if (counts[i] > maxC) {
+            maxC = counts[i];
+            modeIdx = i;
+          }
+        }
+        modeVal = minVal + (modeIdx + 0.5) * binWidth;
+      }
+      // Retrieve user preferences for additional means and decimal precision
+      const showMeans = document.getElementById('paramShowMeans')?.checked;
+      const decInput = document.getElementById('paramStatsDecimals');
+      let decs = parseInt(decInput?.value);
+      if (isNaN(decs) || decs < 0) decs = 4;
+      function fmt(val) {
+        if (typeof val !== 'number' || isNaN(val)) return '';
+        return parseFloat(val.toFixed(decs)).toString();
+      }
+      const minVal = sorted[0];
+      const maxVal = sorted[sorted.length - 1];
+      let rms, l1mean, gmean, hmean;
+      if (showMeans) {
+        const sumSq = sorted.reduce((acc, v) => acc + v * v, 0);
+        rms = Math.sqrt(sumSq / m);
+        const sumAbs = sorted.reduce((acc, v) => acc + Math.abs(v), 0);
+        l1mean = sumAbs / m;
+        if (sorted.every(v => v > 0)) {
+          const logSum = sorted.reduce((acc, v) => acc + Math.log(v), 0);
+          gmean = Math.exp(logSum / m);
+          const sumInv = sorted.reduce((acc, v) => acc + 1 / v, 0);
+          hmean = m / sumInv;
+        } else {
+          gmean = NaN;
+          hmean = NaN;
+        }
+      }
+      let html = '<tr><th>Statistic</th><th>Value</th></tr>';
+      html += `<tr><td>Mean</td><td>${fmt(mean)}</td></tr>`;
+      html += `<tr><td>Median</td><td>${fmt(median)}</td></tr>`;
+      html += `<tr><td>Mode (approx)</td><td>${fmt(modeVal)}</td></tr>`;
+      html += `<tr><td>Min</td><td>${fmt(minVal)}</td></tr>`;
+      html += `<tr><td>Max</td><td>${fmt(maxVal)}</td></tr>`;
+      if (showMeans) {
+        html += `<tr><td>Root mean square</td><td>${isNaN(rms) ? 'n/a' : fmt(rms)}</td></tr>`;
+        html += `<tr><td>Mean absolute value</td><td>${isNaN(l1mean) ? 'n/a' : fmt(l1mean)}</td></tr>`;
+        html += `<tr><td>Geometric mean</td><td>${isNaN(gmean) ? 'n/a' : fmt(gmean)}</td></tr>`;
+        html += `<tr><td>Harmonic mean</td><td>${isNaN(hmean) ? 'n/a' : fmt(hmean)}</td></tr>`;
+      }
+      table.innerHTML = html;
+    }
+
+    // Plot parameter samples histogram
+    function plotParamSamples() {
+      const canvas = document.getElementById('paramCanvas');
+      // Destroy previous
+      if (paramChart) paramChart.destroy();
+      const m = paramSamples.length;
+      if (m === 0) {
+        paramChart = new Chart(canvas, {
+          type: 'bar',
+          data: { labels: [], datasets: [] },
+          options: {}
+        });
+        return;
+      }
+      const sorted = paramSamples.slice().sort((a,b) => a - b);
+      // Determine number of bins: for small m show one bar per sample, up to 25 bars maximum
+      let bins;
+      if (m <= 25) {
+        bins = m;
+      } else {
+        bins = 25;
+      }
+      const minVal = sorted[0];
+      const maxVal = sorted[sorted.length - 1];
+      let binWidth = (maxVal - minVal) / bins;
+      if (binWidth === 0) binWidth = 1;
+      const binEdges = [];
+      const counts = Array(bins).fill(0);
+      for (let i = 0; i < bins; i++) {
+        binEdges.push(minVal + i * binWidth);
+      }
+      // Count values
+      for (const v of sorted) {
+        let idx = Math.floor((v - minVal) / binWidth);
+        if (idx >= bins) idx = bins - 1;
+        counts[idx]++;
+      }
+      // Labels at bin centers. Use dynamic decimal precision based on m to avoid overcrowding.
+      const labels = [];
+      let labelDecs;
+      if (m <= 10) {
+        labelDecs = 3;
+      } else if (m <= 25) {
+        labelDecs = 2;
+      } else {
+        labelDecs = 1;
+      }
+      for (let i = 0; i < bins; i++) {
+        const center = minVal + (i + 0.5) * binWidth;
+        labels.push(parseFloat(center.toFixed(labelDecs)).toString());
+      }
+      // Explicitly set canvas dimensions
+      canvas.height = 280;
+      canvas.width = canvas.parentElement ? canvas.parentElement.clientWidth : 800;
+      paramChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Parameter samples',
+            data: counts,
+            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: (currentModel === 'betaBinomial') ? 'p' : (currentModel === 'normalNormal' ? 'μ' : 'λ')
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Count'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
+    // Draw predictive samples via Monte Carlo
+    function drawPredictiveSamples(m) {
+      if (m <= 0) return;
+      try {
+        const n = unsortedData.length;
+        // Posterior parameters
+        let postParams = {};
+        if (currentModel === 'betaBinomial') {
+          const a = parseFloat(document.getElementById('priorAlpha').value);
+          const b = parseFloat(document.getElementById('priorBeta').value);
+          const k = unsortedData.reduce((acc,val) => acc + val, 0);
+          postParams.a = a + k;
+          postParams.b = b + n - k;
+          for (let i = 0; i < m; i++) {
+            const pSample = betaSample(postParams.a, postParams.b);
+            // Predict new Bernoulli outcome
+            const x = Math.random() < pSample ? 1 : 0;
+            predSamples.push(x);
+          }
+        } else if (currentModel === 'poissonGamma') {
+          const a = parseFloat(document.getElementById('priorAlpha').value);
+          const b = parseFloat(document.getElementById('priorBeta').value);
+          const sumX = unsortedData.reduce((acc,val) => acc + val, 0);
+          postParams.a = a + sumX;
+          postParams.b = b + n;
+          for (let i = 0; i < m; i++) {
+            const lambdaSample = gammaSample(postParams.a, postParams.b);
+            const x = poissonSample(lambdaSample);
+            predSamples.push(x);
+          }
+        } else if (currentModel === 'expGamma') {
+          const a = parseFloat(document.getElementById('priorAlpha').value);
+          const b = parseFloat(document.getElementById('priorBeta').value);
+          const sumX = unsortedData.reduce((acc,val) => acc + val, 0);
+          postParams.a = a + n;
+          postParams.b = b + sumX;
+          for (let i = 0; i < m; i++) {
+            const lambdaSample = gammaSample(postParams.a, postParams.b);
+            const x = exponentialSample(lambdaSample);
+            predSamples.push(x);
+          }
+        } else if (currentModel === 'normalNormal') {
+          const mu0 = parseFloat(document.getElementById('priorMu0').value);
+          const sigma0 = parseFloat(document.getElementById('priorSigma0').value);
+          const dataSigma = parseFloat(document.getElementById('dataSigma').value);
+          const tau0 = sigma0 * sigma0;
+          const tau = dataSigma * dataSigma;
+          const precisionPost = 1 / tau0 + (n > 0 ? n / tau : 0);
+          const varPost = 1 / precisionPost;
+          const sumData = n > 0 ? unsortedData.reduce((acc,val) => acc + val, 0) : 0;
+          const meanPost = varPost * (mu0 / tau0 + (n > 0 ? sumData / tau : 0));
+          const sdPost = Math.sqrt(varPost);
+          for (let i = 0; i < m; i++) {
+            const muSample = normalSample(meanPost, sdPost);
+            const x = normalSample(muSample, dataSigma);
+            predSamples.push(x);
+          }
+        }
+      } catch (err) {
+        // If any error occurs, append NaN and show an error message in the predictive area
+        predSamples.push(NaN);
+        const area = document.getElementById('predArea');
+        area.innerText = area.innerText + '\nError generating predictive samples: ' + err.message;
+      }
+      updatePredArea();
+    }
+
+    // Update predictive area and statistics
+    function updatePredArea() {
+      const area = document.getElementById('predArea');
+      const decInput = document.getElementById('predSampleDecimals');
+      let decs = parseInt(decInput?.value);
+      if (isNaN(decs) || decs < 0) decs = predSampleDecimals;
+      predSampleDecimals = decs;
+      const formatted = predSamples.map(v => {
+        if (typeof v !== 'number' || isNaN(v)) return '';
+        return parseFloat(v.toFixed(decs)).toString();
+      });
+      area.innerText = formatted.join(' ');
+      document.getElementById('predCount').innerText = 'm = ' + predSamples.length;
+      updatePredStats();
+      plotPredSamples();
+    }
+
+    // Parse predictive area manual edits
+    function parsePredArea() {
+      const text = document.getElementById('predArea').innerText;
+      const nums = text.split(/\s|,|;|\n|\r/)
+        .map(x => x.trim())
+        .filter(x => x.length > 0)
+        .map(x => Number(x))
+        .filter(x => !isNaN(x));
+      predSamples = nums;
+      document.getElementById('predCount').innerText = 'm = ' + predSamples.length;
+      updatePredStats();
+      plotPredSamples();
+    }
+
+    // Clear predictive samples
+    function clearPredSamples() {
+      predSamples = [];
+      updatePredArea();
+    }
+
+    // Update predictive statistics
+    function updatePredStats() {
+      const table = document.getElementById('predStats');
+      const m = predSamples.length;
+      if (m === 0) {
+        table.innerHTML = '';
+        return;
+      }
+      const sorted = predSamples.slice().sort((a,b) => a - b);
+      const mean = sorted.reduce((a,b) => a + b, 0) / m;
+      const median = (m % 2 === 1) ? sorted[Math.floor(m/2)] : (sorted[m/2-1] + sorted[m/2]) / 2;
+      // Mode (approx) by binning
+      let modeVal = sorted[0];
+      if (currentModel === 'betaBinomial') {
+        // predictive sample values are 0/1; mode is whichever count is higher
+        const count1 = sorted.filter(x => x === 1).length;
+        const count0 = m - count1;
+        modeVal = (count1 >= count0) ? 1 : 0;
+      } else {
+        const bins = Math.min(20, Math.max(5, Math.floor(Math.sqrt(m))));
+        const minVal = sorted[0];
+        const maxVal = sorted[sorted.length - 1];
+        let binWidth = (maxVal - minVal) / bins;
+        if (binWidth === 0) binWidth = 1;
+        const counts = Array(bins).fill(0);
+        for (const v of sorted) {
+          let idx = Math.floor((v - minVal) / binWidth);
+          if (idx >= bins) idx = bins - 1;
+          counts[idx]++;
+        }
+        let maxC = 0;
+        let modeIdx = 0;
+        for (let i = 0; i < bins; i++) {
+          if (counts[i] > maxC) {
+            maxC = counts[i];
+            modeIdx = i;
+          }
+        }
+        modeVal = minVal + (modeIdx + 0.5) * binWidth;
+      }
+      // Determine user preferences for additional means and decimal precision
+      const showMeans = document.getElementById('predShowMeans')?.checked;
+      const decInput = document.getElementById('predStatsDecimals');
+      let decs = parseInt(decInput?.value);
+      if (isNaN(decs) || decs < 0) decs = 4;
+      function fmt(val) {
+        if (typeof val !== 'number' || isNaN(val)) return '';
+        return parseFloat(val.toFixed(decs)).toString();
+      }
+      const minVal = sorted[0];
+      const maxVal = sorted[sorted.length - 1];
+      // Compute generalized means when requested
+      let rms, l1mean, gmean, hmean;
+      if (showMeans) {
+        const sumSq = sorted.reduce((acc, v) => acc + v * v, 0);
+        rms = Math.sqrt(sumSq / m);
+        const sumAbs = sorted.reduce((acc, v) => acc + Math.abs(v), 0);
+        l1mean = sumAbs / m;
+        if (sorted.every(v => v > 0)) {
+          const logSum = sorted.reduce((acc, v) => acc + Math.log(v), 0);
+          gmean = Math.exp(logSum / m);
+          const sumInv = sorted.reduce((acc, v) => acc + 1 / v, 0);
+          hmean = m / sumInv;
+        } else {
+          gmean = NaN;
+          hmean = NaN;
+        }
+      }
+      let html = '<tr><th>Statistic</th><th>Value</th></tr>';
+      html += `<tr><td>Mean</td><td>${fmt(mean)}</td></tr>`;
+      html += `<tr><td>Median</td><td>${fmt(median)}</td></tr>`;
+      html += `<tr><td>Mode (approx)</td><td>${fmt(modeVal)}</td></tr>`;
+      html += `<tr><td>Min</td><td>${fmt(minVal)}</td></tr>`;
+      html += `<tr><td>Max</td><td>${fmt(maxVal)}</td></tr>`;
+      if (showMeans) {
+        html += `<tr><td>Root mean square</td><td>${isNaN(rms) ? 'n/a' : fmt(rms)}</td></tr>`;
+        html += `<tr><td>Mean absolute value</td><td>${isNaN(l1mean) ? 'n/a' : fmt(l1mean)}</td></tr>`;
+        html += `<tr><td>Geometric mean</td><td>${isNaN(gmean) ? 'n/a' : fmt(gmean)}</td></tr>`;
+        html += `<tr><td>Harmonic mean</td><td>${isNaN(hmean) ? 'n/a' : fmt(hmean)}</td></tr>`;
+      }
+      table.innerHTML = html;
+    }
+
+    // Plot predictive samples histogram
+    function plotPredSamples() {
+      const canvas = document.getElementById('predCanvas');
+      // Destroy previous
+      if (predChart) predChart.destroy();
+      const m = predSamples.length;
+      if (m === 0) {
+        predChart = new Chart(canvas, {
+          type: 'bar',
+          data: { labels: [], datasets: [] },
+          options: {}
+        });
+        return;
+      }
+      const sorted = predSamples.slice().sort((a,b) => a - b);
+      let labels = [];
+      let counts = [];
+      if (currentModel === 'betaBinomial') {
+        // Discrete values 0 and 1 (for single Bernoulli trial)
+        const count0 = sorted.filter(x => x === 0).length;
+        const count1 = m - count0;
+        labels = ['0', '1'];
+        counts = [count0, count1];
+      } else if (currentModel === 'poissonGamma') {
+        // Negative Binomial predictive distribution yields integer counts; build histogram on integer values
+        const countsMap = {};
+        for (const val of sorted) {
+          const k = Math.round(val);
+          countsMap[k] = (countsMap[k] || 0) + 1;
+        }
+        labels = Object.keys(countsMap).sort((a,b) => Number(a) - Number(b));
+        counts = labels.map(l => countsMap[l]);
+      } else {
+        // Continuous predictive distribution: exponential-gamma (Lomax) or normal-normal
+        // Determine number of bins: one per sample when m<=25, otherwise cap at 25
+        let bins;
+        if (m <= 25) {
+          bins = m;
+        } else {
+          bins = 25;
+        }
+        const minVal = sorted[0];
+        const maxVal = sorted[sorted.length - 1];
+        let binWidth = (maxVal - minVal) / bins;
+        if (binWidth === 0) binWidth = 1;
+        counts = Array(bins).fill(0);
+        for (const v of sorted) {
+          let idx = Math.floor((v - minVal) / binWidth);
+          if (idx >= bins) idx = bins - 1;
+          counts[idx]++;
+        }
+        // Determine label decimals based on sample size
+        let labelDecs;
+        if (m <= 10) {
+          labelDecs = 3;
+        } else if (m <= 25) {
+          labelDecs = 2;
+        } else {
+          labelDecs = 1;
+        }
+        for (let i = 0; i < bins; i++) {
+          const center = minVal + (i + 0.5) * binWidth;
+          labels.push(parseFloat(center.toFixed(labelDecs)).toString());
+        }
+      }
+      // Explicitly set canvas dimensions
+      canvas.height = 280;
+      canvas.width = canvas.parentElement ? canvas.parentElement.clientWidth : 800;
+      predChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Predictive samples',
+            data: counts,
+            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: (currentModel === 'betaBinomial') ? 'x* (0/1)' : 'x*'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Count'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
+    // -----------------------------------------------------------------------------
+    /* New helper functions to support dynamic prior/likelihood visualisation and
+       enhanced posterior interactivity. These functions are defined after all
+       existing logic to avoid interfering with the original behaviour. */
+
+    // Attach listeners to prior parameter inputs so that changes immediately
+    // propagate through the posterior and prior/likelihood plots.
+    function attachPriorParamListeners() {
+      const priorContainer = document.getElementById('priorInputs');
+      if (!priorContainer) return;
+      const inputs = priorContainer.querySelectorAll('input');
+      inputs.forEach(inp => {
+        inp.addEventListener('input', function() {
+          updatePosteriorPlot();
+          updateLikelihoodPlot();
+        });
+      });
+      // Handle the dataSigma input separately if present
+      const dataSigmaInput = document.getElementById('dataSigma');
+      if (dataSigmaInput) {
+        dataSigmaInput.addEventListener('input', function() {
+          updatePosteriorPlot();
+          updateLikelihoodPlot();
+        });
+      }
+    }
+
+    // Populate distribution‑specific parameter inputs used for likelihood visualisation
+    function updateModelParams() {
+      const container = document.getElementById('modelParamInputs');
+      if (!container) return;
+      let html = '';
+      if (currentModel === 'betaBinomial') {
+        html = `
+          <label>n (trials): <input type="number" id="model_n" min="0" step="1" value="10" style="width:70px;"></label>
+          <label>k (successes): <input type="number" id="model_k" min="0" step="1" value="5" style="width:70px;"></label>
+        `;
+      } else if (currentModel === 'poissonGamma') {
+        html = `
+          <label>λ (rate): <input type="number" id="model_lambda" min="0" step="0.1" value="3" style="width:70px;"></label>
+          <label>k (count): <input type="number" id="model_k" min="0" step="1" value="5" style="width:70px;"></label>
+          <label>t (time): <input type="number" id="model_t" min="0.1" step="0.1" value="1" style="width:70px;"></label>
+        `;
+      } else if (currentModel === 'expGamma') {
+        // For exponential data with gamma prior, allow the user to control the number of observations
+        // and the total sum of observed times. These parameters influence the likelihood shape
+        // λ^n * exp(−λ * sumX). Default to the current data summary if available.
+        let defaultN = (typeof unsortedData !== 'undefined' && Array.isArray(unsortedData)) ? unsortedData.length : 0;
+        let defaultSum = 0;
+        if (defaultN > 0) {
+          defaultSum = unsortedData.reduce((acc, v) => acc + v, 0);
+        }
+        html = `
+          <label>n (count): <input type="number" id="model_n" min="0" step="1" value="${defaultN}" style="width:70px;"></label>
+          <label>Σx (sum): <input type="number" id="model_sum" min="0" step="0.1" value="${defaultSum.toFixed(2)}" style="width:70px;"></label>
+        `;
+      } else if (currentModel === 'normalNormal') {
+        // For the normal data with normal prior on the mean, allow the user to specify the
+        // sample size and sample mean used to construct the likelihood. Default to the
+        // current data summary if available.
+        let defaultN = (typeof unsortedData !== 'undefined' && Array.isArray(unsortedData)) ? unsortedData.length : 0;
+        let defaultMean = 0;
+        if (defaultN > 0) {
+          defaultMean = unsortedData.reduce((acc, v) => acc + v, 0) / defaultN;
+        }
+        html = `
+          <label>n (observations): <input type="number" id="model_n" min="0" step="1" value="${defaultN}" style="width:70px;"></label>
+          <label>x̄ (mean): <input type="number" id="model_mean" step="0.1" value="${defaultMean.toFixed(2)}" style="width:70px;"></label>
+        `;
+      } else {
+        html = '';
+      }
+      container.innerHTML = html;
+      // Attach input listeners to trigger likelihood redraw when parameters change
+      const modelInputs = container.querySelectorAll('input');
+      modelInputs.forEach(inp => {
+        inp.addEventListener('input', function() {
+          updateLikelihoodPlot();
+        });
+      });
+    }
+
+    // Set up the controls for CDF exploration of the prior distribution. 
+    // This function runs only once on page load. Subsequent calls will do nothing.
+    function updatePriorLikControls() {
+      const ctlContainer = document.getElementById('priorLikControls');
+      if (!ctlContainer) return;
+      // prevent reinitialising if already set up
+      if (ctlContainer.dataset.initialised) return;
+      ctlContainer.dataset.initialised = 'true';
+      ctlContainer.innerHTML = `
+        <label>Probability: <input type="number" id="priorCdfValue" min="0" max="1" step="0.01" value="0.5" style="width:60px;"></label>
+        <input type="range" id="priorCdfSlider" min="0" max="1" step="0.01" value="0.5" style="width:150px;">
+        <label>Tail:
+          <select id="priorCdfTail">
+            <option value="left" selected>Left</option>
+            <option value="right">Right</option>
+          </select>
+        </label>
+      `;
+      const numInput = document.getElementById('priorCdfValue');
+      const slider = document.getElementById('priorCdfSlider');
+      const tailSel = document.getElementById('priorCdfTail');
+      // Synchronise number box and slider
+      numInput.addEventListener('input', function() {
+        let v = parseFloat(numInput.value);
+        if (isNaN(v)) v = 0;
+        if (v < 0) v = 0;
+        if (v > 1) v = 1;
+        numInput.value = v;
+        slider.value = v;
+        updateLikelihoodPlot();
+      });
+      slider.addEventListener('input', function() {
+        numInput.value = slider.value;
+        updateLikelihoodPlot();
+      });
+      tailSel.addEventListener('change', function() {
+        updateLikelihoodPlot();
+      });
+    }
+
+    /* Helper function to compute the prior PDF and unnormalised likelihood for the
+       current model and plot them along with a shaded CDF region. This visualises
+       how the prior and data (via k/n or k/t) influence inference before any
+       sampling takes place. */
+    function updateLikelihoodPlot() {
+      const canvas = document.getElementById('priorLikCanvas');
+      const info = document.getElementById('priorLikInfo');
+      if (!canvas || !info) return;
+      // Read prior parameters
+      let a, b;
+      let mu0, sigma0, sigmaData;
+      if (currentModel === 'betaBinomial') {
+        a = parseFloat(document.getElementById('priorAlpha')?.value);
+        b = parseFloat(document.getElementById('priorBeta')?.value);
+      } else if (currentModel === 'poissonGamma' || currentModel === 'expGamma') {
+        a = parseFloat(document.getElementById('priorAlpha')?.value);
+        b = parseFloat(document.getElementById('priorBeta')?.value);
+      } else if (currentModel === 'normalNormal') {
+        mu0 = parseFloat(document.getElementById('priorMu0')?.value);
+        sigma0 = parseFloat(document.getElementById('priorSigma0')?.value);
+        sigmaData = parseFloat(document.getElementById('dataSigma')?.value);
+      }
+      // Read model parameters for likelihood
+      const model_n = parseInt(document.getElementById('model_n')?.value);
+      const model_k = parseInt(document.getElementById('model_k')?.value);
+      const model_lambda = parseFloat(document.getElementById('model_lambda')?.value);
+      const model_t = parseFloat(document.getElementById('model_t')?.value);
+      const probValInput = document.getElementById('priorCdfValue');
+      const probVal = probValInput ? parseFloat(probValInput.value) : 0.5;
+      const tailSel = document.getElementById('priorCdfTail');
+      const tail = tailSel ? tailSel.value : 'left';
+      let xs = [];
+      let priorYs = [];
+      let likUnnorm = [];
+      let xMin = 0;
+      let xMax = 1;
+      let steps = 200;
+      // Guard: if parameters are missing or invalid, skip plotting
+      if ((currentModel === 'betaBinomial' || currentModel === 'poissonGamma' || currentModel === 'expGamma') && (isNaN(a) || isNaN(b))) {
+        return;
+      }
+      if (currentModel === 'betaBinomial') {
+        xMin = 0;
+        xMax = 1;
+        // ensure k and n are valid
+        const n = isNaN(model_n) ? 0 : model_n;
+        const k = isNaN(model_k) ? 0 : Math.min(model_k, n);
+        let maxLik = 0;
+        for (let i = 0; i <= steps; i++) {
+          const x = xMin + (xMax - xMin) * i / steps;
+          xs.push(x);
+          const priorVal = betaPdf(x, a, b);
+          priorYs.push(priorVal);
+          // likelihood: p^k (1-p)^(n-k)
+          let likVal = 0;
+          if (n > 0) {
+            likVal = Math.pow(x, k) * Math.pow(1 - x, n - k);
+          }
+          likUnnorm.push(likVal);
+          if (likVal > maxLik) maxLik = likVal;
+        }
+        // scale likelihood to [0,1] for display
+        for (let i = 0; i < likUnnorm.length; i++) {
+          likUnnorm[i] = (maxLik > 0) ? likUnnorm[i] / maxLik : 0;
+        }
+      } else if (currentModel === 'poissonGamma') {
+        // Domain: choose range based on prior mean and model parameter λ
+        const mean = a / b;
+        const sd = Math.sqrt(a) / b;
+        const lambdaBase = isNaN(model_lambda) ? mean : model_lambda;
+        const tVal = (isNaN(model_t) || model_t <= 0) ? 1 : model_t;
+        xMin = 0;
+        // Choose xMax as a multiple of expected rate
+        xMax = Math.max(mean + 4 * sd, lambdaBase * 3 + 5);
+        if (xMax <= 0) xMax = 5;
+        const k = isNaN(model_k) ? 0 : model_k;
+        let maxLik = 0;
+        for (let i = 0; i <= steps; i++) {
+          const x = xMin + (xMax - xMin) * i / steps;
+          xs.push(x);
+          const priorVal = gammaPdf(x, a, b);
+          priorYs.push(priorVal);
+          // likelihood: λ^k exp(-λ t)
+          let likVal = 0;
+          if (k >= 0) {
+            likVal = Math.pow(x, k) * Math.exp(-x * tVal);
+          }
+          likUnnorm.push(likVal);
+          if (likVal > maxLik) maxLik = likVal;
+        }
+        for (let i = 0; i < likUnnorm.length; i++) {
+          likUnnorm[i] = (maxLik > 0) ? likUnnorm[i] / maxLik : 0;
+        }
+      } else if (currentModel === 'expGamma') {
+        // For exponential data with a gamma prior on the rate, allow the user to specify the effective sample size n and total time sumX via model inputs.  
+        // If these are not provided (or invalid), fall back to the actual data summary.
+        let dataN = unsortedData.length;
+        let dataSum = 0;
+        if (dataN > 0) {
+          dataSum = unsortedData.reduce((acc, val) => acc + val, 0);
+        }
+        const nInput = parseInt(document.getElementById('model_n')?.value);
+        const sumInput = parseFloat(document.getElementById('model_sum')?.value);
+        const n = isNaN(nInput) ? dataN : nInput;
+        const sumX = isNaN(sumInput) ? dataSum : sumInput;
+        // Domain based on prior; choose an upper bound based on prior mean and variability
+        const mean = a / b;
+        const sd = Math.sqrt(a) / b;
+        xMin = 0;
+        xMax = Math.max(mean + 4 * sd, 5);
+        let maxLik = 0;
+        for (let i = 0; i <= steps; i++) {
+          const x = xMin + (xMax - xMin) * i / steps;
+          xs.push(x);
+          const priorVal = gammaPdf(x, a, b);
+          priorYs.push(priorVal);
+          // likelihood: λ^n * exp(−λ * sumX)
+          let likVal = 0;
+          if (n > 0) {
+            likVal = Math.pow(x, n) * Math.exp(-x * sumX);
+          }
+          likUnnorm.push(likVal);
+          if (likVal > maxLik) maxLik = likVal;
+        }
+        // Scale likelihood to [0,1]
+        for (let i = 0; i < likUnnorm.length; i++) {
+          likUnnorm[i] = (maxLik > 0) ? likUnnorm[i] / maxLik : 0;
+        }
+      } else if (currentModel === 'normalNormal') {
+        /* For the normal model with unknown mean and known variance, allow the user
+           to provide an effective sample size and sample mean to construct the
+           unnormalised likelihood.  The likelihood is proportional to
+           exp(−0.5 * (n/σ²) * (μ − x̄)²).
+           Obtain data summary for defaults */
+        let dataN = unsortedData.length;
+        let dataMean = 0;
+        if (dataN > 0) {
+          dataMean = unsortedData.reduce((acc, v) => acc + v, 0) / dataN;
+        }
+        const nInput = parseInt(document.getElementById('model_n')?.value);
+        const meanInput = parseFloat(document.getElementById('model_mean')?.value);
+        const nEff = isNaN(nInput) ? dataN : nInput;
+        const xBar = isNaN(meanInput) ? (dataN > 0 ? dataMean : mu0) : meanInput;
+        // Use sigmaData for the likelihood width; if not provided fall back to sigma0
+        const sdData = (typeof sigmaData !== 'undefined' && !isNaN(sigmaData)) ? sigmaData : sigma0;
+        const variance = sdData * sdData;
+        // Domain based on prior
+        const sd0 = sigma0;
+        const mean0 = mu0;
+        xMin = mean0 - 4 * sd0;
+        xMax = mean0 + 4 * sd0;
+        let maxLik = 0;
+        for (let i = 0; i <= steps; i++) {
+          const x = xMin + (xMax - xMin) * i / steps;
+          xs.push(x);
+          const priorVal = normalPdf(x, mean0, sd0);
+          priorYs.push(priorVal);
+          // unnormalised likelihood
+          let likVal = 0;
+          if (nEff > 0) {
+            const diff = x - xBar;
+            likVal = Math.exp(-0.5 * nEff * (diff * diff) / variance);
+          }
+          likUnnorm.push(likVal);
+          if (likVal > maxLik) maxLik = likVal;
+        }
+        // scale likelihood
+        for (let i = 0; i < likUnnorm.length; i++) {
+          likUnnorm[i] = (maxLik > 0) ? likUnnorm[i] / maxLik : 0;
+        }
+      } else {
+        // Unknown model, nothing to draw
+        return;
+      }
+      // Compute CDF of prior using trapezoidal rule
+      const cdf = [];
+      let totalArea = 0;
+      // First compute total area for normalisation
+      for (let i = 1; i < xs.length; i++) {
+        const dx = xs[i] - xs[i - 1];
+        totalArea += (priorYs[i] + priorYs[i - 1]) * dx / 2;
+      }
+      let accum = 0;
+      cdf.push(0);
+      for (let i = 1; i < xs.length; i++) {
+        const dx = xs[i] - xs[i - 1];
+        const area = (priorYs[i] + priorYs[i - 1]) * dx / 2;
+        accum += area;
+        cdf.push(Math.min(1, accum / (totalArea > 0 ? totalArea : 1)));
+      }
+      // Determine the x threshold for the specified probability
+      let xThresh = xs[xs.length - 1];
+      for (let i = 0; i < cdf.length; i++) {
+        if (cdf[i] >= probVal) {
+          xThresh = xs[i];
+          break;
+        }
+      }
+      // Build shading data for the chosen tail direction
+      const shading = [];
+      for (let i = 0; i < xs.length; i++) {
+        if (tail === 'left') {
+          shading.push(xs[i] <= xThresh ? priorYs[i] : 0);
+        } else {
+          shading.push(xs[i] >= xThresh ? priorYs[i] : 0);
+        }
+      }
+      // Prepare datasets for Chart.js. 
+      // Likelihood line may be absent for models that lack an explicit likelihood (like normalNormal).
+      const datasets = [];
+      datasets.push({
+        label: 'Prior PDF',
+        data: priorYs,
+        borderColor: 'rgba(54,162,235,1)',
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false
+      });
+      // Only include likelihood when it contains non‑zero values
+      const includeLik = likUnnorm.some(v => v > 0);
+      if (includeLik) {
+        datasets.push({
+          label: 'Likelihood (scaled)',
+          data: likUnnorm,
+          borderColor: 'rgba(255,99,132,1)',
+          borderWidth: 2,
+          borderDash: [5,5],
+          pointRadius: 0,
+          fill: false
+        });
+      }
+      datasets.push({
+        label: 'Shaded CDF area',
+        data: shading,
+        backgroundColor: 'rgba(100,200,100,0.2)',
+        borderColor: 'rgba(100,200,100,0.5)',
+        borderWidth: 1,
+        pointRadius: 0,
+        fill: true
+      });
+      // Destroy previous chart
+      if (priorLikChart) {
+        priorLikChart.destroy();
+      }
+      // Explicitly set canvas dimensions to prevent growth
+      canvas.height = 280;
+      canvas.width = canvas.parentElement ? canvas.parentElement.clientWidth : 800;
+      priorLikChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: xs,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: 'linear',
+              title: {
+                display: true,
+                text: (currentModel === 'betaBinomial') ? 'p' : ((currentModel === 'normalNormal') ? 'μ' : 'λ'),
+                font: { size: 14 }
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Density'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: false
+            }
+          }
+        }
+      });
+      // Update info message
+      const pct = (probVal * 100).toFixed(1);
+      const tailWord = tail === 'left' ? 'left' : 'right';
+      info.innerText = `${pct}% of the prior distribution's mass lies in the ${tailWord} tail up to x = ${formatNumber(xThresh)}.`;
+    }
+
+    /* Update the posterior hover information, shading and vertical line. This
+       function interpolates the density and computes distances to summary stats
+       when the user hovers over the posterior plot. */
+
+    function updatePosteriorHover(xVal) {
+      if (!posteriorChart) return;
+      // Store the current hover position so we can recompute shading if controls change
+      posteriorHoverX = xVal;
+      // Find nearest index in the xs array
+      let idx = posteriorXs.length - 1;
+      for (let i = 0; i < posteriorXs.length; i++) {
+        if (posteriorXs[i] >= xVal) {
+          idx = i;
+          break;
+        }
+      }
+      // Interpolate density at xVal
+      let pdfVal;
+      if (idx === 0) {
+        pdfVal = posteriorYs[0];
+      } else {
+        const x0 = posteriorXs[idx - 1];
+        const x1 = posteriorXs[idx];
+        const y0 = posteriorYs[idx - 1];
+        const y1 = posteriorYs[idx];
+        const t = (xVal - x0) / (x1 - x0);
+        pdfVal = y0 + t * (y1 - y0);
+      }
+      // Compute distances from mean, median and mode
+      const dMean = Math.abs(xVal - (posteriorStatsObj.mean ?? 0));
+      const dMed = Math.abs(xVal - (posteriorStatsObj.median ?? 0));
+      const dMode = Math.abs(xVal - (posteriorStatsObj.mode ?? 0));
+      // Compute cumulative probability up to xVal
+      // Use previously computed CDF array; find index
+      let cdfLeft;
+      if (idx === 0) {
+        cdfLeft = 0;
+      } else {
+        cdfLeft = posteriorCDF[idx];
+      }
+      // The shading dataset for the posterior plot is controlled by the CDF controls rather than by the pointer.
+      // Only update the hover line to reflect the current x position. Shading remains unchanged.
+      const tailSel = document.getElementById('posteriorCdfTail')?.value || 'left';
+      const lineDataset = posteriorChart.data.datasets[2];
+      lineDataset.data = [ { x: xVal, y: 0 }, { x: xVal, y: pdfVal } ];
+      // Update chart without animation
+      posteriorChart.update('none');
+      // Update info display
+      const infoDiv = document.getElementById('posteriorInfo');
+      if (infoDiv) {
+        const showCDF = document.getElementById('posteriorShowCDF')?.checked;
+        const cdfDisplay = tailSel === 'left' ? cdfLeft : (1 - cdfLeft);
+        infoDiv.innerHTML = `x = ${formatNumber(xVal)}<br>` +
+          `PDF(x) = ${formatNumber(pdfVal)}<br>` +
+          `|x − mean| = ${formatNumber(dMean)}, |x − median| = ${formatNumber(dMed)}, |x − mode| = ${formatNumber(dMode)}<br>` +
+          (showCDF ? `${tailSel === 'left' ? 'P(X ≤ x)' : 'P(X ≥ x)'} = ${formatNumber(cdfDisplay)}` : '');
+      }
+    }
+
+    /* Update posterior CDF shading based on the specified probability and tail direction.
+       This function reads the posteriorCdfValue and posteriorCdfTail controls and updates
+       the shading dataset accordingly.  If the CDF toggle is off, the shading is
+       cleared.  The slider and numeric box are kept in sync. */
+    function updatePosteriorCdfShading() {
+      if (!posteriorChart) return;
+      const showCDF = document.getElementById('posteriorShowCDF')?.checked;
+      const valInput = document.getElementById('posteriorCdfValue');
+      const slider = document.getElementById('posteriorCdfSlider');
+      const tailSel = document.getElementById('posteriorCdfTail');
+      let prob = parseFloat(valInput?.value);
+      if (isNaN(prob)) prob = 0;
+      if (prob < 0) prob = 0;
+      if (prob > 1) prob = 1;
+      if (valInput) valInput.value = prob;
+      if (slider) slider.value = prob;
+      // Access shading dataset
+      const shadingDataset = posteriorChart.data.datasets[1];
+      if (!showCDF) {
+        // remove shading
+        if (shadingDataset) {
+          shadingDataset.data = posteriorYs.map(() => 0);
+        }
+        posteriorChart.update('none');
+        return;
+      }
+      // Determine threshold x such that the cumulative probability in the chosen tail matches the specified probability.  
+      // For the left tail we find x where CDF(x) >= prob. For the right tail we find x where 1-CDF(x) <= prob.
+      const tail = tailSel ? tailSel.value : 'left';
+      let xThresh = posteriorXs[posteriorXs.length - 1];
+      if (tail === 'left') {
+        for (let i = 0; i < posteriorCDF.length; i++) {
+          if (posteriorCDF[i] >= prob) {
+            xThresh = posteriorXs[i];
+            break;
+          }
+        }
+      } else {
+        for (let i = 0; i < posteriorCDF.length; i++) {
+          if (1 - posteriorCDF[i] <= prob) {
+            xThresh = posteriorXs[i];
+            break;
+          }
+        }
+      }
+      // Build new shading values
+      const newShading = [];
+      for (let i = 0; i < posteriorXs.length; i++) {
+        if (tail === 'left') {
+          newShading.push(posteriorXs[i] <= xThresh ? posteriorYs[i] : 0);
+        } else {
+          newShading.push(posteriorXs[i] >= xThresh ? posteriorYs[i] : 0);
+        }
+      }
+      if (shadingDataset) {
+        shadingDataset.data = newShading;
+      }
+      posteriorChart.update('none');
+    }
+
+  </script>
+</body>
+</html>

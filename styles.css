@@ -1,0 +1,878 @@
+:root {
+  --text: #1f2937;
+  --primary: #66CBE3;
+  --primarymuted: #175A69;
+  --secondary: #286784;
+  --secondarymuted: #4D7185;
+  --thirdblue: #143963;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --bg: #ffffff;
+  --bg-elev: #ffffffF2;
+  --shadow: 0 4px 20px rgba(0, 0, 0, .06);
+  --ring: 0 0 0 3px color-mix(in oklab, var(--primary) 35%, transparent);
+  --radius: 16px;
+  --container: 1120px;
+  --glassOpacity: .06;
+  --glassShift: 0px;
+  --btnScale: 1;
+  --shimmerX: 0%;
+  --toneVolume: .25;
+}
+
+/*  Global polish & accessibility  */
+:where(a, button, [role="button"], summary):focus-visible {
+  outline: var(--ring);
+  outline-offset: 2px;
+}
+
+/* Make the glass background a touch subtler on large canvases */
+@media (min-width: 900px) {
+  .page-bg { opacity: calc(var(--glassOpacity) * 0.85); }
+}
+
+html[data-theme="dark"] {
+  --bg: #0b1220;
+  --bg-elev: #0b1220F2;
+  --text: #e5e7eb;
+  --border: #1f2937;
+  --shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  --glassOpacity: .08;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] {
+    --bg: #0b1220;
+    --bg-elev: #0b1220F2;
+    --text: #e5e7eb;
+    --border: #1f2937;
+    --shadow: 0 8px 24px rgba(0, 0, 0, .35);
+    --glassOpacity: .08;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Helvetica Neue", Helvetica, Arial, -apple-system, system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--secondary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.container {
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+
+/* Glassy background that responds to scroll */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(1200px 800px at calc(50% + 200px) calc(0% + var(--glassShift)), color-mix(in oklab, var(--primary) 12%, transparent), transparent 70%),
+    radial-gradient(900px 600px at calc(10% + 0px) calc(40% + var(--glassShift)), color-mix(in oklab, var(--secondary) 10%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in oklab, var(--primary) 4%, transparent), transparent 30%, color-mix(in oklab, var(--secondary) 3%, transparent) 60%, transparent);
+  opacity: var(--glassOpacity);
+  filter: saturate(120%) contrast(105%);
+  transition: opacity .6s ease;
+}
+
+header.site {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: saturate(140%) blur(8px);
+  background: color-mix(in oklab, var(--bg-elev) 92%, transparent);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 0;
+  --header-pad-b: 10px;
+  padding-block: var(--header-pad-b);
+}
+
+.header-left,
+.header-mid {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 0 1rem;
+}
+.header-left {
+  align-self: stretch;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 1rem;
+  gap: 22px;
+}
+
+details.contact {
+  position: relative;
+  align-self: stretch;
+}
+
+details.contact > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  gap: 10px;
+  padding: 6px 10px; /* slightly larger target */
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  box-shadow: none;
+  position: relative;
+  transition: color .2s ease;
+  /* Custom font hoices for this one */
+  font-family: "Roboto", system-ui, -apple-system, Segoe UI, Helvetica, Arial, "Atkinson Hyperlegible Next", sans-serif;
+  font-weight: 400;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+details.contact > summary::before {
+  content: none;
+}
+
+/* Minimal Apple-like hover panel */
+details.contact > summary::after {
+  content: "";
+  position: absolute;
+  /* extend from top of the sticky header to its bottom around the summary */
+  /* extend from top of the sticky header to its bottom around the summary */
+  top: calc(-1 * var(--header-pad-b)); 
+  bottom: calc(-1 * var(--header-pad-b)); 
+  left: calc(-20px - 1rem); 
+  right: -12px;
+  border-radius: 0px;
+  /* layered glass look with subtle reflection stripe */
+  background:
+    /* thin reflective stripe near the top */
+    linear-gradient(180deg, rgba(255,255,255,.28) 0%, rgba(255,255,255,.10) 38%, rgba(255,255,255,0) 42%),
+    /* soft overhead glow to suggest a light source */
+    radial-gradient(120% 180% at 50% -40%, rgba(255,255,255,.22), rgba(255,255,255,0) 60%),
+    /* base tint that matches the page */
+    color-mix(in oklab, var(--bg) 96%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
+  box-shadow: 0 8px 24px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.25);
+  backdrop-filter: saturate(140%) blur(8px);
+  opacity: 0;                 /* hidden by default */
+  transition: opacity .18s ease, background-color .18s ease;
+  z-index: -1;                /* sit behind the text */
+}
+
+details.contact > summary:hover::after,
+details.contact > summary:focus-visible::after {
+  opacity: 1;
+  background:
+    /* A softer, wider top highlight */
+    linear-gradient(180deg, rgba(255,255,255,.12) 0%, rgba(255,255,255,0) 50%),
+    /* A more subtle radial glow from the top */
+    radial-gradient(150% 150% at 50% 0%, rgba(193, 183, 183, 0.1), rgba(255,255,255,0) 40%),
+    /* Base color, slightly more transparent */
+    color-mix(in oklab, var(--bg) 90%, transparent);
+  /* Add an inner shadow to create a crisp, lit edge and a soft drop shadow 
+  box-shadow: 0 8px 32px rgba(0,0,0,.1), inset 0 1px 0 rgba(255,255,255,.2);
+
+  */
+}
+
+details.contact > summary:hover {
+  transform: none;
+  box-shadow: none;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+details.contact[open] > summary {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.contact-panel {
+  /* Configurable parameters for the panel */
+  /* Sets the minimum width of the panel. */
+  --panel-min-width: 280px;
+  /* Sets a fixed width. 'auto' makes it content-sized. Always keep it to auto or u'll break the hell out of it. */
+  --panel-width: auto;
+  /* Sets the maximum width of the panel. */
+  --panel-max-width: 320px;
+
+  /* Positioning */
+  /* Controls the vertical distance from the button. Negative values move it up. */
+  --panel-vertical-offset: 10px;
+  /* Controls the horizontal position. Negative values move it left. */
+  --panel-horizontal-offset: -6px;
+
+  /* Appearance */
+  /* Opacity of the panel background. 1.0 is fully opaque. */
+  --panel-bg-opacity: 1.0;
+  
+  position: absolute;
+  /* Use the variables to control the final position */
+  top: calc(100% + var(--panel-vertical-offset));
+  left: var(--panel-horizontal-offset);
+  
+  /* Use the variables to control the final dimensions */
+  width: var(--panel-width);
+  min-width: var(--panel-min-width);
+  max-width: var(--panel-max-width);
+
+  border: 1px solid var(--border);
+  border-top: none;
+  background: color-mix(in oklab, var(--bg-elev) calc(var(--panel-bg-opacity) * 100%), transparent);
+  padding: 12px;
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+  box-shadow: var(--shadow);
+  animation: fadeIn .2s ease-out;
+}
+
+/* Optional: Add a keyframe animation for a smoother appearance. Remove if u don't like */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.contact-panel a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.contact-panel a:hover {
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  text-decoration: none;
+}
+
+.toggle {
+  --h: 18.6px;
+  --w: 36px;
+  position: relative;
+  width: var(--w);
+  height: var(--h);
+  border-radius: 20px;
+  border: 5px solid #c9c9c9;
+  background: color-mix(in oklab, var(--bg) 88%, black 12%);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .12);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.toggle .knob {
+  --s: 16px;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff, #d6d6d6);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .28);
+  transform: translateX(3px);
+  transition: transform .2s ease;
+}
+
+.toggle.dark .knob {
+  transform: translateX(calc(var(--w) - var(--s) - 3px));
+  background: linear-gradient(180deg, #e6eef4, #b7c8d4);
+}
+
+.toggle:focus-visible { outline: var(--ring); outline-offset: 2px; }
+
+.profile-photo {
+  width: 234px;         /* Sets the width of the circle */
+  height: 318.2px;        /* Sets the height of the circle */
+  object-position: 50% 40%;
+  object-fit: cover;
+
+  
+  /* border-radius: 100%; */   /* Set to 50% for a circle ( I think) */
+  
+  /* Deprecated for now */
+  /* This is the magic part for non-square images: 
+  Ensures the image fills the circle without being distorted */
+
+  /* A little polish to match site's design */
+  margin-bottom: 8px; /* Adds some space below the photo */
+  margin-top: 0px;
+  border: 3px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  line-height: 1.2;
+  font-size: .95rem;
+  opacity: 1;
+  margin-top: 1px;
+}
+
+.title h1 {
+  font-weight: 800;
+  letter-spacing: .2px;
+  margin: 0;
+  font-size: clamp(22px, 2.3vw, 36px);
+}
+
+.title h1 a {
+  /* Make the color slightly lighter than the main text color. This works in both light and dark mode! */
+  color: color-mix(in oklab, var(--text) 75%, transparent);
+  text-decoration: none; /* Remove the default link underline */
+  transition: color 0.2s ease; /* Add a smooth transition for the hover effect */
+}
+
+/* Style for when the user hovers over the link */
+.title h1 a:hover {
+  /* On hover, make it the full, solid text color */
+  color: var(--text);
+}
+
+.subtitle {
+  font-size: 1rem;
+  opacity: .8;
+  margin-top: 0.5rem;
+}
+
+.settings {
+  position: relative;
+}
+
+.settings-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--bg) 90%, white 10%), color-mix(in oklab, var(--bg) 96%, black 4%));
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  font-size: 1.05rem; 
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+.settings-btn:hover {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .08);
+  filter: brightness(0.8);
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 240px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--bg) 92%, transparent);
+  box-shadow: var(--shadow);
+  padding: 6px;
+  display: none;
+}
+
+.menu.open {
+  display: block;
+}
+
+.menu .group {
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+  margin-top: 6px;
+}
+
+.menu a,
+.menu button.menuitem {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: none;
+}
+
+.menu a:hover,
+.menu button.menuitem:hover {
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  text-decoration: none;
+}
+
+main {
+  display: block;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  
+
+}
+
+section {
+  padding: 40px 0;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+/* We will create a NEW rule to target the home section specifically */
+#home {
+  padding-top: 20px; /* Reduce the top padding just for the home section */
+}
+
+section:last-of-type {
+  border-bottom: none;
+}
+
+#home {
+  display: flex;
+  flex-direction: column; /* Stack the items vertically */
+  align-items: center;   /* Center the items horizontally */
+}
+
+.home-text {
+  max-width: 60ch; /* Limit the line length for readability */
+  text-align: center; /* Match the alignment of the heading */
+  color: #06214f;
+  margin-top: 5px;
+}
+
+
+h2 {
+  margin: 0 0 14px;
+  font-size: clamp(22px, 5vw, 42px);
+  animation: colorCycle 10s linear infinite;
+  /* Add a smooth transition for the hover effect */
+  transition: transform 0.3s ease-in-out;
+}
+
+#home h2 {
+    font-size:3.5rem;
+    margin-bottom: 6px;
+}
+
+/* Hover effect */
+h2:hover {
+  /* Scale the text up slightly on hover */
+  transform: scale(1.02);
+}
+
+@media (min-width: 1200px) {
+  section { padding: 44px 0; }
+}
+
+.lead {
+  color: var(--secondarymuted);
+  max-width: 62ch;
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+
+.card {
+  grid-column: span 6;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--bg) 98%, transparent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  transition: transform .2s ease, box-shadow .2s ease;
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+}
+
+#home > div {
+  justify-content: center;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .12);
+  text-decoration: none;
+}
+
+@media (max-width: 800px) {
+  .card {
+    grid-column: span 12;
+  }
+
+  .header {
+    flex-wrap: wrap;
+  }
+
+  .header-mid {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .settings-btn .label {
+    display: none;
+  }
+}
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 16px;
+  border: 1px solid color-mix(in oklab, var(--primary) 30%, var(--border));
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--primary) 30%, var(--bg) 70%),
+    color-mix(in oklab, var(--primarymuted) 18%, var(--bg) 82%)
+  );
+  color: #06262e;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.05);
+  text-decoration: none;
+  transition: transform .2s ease, box-shadow .2s ease, filter .15s ease;
+  will-change: transform;
+  overflow: hidden;
+}
+
+.btn:hover {
+  transform: scale(1.015);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  text-decoration: none;
+  filter: saturate(1.1) contrast(1.05);
+  
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--primary) 30%, var(--bg) 60%),
+    color-mix(in oklab, var(--primarymuted) 75%, var(--bg) 75%)
+  );
+}
+
+.btn:focus-visible { box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 35%, transparent), 0 4px 16px rgba(0,0,0,.12); }
+
+.btn:active {
+  transform: scale(0.995);
+}
+
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  transform: translateX(-120%) rotate(20deg);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .35) 50%, transparent 100%);
+  transition: transform .6s ease;
+}
+
+.btn:hover::after {
+  transform: translateX(120%) rotate(20deg);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.pill {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: .75rem;
+  color: var(--secondarymuted);
+}
+
+.kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Atkinson Hyperlegible Next", monospace;
+  font-size: .85em;
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.skip {
+  position: absolute;
+  left: -999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.skip:focus {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  width: auto;
+  height: auto;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  z-index: 999;
+}
+
+footer {
+  padding: 30px 0;
+}
+
+.social {
+  display: flex;
+  gap: 10px;
+}
+
+.social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--bg) 95%, transparent);
+}
+
+.social a:hover {
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+}
+
+/*
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  h2 {
+    animation-duration: 8s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+  */
+
+html[data-theme="dark"] details.contact > summary:hover::after,
+html[data-theme="dark"] details.contact > summary:focus-visible::after {
+  background:
+    /* Softer top highlight for dark mode */
+    linear-gradient(180deg, rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 50%),
+    /* Subtle radial glow */
+    radial-gradient(150% 150% at 50% 0%, rgba(255,255,255,.12), rgba(255,255,255,0) 40%),
+    /* Base color */
+    color-mix(in oklab, var(--bg) 88%, transparent);
+  /* Deeper drop shadow for dark mode and a crisp inner edge */
+  box-shadow: 0 8px 32px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.2);
+}
+html[data-theme="dark"] .btn::after {
+  /* creates a more subtle, ghostly shimmer for dark mode */
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .15) 50%, transparent 100%);
+}
+
+@keyframes colorCycle {
+  0% {
+    color: #1e6297f2;
+  }
+  33% {
+    color: var(--secondary);
+  }
+  66% {
+    color: var(--secondarymuted);
+  }
+  100% {
+    color: #1e6297f2;
+  }
+}
+
+/*  STYLES FOR THE INTERST LIST!!  */
+
+.interest-list-container {
+  width: 100%;
+  margin-top: 24px; /* Add some space above the new section */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.interest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0px; /* Space between the category headers */
+  max-width: 75ch; /* Keep it constrained and readable */
+  margin-inline: auto; /* Center the list */
+  text-align: left; /* Align text to the left for readability */
+}
+
+.interest-category h3 {
+  font-size: 1.25rem;
+  color: var(--thirdblue);
+  margin-top: 2px;
+  margin-bottom: 1px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1px;
+  text-align: center;
+}
+
+/* This is where the magic starts Mwhaha */
+.interest-details {
+  list-style-type: '- '; /* Custom bullet point style */
+  padding-left: 20px;
+  margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.4;
+
+  /* 1. INITIAL HIDDEN STATE */
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-15px); /* Start slightly shifted up */
+  
+  /* 2. DEFINE THE TRANSITION */
+  transition:
+    /* Make the expensive max-height change happen fast, almost invisibly */
+    max-height 0.5s cubic-bezier(0.23, 1, 0.32, 1), 
+
+    opacity    0.4s ease-in-out 0.15s, /* Delay the fade-in slightly */
+    transform  0.5s ease-in-out 0.1s; /* Moves slightly later */
+}
+
+/* 3. REVEALED STATE (triggered by JavaScript) */
+.interest-category.revealed .interest-details {
+  max-height: 500px; /* Animate to a height larger than the content will ever be */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#useful-tools {
+  text-align: center; /* Center the h2 and lead paragraph */
+}
+
+/* Style the cards in our new grid */
+.tool-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: var(--text);
+  text-align: left;
+  padding: 10px;
+}
+
+/* The square box for the icon */
+.tool-icon-box {
+  width: 85%;
+  aspect-ratio: 1 / 1; /* This makes it a perfect square */
+  background: color-mix(in oklab, var(--primary) 6%, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  margin-top: 8px;
+  display: grid;
+  place-content: center; /* This will perfectly center the SVG icon later */
+  margin-inline: auto; /* Center the icon box */
+}
+
+.tool-icon-box img {
+  width: 100%; /* Make the image the full size of container */
+  height: 100%; /* Make the image smaller than its container */
+  object-fit: contain; /* Ensures the image scales without being stretched or cropped */
+}
+
+/* The bold 1.2rem title */
+.tool-title {
+  font-size: 1.2rem;
+  font-weight: 700; /* Bold */
+  margin: 0 0 6px 0;
+  color: var(--secondary);
+  text-align: center;
+}
+
+.tool-card p {
+  margin: 0;
+  text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Responsive Grid Layout for the Tools */
+#toolsGrid > .tool-card {
+  grid-column: span 12; /* 1 column on small screens */
+  max-width: 11rem;
+  margin-inline: auto; /* Center the cards on small screens */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+
+}
+
+@media (min-width: 600px) {
+  #toolsGrid > .tool-card {
+    grid-column: span 6; /* 2 columns on medium screens */
+  }
+}
+
+@media (min-width: 900px) {
+  #toolsGrid > .tool-card {
+    grid-column: span 3; /* 4 columns on large screens, as requested */
+  }
+}
+
+.useful-tools-title,
+.useful-tools-subtitle {
+  text-align: center; /* This centers both the title and the lead text */
+  margin-inline: auto; /* Ensures they don't stretch full-width */
+}
+
+#useful-tools .useful-tools-title {
+    color: #154865;
+    animation: none; /* Disable colorCycle animation for tool titles */
+}
+
+.useful-tools-subtitle {
+  max-width: 65ch; /* Constrains the line length for readability */
+  color: var(--muted);
+  margin-bottom: 32px;
+}

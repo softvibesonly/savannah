@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Root & Minima Finding Interactive Demo</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fb;
+            color: #333;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .controls > div {
+            flex: 1 1 220px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        input[type="text"], input[type="number"], select {
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            padding: 8px 12px;
+            margin-right: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #0078d7;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #005ea1;
+        }
+        #plot-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #ccc;
+            background: #fafafa;
+        }
+        #formula {
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            min-height: 60px;
+            overflow-x: auto;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: center;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #e5e9f0;
+        }
+        #method-params {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .param-field {
+            flex: 1 1 150px;
+            display: flex;
+            flex-direction: column;
+        }
+        .param-field input {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive Root & Minima Finding Demo</h1>
+        <p>Select or enter a function, choose a numerical method, specify starting parameters and step through the algorithm. Visualize how the method converges and explore when it fails.</p>
+        <div class="controls">
+            <div>
+                <label for="function-input">Function f(x)</label>
+                <input type="text" id="function-input" placeholder="e.g. x^3 - x - 2">
+            </div>
+            <div>
+                <label for="preset-select">Preset Function</label>
+                <select id="preset-select">
+                    <option value="">-- choose preset --</option>
+                    <option value="x^3 - x - 2">x^3 - x - 2 (root)</option>
+                    <option value="x^3 - 2*x - 5">x^3 - 2x - 5 (root)</option>
+                    <option value="sin(x) - x/4">sin(x) - x/4 (root)</option>
+                    <option value="cos(x) - x">cos(x) - x (root)</option>
+                    <option value="x^4 - x^2 + x">x^4 - x^2 + x (min)</option>
+                    <option value="sin(x) + 0.5*x^2">sin(x) + 0.5 x^2 (min)</option>
+                    <option value="random">Random function</option>
+                </select>
+            </div>
+            <div>
+                <label for="method-select">Method</label>
+                <select id="method-select">
+                    <option value="">-- choose method --</option>
+                    <optgroup label="Root-finding">
+                        <option value="bisection">Bisection Method</option>
+                        <option value="secant">Secant Method</option>
+                        <option value="inverse_quadratic">Inverse Quadratic Interpolation</option>
+                        <option value="dekker">Dekker's Method</option>
+                        <option value="brent">Brent-Dekker Method</option>
+                    </optgroup>
+                    <optgroup label="Minimization">
+                        <option value="hyperbolic">Successive Parabolic Interpolation</option>
+                        <option value="golden">Golden Section Search</option>
+                        <option value="brent_min">Brent's Minimization Method</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div>
+                <label for="epsilon-input">Tolerance (ε)</label>
+                <input type="number" id="epsilon-input" value="0.0001" step="0.0001" min="0" style="width:100px;">
+            </div>
+        </div>
+        <div id="method-params"></div>
+        <div class="controls" style="margin-top:10px;">
+            <div>
+                <button id="init-button">Initialize</button>
+                <button id="prev-step" disabled>Previous Step</button>
+                <button id="next-step" disabled>Next Step</button>
+            </div>
+        </div>
+        <div id="plot-container">
+            <canvas id="plotCanvas" width="900" height="400"></canvas>
+        </div>
+        <div id="formula"></div>
+        <div id="results">
+            <h3>Step History</h3>
+            <table id="resultTable">
+                <thead>
+                    <tr id="resultHeader">
+                        <th>Step</th>
+                        <th>x</th>
+                        <th>f(x)</th>
+                    </tr>
+                </thead>
+                <tbody id="resultBody"></tbody>
+            </table>
+        </div>
+        <!-- Method description section -->
+        <div id="method-description" style="margin-top:20px; padding:10px; background:#f9f9f9; border-radius:4px; font-size:14px; line-height:1.4; display:none;"></div>
+    </div>
+    <script>
+    (() => {
+        // Utility: parse user function string into executable function
+        function parseFunction(expr) {
+            if (!expr) return null;
+            // replace caret with exponentiation and safe functions
+            let processed = expr.replace(/\^/g, '**');
+            // Support shorthand math functions: sin, cos, tan, log, exp, sqrt, abs, asin, acos, atan
+            const funcs = ['sin','cos','tan','log','exp','sqrt','abs','asin','acos','atan'];
+            funcs.forEach(fn => {
+                processed = processed.replace(new RegExp('(?<![A-Za-z0-9_\\.])' + fn + '\\(', 'g'), 'Math.' + fn + '(');
+            });
+            // Support constants e, pi
+            processed = processed.replace(/(?<![A-Za-z0-9_\\.])pi/g, 'Math.PI');
+            processed = processed.replace(/(?<![A-Za-z0-9_\\.])e/g, 'Math.E');
+            // Build function safely
+            try {
+                const f = new Function('x', 'return ' + processed + ';');
+                // test evaluation
+                f(0);
+                return f;
+            } catch (e) {
+                alert('Error parsing function: ' + e.message);
+                return null;
+            }
+        }
+
+        // Generate random function (polynomial + trig combo)
+        function randomFunction() {
+            const randCoeff = () => (Math.random() * 4 - 2).toFixed(2);
+            const choice = Math.floor(Math.random() * 3);
+            if (choice === 0) {
+                // cubic polynomial
+                const a = randCoeff(), b = randCoeff(), c = randCoeff(), d = randCoeff();
+                return `${a}*x^3 + ${b}*x^2 + ${c}*x + ${d}`;
+            } else if (choice === 1) {
+                // trig minus linear
+                const a = randCoeff(), b = randCoeff();
+                return `${a}*sin(x) + ${b}*x`;
+            } else {
+                // exp and poly
+                const a = randCoeff(), b = randCoeff();
+                return `${a}*exp(x) + ${b}*x^2 - x`;
+            }
+        }
+
+        // DOM elements
+        const funcInput = document.getElementById('function-input');
+        const presetSelect = document.getElementById('preset-select');
+        const methodSelect = document.getElementById('method-select');
+        const epsilonInput = document.getElementById('epsilon-input');
+        const paramsDiv = document.getElementById('method-params');
+        const initBtn = document.getElementById('init-button');
+        const prevBtn = document.getElementById('prev-step');
+        const nextBtn = document.getElementById('next-step');
+        const canvas = document.getElementById('plotCanvas');
+        const ctx = canvas.getContext('2d');
+        const formulaDiv = document.getElementById('formula');
+        const resultBody = document.getElementById('resultBody');
+        const resultHeader = document.getElementById('resultHeader');
+        const methodDescDiv = document.getElementById('method-description');
+
+        let f = null;
+        let method = '';
+        let eps = 1e-4;
+        let state = null;
+        let history = [];
+
+        // temp state for animation
+        let tempState = null;
+        let isAnimating = false;
+
+        // Setup event listeners
+        presetSelect.addEventListener('change', (e) => {
+            const val = presetSelect.value;
+            if (val === 'random') {
+                const randExpr = randomFunction();
+                funcInput.value = randExpr;
+            } else if (val) {
+                funcInput.value = val;
+            }
+            handleFunctionChange();
+        });
+        methodSelect.addEventListener('change', updateParamsFields);
+        epsilonInput.addEventListener('change', () => {
+            eps = parseFloat(epsilonInput.value) || 1e-4;
+        });
+        initBtn.addEventListener('click', initialize);
+        // async iteration to allow animations
+        nextBtn.addEventListener('click', async () => {
+            await iterateStep(true);
+        });
+        prevBtn.addEventListener('click', async () => {
+            await iterateStep(false);
+        });
+
+        // When the function expression changes, parse and draw preview
+        funcInput.addEventListener('input', handleFunctionChange);
+
+        // Update method description based on selected method
+        function updateMethodDescription() {
+            const sel = methodSelect.value;
+            let html = '';
+            // Provide simple, educational descriptions for each supported method
+            switch (sel) {
+                case 'bisection':
+                    html = '<strong>Bisection Method:</strong> This robust root‑finding method requires a continuous function and an interval [a,b] where f(a) and f(b) have opposite signs. At each step it computes the midpoint c = (a + b) / 2 and selects the half‑interval where the sign change occurs. The interval shrinks by half each time, guaranteeing convergence, but it can be slow.';
+                    break;
+                case 'secant':
+                    html = '<strong>Secant Method:</strong> An open root‑finding method that starts with two guesses x₀ and x₁. It draws a line (secant) through the points (x₀,f(x₀)) and (x₁,f(x₁)) and uses the x‑intercept of this line as the next approximation: x₂ = x₁ − f(x₁)(x₁ − x₀)/(f(x₁) − f(x₀)). It often converges faster than bisection but can fail if the function is not well‑behaved.';
+                    break;
+                case 'inverse_quadratic':
+                    html = '<strong>Inverse Quadratic Interpolation:</strong> This method uses three points (x_{n−2}, x_{n−1}, x_n) to fit a quadratic curve that expresses x as a function of y. It then evaluates this quadratic at y=0 to find the next approximation x_{n+1}. It can converge quickly but requires three starting values.';
+                    break;
+                case 'dekker':
+                    html = '<strong>Dekker\'s Method:</strong> A hybrid between the bisection and secant methods. It maintains a bracketing interval like bisection to ensure convergence, but attempts a secant or inverse quadratic step when possible to accelerate progress. If the interpolation step fails or loses the bracket, it falls back to bisection.';
+                    break;
+                case 'brent':
+                    html = '<strong>Brent–Dekker Method:</strong> An improved hybrid algorithm that combines bisection, secant and inverse quadratic interpolation steps. It automatically chooses the safest and fastest step while always keeping the root bracketed, making it both reliable and efficient.';
+                    break;
+                case 'golden':
+                    html = '<strong>Golden Section Search:</strong> A derivative‑free method for finding a minimum of a unimodal function on [a,b]. It chooses interior points c and d such that (b−c):(c−a) is the golden ratio (~0.618). At each step it evaluates f at c and d, discards one subinterval, and repeats. It converges steadily but more slowly than methods using curvature.';
+                    break;
+                case 'hyperbolic':
+                    html = '<strong>Successive Parabolic Interpolation:</strong> Also called parabolic interpolation, this method for minimization fits a parabola through three points and uses the vertex of the parabola as a new estimate of the minimum. It iteratively replaces the worst of the three points with the new point. It is usually faster than the golden section search but can fail if the function is not unimodal.';
+                    break;
+                case 'brent_min':
+                    html = '<strong>Brent\'s Minimization Method:</strong> A one‑dimensional minimization algorithm that mixes the golden section search with parabolic interpolation. It adaptively chooses between the two strategies to get both robustness and fast convergence. It works on a unimodal function over an interval [a,b].';
+                    break;
+                default:
+                    html = '';
+            }
+            if (html) {
+                methodDescDiv.innerHTML = html;
+                methodDescDiv.style.display = 'block';
+            } else {
+                methodDescDiv.innerHTML = '';
+                methodDescDiv.style.display = 'none';
+            }
+        }
+
+        function handleFunctionChange() {
+            const expr = funcInput.value.trim();
+            const parsed = parseFunction(expr);
+            if (parsed) {
+                f = parsed;
+                // draw the function alone for preview if no history
+                if (history.length === 0) {
+                    drawFunctionOnly();
+                }
+            }
+        }
+
+        function updateParamsFields() {
+            method = methodSelect.value;
+            paramsDiv.innerHTML = '';
+            history = [];
+            resultBody.innerHTML = '';
+            formulaDiv.innerHTML = '';
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+
+            // update method description
+            updateMethodDescription();
+            if (!method) return;
+            // Create parameter input fields based on method
+            let fields = [];
+            if (method === 'bisection' || method === 'dekker' || method === 'brent') {
+                fields = [
+                    { id: 'param-a', label: 'a (lower bound)', value: '-1' },
+                    { id: 'param-b', label: 'b (upper bound)', value: '2' }
+                ];
+            } else if (method === 'secant') {
+                fields = [
+                    { id: 'param-x0', label: 'x0', value: '-1' },
+                    { id: 'param-x1', label: 'x1', value: '1' }
+                ];
+            } else if (method === 'inverse_quadratic') {
+                fields = [
+                    { id: 'param-x0', label: 'x0', value: '-1' },
+                    { id: 'param-x1', label: 'x1', value: '0' },
+                    { id: 'param-x2', label: 'x2', value: '1' }
+                ];
+            } else if (method === 'golden') {
+                fields = [
+                    { id: 'param-a', label: 'a (lower bound)', value: '-1' },
+                    { id: 'param-b', label: 'b (upper bound)', value: '2' }
+                ];
+            } else if (method === 'hyperbolic') {
+                fields = [
+                    { id: 'param-x0', label: 'x0', value: '-1' },
+                    { id: 'param-x1', label: 'x1', value: '0' },
+                    { id: 'param-x2', label: 'x2', value: '1' }
+                ];
+            } else if (method === 'brent_min') {
+                fields = [
+                    { id: 'param-a', label: 'a (lower bound)', value: '-1' },
+                    { id: 'param-b', label: 'b (upper bound)', value: '2' }
+                ];
+            }
+            fields.forEach(field => {
+                const container = document.createElement('div');
+                container.className = 'param-field';
+                const lab = document.createElement('label');
+                lab.textContent = field.label;
+                lab.setAttribute('for', field.id);
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.step = 'any';
+                input.id = field.id;
+                input.value = field.value;
+                container.appendChild(lab);
+                container.appendChild(input);
+                paramsDiv.appendChild(container);
+            });
+
+            // If a function exists, draw preview again with new parameters (for domain scaling)
+            if (f) {
+                drawFunctionOnly();
+            }
+        }
+
+        function initialize() {
+            // parse function
+            f = parseFunction(funcInput.value.trim());
+            if (!f) return;
+            eps = parseFloat(epsilonInput.value) || 1e-4;
+            method = methodSelect.value;
+            if (!method) {
+                alert('Please choose a method.');
+                return;
+            }
+            // gather parameters
+            const getVal = (id) => parseFloat(document.getElementById(id).value);
+            history = [];
+            resultBody.innerHTML = '';
+            formulaDiv.innerHTML = '';
+            methodDescDiv.style.display = method ? 'block' : 'none';
+            prevBtn.disabled = true;
+            nextBtn.disabled = false;
+            // create initial state based on method
+            if (method === 'bisection') {
+                let a = getVal('param-a');
+                let b = getVal('param-b');
+                const fa = f(a);
+                const fb = f(b);
+                if (fa === undefined || fb === undefined || isNaN(fa) || isNaN(fb)) {
+                    alert('Invalid interval evaluation.');
+                    return;
+                }
+                if (fa * fb > 0) {
+                    alert('f(a) and f(b) must have opposite signs for bisection.');
+                    return;
+                }
+                const stateInit = {a: a, b: b, fa: fa, fb: fb};
+                history.push(stateInit);
+            } else if (method === 'secant') {
+                const x0 = getVal('param-x0');
+                const x1 = getVal('param-x1');
+                const f0 = f(x0);
+                const f1 = f(x1);
+                const stateInit = {x_prev: x0, x_curr: x1, f_prev: f0, f_curr: f1};
+                history.push(stateInit);
+            } else if (method === 'inverse_quadratic') {
+                const x0 = getVal('param-x0');
+                const x1 = getVal('param-x1');
+                const x2 = getVal('param-x2');
+                const f0 = f(x0);
+                const f1 = f(x1);
+                const f2 = f(x2);
+                const stateInit = {points: [x0,x1,x2], values: [f0,f1,f2]};
+                history.push(stateInit);
+            } else if (method === 'dekker' || method === 'brent') {
+                let a = getVal('param-a');
+                let b = getVal('param-b');
+                let fa = f(a);
+                let fb = f(b);
+                if (fa * fb > 0) {
+                    alert('f(a) and f(b) must have opposite signs for Dekker/Brent.');
+                    return;
+                }
+                if (Math.abs(fa) < Math.abs(fb)) {
+                    [a,b] = [b,a];
+                    [fa,fb] = [fb,fa];
+                }
+                const c = a;
+                const fc = fa;
+                const prev_b = a;
+                const stateInit = {a: a, b: b, c: c, fa: fa, fb: fb, fc: fc, mflag: true, prev_b: prev_b, d: b-c, e: b-c, stepType: ''};
+                history.push(stateInit);
+            } else if (method === 'golden') {
+                let a = getVal('param-a');
+                let b = getVal('param-b');
+                if (a > b) [a,b] = [b,a];
+                const phi = (Math.sqrt(5) - 1) / 2;
+                const cVal = b - phi * (b - a);
+                const dVal = a + phi * (b - a);
+                const fc = f(cVal);
+                const fd = f(dVal);
+                const stateInit = {a: a, b: b, c: cVal, d: dVal, fc: fc, fd: fd};
+                history.push(stateInit);
+            } else if (method === 'hyperbolic') {
+                const x0 = getVal('param-x0');
+                const x1 = getVal('param-x1');
+                const x2 = getVal('param-x2');
+                const f0 = f(x0);
+                const f1 = f(x1);
+                const f2 = f(x2);
+                const stateInit = {xs: [x0,x1,x2], fs: [f0,f1,f2]};
+                history.push(stateInit);
+            } else if (method === 'brent_min') {
+                let a = getVal('param-a');
+                let b = getVal('param-b');
+                if (a > b) [a,b] = [b,a];
+                const gr = 0.3819660;
+                const x = a + gr * (b - a);
+                const w = x;
+                const v = x;
+                const fx = f(x);
+                const fw = fx;
+                const fv = fx;
+                const stateInit = {a: a, b: b, x: x, w: w, v: v, fx: fx, fw: fw, fv: fv, d: 0, e: 0, stepType: ''};
+                history.push(stateInit);
+            }
+            draw();
+            updateFormula();
+            updateTable();
+        }
+
+        async function iterateStep(forward) {
+            if (forward) {
+                const current = JSON.parse(JSON.stringify(history[history.length - 1]));
+                let newState = null;
+                if (method === 'bisection') {
+                    newState = stepBisection(current);
+                } else if (method === 'secant') {
+                    newState = stepSecant(current);
+                } else if (method === 'inverse_quadratic') {
+                    newState = stepInverseQuadratic(current);
+                } else if (method === 'dekker') {
+                    newState = stepDekker(current);
+                } else if (method === 'brent') {
+                    newState = stepBrent(current);
+                } else if (method === 'golden') {
+                    newState = stepGolden(current);
+                } else if (method === 'hyperbolic') {
+                    newState = stepHyperbolic(current);
+                } else if (method === 'brent_min') {
+                    newState = stepBrentMin(current);
+                }
+                if (!newState) {
+                    nextBtn.disabled = true;
+                    return;
+                }
+                // animate transition
+                await animateTransition(current, newState);
+                history.push(newState);
+                prevBtn.disabled = false;
+                // check convergence
+                if (method === 'bisection') {
+                    if (Math.abs(newState.b - newState.a) < eps || Math.abs(f(newState.c)) < eps) {
+                        nextBtn.disabled = true;
+                    }
+                } else if (method === 'secant') {
+                    if (Math.abs(newState.x_curr - newState.x_prev) < eps || Math.abs(newState.f_curr) < eps) {
+                        nextBtn.disabled = true;
+                    }
+                } else if (method === 'inverse_quadratic') {
+                    const pts = newState.points;
+                    const vals = newState.values;
+                    const last = pts[pts.length - 1];
+                    const prev = pts[pts.length - 2];
+                    const val = vals[vals.length - 1];
+                    if (Math.abs(last - prev) < eps || Math.abs(val) < eps) {
+                        nextBtn.disabled = true;
+                    }
+                } else if (method === 'dekker' || method === 'brent') {
+                    if (Math.abs(newState.fb) < eps || Math.abs(newState.b - newState.a) < eps) {
+                        nextBtn.disabled = true;
+                    }
+                } else if (method === 'golden') {
+                    if (Math.abs(newState.b - newState.a) < eps) {
+                        nextBtn.disabled = true;
+                    }
+                } else if (method === 'hyperbolic') {
+                    const xs = newState.xs;
+                    if (Math.abs(xs[2] - xs[1]) < eps) {
+                        nextBtn.disabled = true;
+                    }
+                } else if (method === 'brent_min') {
+                    if (Math.abs(newState.b - newState.a) < eps) {
+                        nextBtn.disabled = true;
+                    }
+                }
+            } else {
+                if (history.length > 1) {
+                    history.pop();
+                    nextBtn.disabled = false;
+                    if (history.length === 1) {
+                        prevBtn.disabled = true;
+                    }
+                }
+            }
+            draw();
+            updateFormula();
+            updateTable();
+        }
+
+        // Animate transition between states
+        function animateTransition(oldState, newState) {
+            return new Promise((resolve) => {
+                const duration = 500; // ms
+                const start = performance.now();
+                isAnimating = true;
+                function interpolateValue(a, b, t) {
+                    if (typeof a === 'number' && typeof b === 'number') {
+                        return a + (b - a) * t;
+                    }
+                    // if array
+                    if (Array.isArray(a) && Array.isArray(b)) {
+                        return a.map((ai, i) => interpolateValue(ai, b[i], t));
+                    }
+                    // for objects with numeric props, shallow copy
+                    const obj = {};
+                    for (const key in a) {
+                        if (a.hasOwnProperty(key)) {
+                            if (typeof a[key] === 'number' && typeof b[key] === 'number') {
+                                obj[key] = a[key] + (b[key] - a[key]) * t;
+                            } else if (Array.isArray(a[key]) && Array.isArray(b[key])) {
+                                obj[key] = a[key].map((val, idx) => interpolateValue(val, b[key][idx], t));
+                            } else {
+                                // keep old value for non-numeric
+                                obj[key] = b[key];
+                            }
+                        }
+                    }
+                    return obj;
+                }
+                function frame(now) {
+                    const t = Math.min(1, (now - start) / duration);
+                    tempState = interpolateValue(oldState, newState, t);
+                    draw();
+                    if (t < 1) {
+                        requestAnimationFrame(frame);
+                    } else {
+                        tempState = null;
+                        isAnimating = false;
+                        resolve();
+                    }
+                }
+                requestAnimationFrame(frame);
+            });
+        }
+
+        // Bisection step
+        function stepBisection(st) {
+            const a = st.a;
+            const b = st.b;
+            // compute midpoint of current interval
+            const mid = 0.5 * (a + b);
+            const fmid = f(mid);
+            let newA = a;
+            let newB = b;
+            let newFa = st.fa;
+            let newFb = st.fb;
+            // Determine which subinterval contains the root
+            if (fmid === 0) {
+                // found exact root
+                return {a: mid, b: mid, fa: 0, fb: 0, c: mid, fc: 0};
+            }
+            if (st.fa * fmid < 0) {
+                // root is between a and mid
+                newA = a;
+                newFa = st.fa;
+                newB = mid;
+                newFb = fmid;
+            } else {
+                // root is between mid and b
+                newA = mid;
+                newFa = fmid;
+                newB = b;
+                newFb = st.fb;
+            }
+            // compute new midpoint for the next state
+            const newMid = 0.5 * (newA + newB);
+            const newFmid = f(newMid);
+            return {a: newA, b: newB, fa: newFa, fb: newFb, c: newMid, fc: newFmid};
+        }
+
+        // Secant step
+        function stepSecant(st) {
+            const x0 = st.x_prev;
+            const x1 = st.x_curr;
+            const f0 = st.f_prev;
+            const f1 = st.f_curr;
+            const denom = (f1 - f0);
+            if (denom === 0) {
+                alert('Secant method failed: division by zero.');
+                return null;
+            }
+            const x2 = x1 - f1 * (x1 - x0) / denom;
+            const f2 = f(x2);
+            return {x_prev: x1, x_curr: x2, f_prev: f1, f_curr: f2};
+        }
+
+        // Inverse quadratic interpolation step
+        function stepInverseQuadratic(st) {
+            const xs = st.points.slice();
+            const fsVals = st.values.slice();
+            const x0 = xs[0], x1 = xs[1], x2 = xs[2];
+            const f0 = fsVals[0], f1 = fsVals[1], f2 = fsVals[2];
+            const denom0 = (f0 - f1) * (f0 - f2);
+            const denom1 = (f1 - f0) * (f1 - f2);
+            const denom2 = (f2 - f0) * (f2 - f1);
+            if (denom0 === 0 || denom1 === 0 || denom2 === 0) {
+                alert('Inverse quadratic interpolation failed: degenerate denominators.');
+                return null;
+            }
+            const term0 = (f1 * f2 / denom0) * x0;
+            const term1 = (f0 * f2 / denom1) * x1;
+            const term2 = (f0 * f1 / denom2) * x2;
+            const x3 = term0 + term1 + term2;
+            const f3 = f(x3);
+            const newPoints = [x1, x2, x3];
+            const newValues = [f1, f2, f3];
+            return {points: newPoints, values: newValues};
+        }
+
+        // Dekker step (linear interpolation + bisection)
+        function stepDekker(st) {
+            let {a, b, c, fa, fb, fc, mflag, prev_b} = st;
+            if (fb === 0) return null;
+            if (fa * fb > 0) {
+                alert('Dekker method lost bracketing.');
+                return null;
+            }
+            let s;
+            let stepType = '';
+            // Use inverse quadratic interpolation if possible
+            if (fa !== fc && fb !== fc) {
+                s = (fa * fb) / ((fc - fa) * (fc - fb)) * c + (fa * fc) / ((fb - fa) * (fb - fc)) * b + (fb * fc) / ((fa - fb) * (fa - fc)) * a;
+                stepType = 'IQI';
+            } else {
+                s = b - fb * (b - a) / (fb - fa);
+                stepType = 'Secant';
+            }
+            const m = 0.5 * (a + b);
+            let conditionsMet = false;
+            if (!(s > Math.min(a,b) && s < Math.max(a,b))) conditionsMet = true;
+            if (mflag && Math.abs(s - b) >= Math.abs(b - prev_b) / 2) conditionsMet = true;
+            if (!mflag && Math.abs(s - b) >= Math.abs(prev_b - c) / 2) conditionsMet = true;
+            if (conditionsMet || (stepType === 'IQI' && Math.abs(b - a) < eps)) {
+                s = m;
+                mflag = true;
+                stepType = 'Bisection';
+            } else {
+                mflag = false;
+            }
+            const fs = f(s);
+            prev_b = b;
+            c = b;
+            fc = fb;
+            if (fa * fs < 0) {
+                b = s;
+                fb = fs;
+            } else {
+                a = s;
+                fa = fs;
+            }
+            if (Math.abs(fa) < Math.abs(fb)) {
+                [a, b] = [b, a];
+                [fa, fb] = [fb, fa];
+            }
+            return {a: a, b: b, c: c, fa: fa, fb: fb, fc: fc, mflag: mflag, prev_b: prev_b, d: 0, e: 0, stepType: stepType};
+        }
+
+        // Brent-Dekker step (Brent's method for root)
+        function stepBrent(st) {
+            let {a, b, c, fa, fb, fc, mflag, prev_b, d, e} = st;
+            if (fb === 0) return null;
+            if (fa * fb > 0) {
+                alert('Brent method lost bracketing.');
+                return null;
+            }
+            let s;
+            let stepType = '';
+            if (fa !== fc && fb !== fc) {
+                s = (a * fb * fc) / ((fa - fb) * (fa - fc)) + (b * fa * fc) / ((fb - fa) * (fb - fc)) + (c * fa * fb) / ((fc - fa) * (fc - fb));
+                stepType = 'IQI';
+            } else {
+                s = b - fb * (b - a) / (fb - fa);
+                stepType = 'Secant';
+            }
+            const m = 0.5 * (a + b);
+            const tolAct = 2 * eps * Math.abs(b) + eps / 2;
+            let acceptInterp = true;
+            if (!(s > (3 * a + b) / 4 && s < b)) acceptInterp = false;
+            if (mflag && Math.abs(s - b) >= Math.abs(b - c) / 2) acceptInterp = false;
+            if (!mflag && Math.abs(s - b) >= Math.abs(c - d) / 2) acceptInterp = false;
+            if (mflag && Math.abs(b - c) < tolAct) acceptInterp = false;
+            if (!mflag && Math.abs(c - d) < tolAct) acceptInterp = false;
+            if (!acceptInterp) {
+                s = m;
+                stepType = 'Bisection';
+                mflag = true;
+            } else {
+                mflag = false;
+            }
+            const fs = f(s);
+            d = c;
+            c = b;
+            fc = fb;
+            if (fa * fs < 0) {
+                b = s;
+                fb = fs;
+            } else {
+                a = s;
+                fa = fs;
+            }
+            if (Math.abs(fa) < Math.abs(fb)) {
+                [a, b] = [b, a];
+                [fa, fb] = [fb, fa];
+            }
+            return {a: a, b: b, c: c, fa: fa, fb: fb, fc: fc, mflag: mflag, prev_b: prev_b, d: d, e: e, stepType: stepType};
+        }
+
+        // Golden-section search step
+        function stepGolden(st) {
+            let {a, b, c, d: dVal, fc, fd} = st;
+            const phi = (Math.sqrt(5) - 1) / 2;
+            if (fc < fd) {
+                b = dVal;
+                dVal = c;
+                fd = fc;
+                c = b - phi * (b - a);
+                fc = f(c);
+            } else {
+                a = c;
+                c = dVal;
+                fc = fd;
+                dVal = a + phi * (b - a);
+                fd = f(dVal);
+            }
+            return {a: a, b: b, c: c, d: dVal, fc: fc, fd: fd};
+        }
+
+        // Successive parabolic interpolation step for minimization
+        function stepHyperbolic(st) {
+            const xs = st.xs.slice();
+            const fsVals = st.fs.slice();
+            const zipped = xs.map((x,i) => ({x:x, f:fsVals[i]})).sort((p,q) => p.x - q.x);
+            const x0 = zipped[0].x;
+            const x1 = zipped[1].x;
+            const x2 = zipped[2].x;
+            const f0 = zipped[0].f;
+            const f1 = zipped[1].f;
+            const f2 = zipped[2].f;
+            const denom = (x0 - x1)*(f0 - f2) - (x0 - x2)*(f0 - f1);
+            if (denom === 0) {
+                // fallback: midpoint
+                const newx = 0.5 * (Math.min(x0,x2) + Math.max(x0,x2));
+                const newf = f(newx);
+                let idxToRemove = fsVals.indexOf(Math.max(...fsVals));
+                const newXs = xs.slice();
+                const newFs = fsVals.slice();
+                newXs[idxToRemove] = newx;
+                newFs[idxToRemove] = newf;
+                return {xs: newXs, fs: newFs};
+            }
+            const term1 = ((x0 - x1)**2 * (f0 - f2) - (x0 - x2)**2 * (f0 - f1));
+            const x3 = x0 - 0.5 * term1 / denom;
+            const f3 = f(x3);
+            let idxToRemove = 0;
+            if (f0 >= f1 && f0 >= f2) idxToRemove = xs.indexOf(x0);
+            else if (f1 >= f0 && f1 >= f2) idxToRemove = xs.indexOf(x1);
+            else idxToRemove = xs.indexOf(x2);
+            const newXs = xs.slice();
+            const newFs = fsVals.slice();
+            newXs[idxToRemove] = x3;
+            newFs[idxToRemove] = f3;
+            return {xs: newXs, fs: newFs};
+        }
+
+        // Brent's minimization step
+        function stepBrentMin(st) {
+            let {a, b, x, w, v, fx, fw, fv, d, e, stepType} = st;
+            const tol = eps;
+            const tol1 = tol * Math.abs(x) + 1e-10;
+            const tol2 = 2 * tol1;
+            const m = 0.5 * (a + b);
+            if (Math.abs(x - m) <= tol2 - 0.5 * (b - a)) {
+                return null;
+            }
+            let u;
+            let newStepType = '';
+            if (Math.abs(e) > tol1) {
+                const r = (x - w) * (fx - fv);
+                const q = (x - v) * (fx - fw);
+                let p = (x - v) * q - (x - w) * r;
+                let q2 = 2 * (q - r);
+                if (q2 > 0) p = -p;
+                q2 = Math.abs(q2);
+                const temp = e;
+                e = d;
+                if (Math.abs(p) < Math.abs(0.5 * q2 * temp) && p > q2 * (a - x) && p < q2 * (b - x)) {
+                    d = p / q2;
+                    u = x + d;
+                    newStepType = 'Parabolic';
+                    if (u - a < tol2 || b - u < tol2) {
+                        d = (x < m ? tol1 : -tol1);
+                    }
+                } else {
+                    e = (x < m) ? b - x : a - x;
+                    d = 0.3819660 * e;
+                    newStepType = 'Golden';
+                }
+            } else {
+                e = (x < m) ? b - x : a - x;
+                d = 0.3819660 * e;
+                newStepType = 'Golden';
+            }
+            u = x + ((Math.abs(d) >= tol1) ? d : (d > 0 ? tol1 : -tol1));
+            const fu = f(u);
+            if (fu <= fx) {
+                if (u >= x) a = x; else b = x;
+                v = w; fv = fw;
+                w = x; fw = fx;
+                x = u; fx = fu;
+            } else {
+                if (u >= x) b = u; else a = u;
+                if (fu <= fw || w === x) {
+                    v = w; fv = fw;
+                    w = u; fw = fu;
+                } else if (fu <= fv || v === x || v === w) {
+                    v = u; fv = fu;
+                }
+            }
+            return {a: a, b: b, x: x, w: w, v: v, fx: fx, fw: fw, fv: fv, d: d, e: e, stepType: newStepType};
+        }
+
+        function draw() {
+            // Determine which state to draw: animation temp state or last state in history
+            const st = isAnimating && tempState ? tempState : history[history.length - 1];
+            if (!st || !f) {
+                ctx.clearRect(0,0,canvas.width, canvas.height);
+                return;
+            }
+            // Determine x range from all history for persistent drawing
+            let xsAll = [];
+            history.forEach(hst => {
+                if (method === 'bisection') xsAll.push(hst.a, hst.b, hst.c);
+                else if (method === 'secant') xsAll.push(hst.x_prev, hst.x_curr);
+                else if (method === 'inverse_quadratic') xsAll.push(...hst.points);
+                else if (method === 'dekker' || method === 'brent') xsAll.push(hst.a, hst.b, hst.c);
+                else if (method === 'golden') xsAll.push(hst.a, hst.b, hst.c, hst.d);
+                else if (method === 'hyperbolic') xsAll.push(...hst.xs);
+                else if (method === 'brent_min') xsAll.push(hst.a, hst.b, hst.x, hst.w, hst.v);
+            });
+            if (isAnimating && tempState) {
+                // include temp state values for domain
+                if (method === 'bisection') xsAll.push(tempState.a, tempState.b, tempState.c);
+                else if (method === 'secant') xsAll.push(tempState.x_prev, tempState.x_curr);
+                else if (method === 'inverse_quadratic') xsAll.push(...tempState.points);
+                else if (method === 'dekker' || method === 'brent') xsAll.push(tempState.a, tempState.b, tempState.c);
+                else if (method === 'golden') xsAll.push(tempState.a, tempState.b, tempState.c, tempState.d);
+                else if (method === 'hyperbolic') xsAll.push(...tempState.xs);
+                else if (method === 'brent_min') xsAll.push(tempState.a, tempState.b, tempState.x, tempState.w, tempState.v);
+            }
+            xsAll = xsAll.filter(v => typeof v === 'number' && isFinite(v));
+            let minX, maxX;
+            if (xsAll.length > 0) {
+                minX = Math.min(...xsAll) - 1;
+                maxX = Math.max(...xsAll) + 1;
+            } else {
+                minX = -5;
+                maxX = 5;
+            }
+            const sampleCount = 300;
+            let minY = Infinity;
+            let maxY = -Infinity;
+            const sampled = [];
+            for (let i = 0; i <= sampleCount; i++) {
+                const xVal = minX + (i / sampleCount) * (maxX - minX);
+                let yVal = f(xVal);
+                if (!isFinite(yVal)) yVal = NaN;
+                sampled.push({x: xVal, y: yVal});
+                if (isFinite(yVal)) {
+                    if (yVal < minY) minY = yVal;
+                    if (yVal > maxY) maxY = yVal;
+                }
+            }
+            if (!isFinite(minY) || !isFinite(maxY)) {
+                minY = -10;
+                maxY = 10;
+            }
+            const yMargin = 0.1 * (maxY - minY);
+            minY -= yMargin;
+            maxY += yMargin;
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            const toCanvasX = x => (x - minX) / (maxX - minX) * canvas.width;
+            const toCanvasY = y => canvas.height - (y - minY) / (maxY - minY) * canvas.height;
+            // axes
+            ctx.strokeStyle = '#bbb';
+            ctx.lineWidth = 1;
+            // horizontal axis y=0
+            const y0 = toCanvasY(0);
+            ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(canvas.width, y0); ctx.stroke();
+            // vertical axis x=0
+            const x0 = toCanvasX(0);
+            ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0, canvas.height); ctx.stroke();
+            // axis labels and ticks
+            const ticks = 6;
+            ctx.fillStyle = '#888';
+            ctx.font = '11px sans-serif';
+            for (let i=0; i<=ticks; i++) {
+                const xt = minX + i * (maxX - minX) / ticks;
+                const px = toCanvasX(xt);
+                ctx.beginPath(); ctx.moveTo(px, y0 - 3); ctx.lineTo(px, y0 + 3); ctx.stroke();
+                ctx.fillText(xt.toFixed(2), px - 12, y0 + 15);
+            }
+            for (let j=0; j<=ticks; j++) {
+                const yt = minY + j * (maxY - minY) / ticks;
+                const py = toCanvasY(yt);
+                ctx.beginPath(); ctx.moveTo(x0 - 3, py); ctx.lineTo(x0 + 3, py); ctx.stroke();
+                ctx.fillText(yt.toFixed(2), x0 + 6, py + 4);
+            }
+            // function curve
+            ctx.strokeStyle = '#0078d7';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            let startedCurve = false;
+            for (const point of sampled) {
+                const cx = toCanvasX(point.x);
+                const cy = toCanvasY(point.y);
+                if (!startedCurve) {
+                    ctx.moveTo(cx, cy);
+                    startedCurve = true;
+                } else {
+                    ctx.lineTo(cx, cy);
+                }
+            }
+            ctx.stroke();
+            // helper for drawing a point with label and adjustable opacity
+            function drawPointLocal(xVal, color, label, radius=4) {
+                const px = toCanvasX(xVal);
+                const py = toCanvasY(f(xVal));
+                ctx.fillStyle = color;
+                ctx.beginPath(); ctx.arc(px, py, radius, 0, 2*Math.PI); ctx.fill();
+                if (label) {
+                    ctx.fillStyle = '#333';
+                    ctx.font = '12px sans-serif';
+                    ctx.fillText(label, px + 5, py - 5);
+                }
+            }
+            // iterate through history for persistent drawing
+            history.forEach((hst, idx) => {
+                const opacity = 0.3 + 0.7 * (idx + 1) / history.length;
+                const radius = 3 + 2 * (idx + 1) / history.length;
+                const colorA = `rgba(214,39,40,${opacity})`;
+                const colorB = `rgba(44,160,44,${opacity})`;
+                const colorC = `rgba(255,127,14,${opacity})`;
+                const colorD = `rgba(148,103,189,${opacity})`;
+                // use method-specific drawings
+                if (method === 'bisection') {
+                    drawPointLocal(hst.a, colorA, idx === history.length-1 ? 'a' : '');
+                    drawPointLocal(hst.b, colorB, idx === history.length-1 ? 'b' : '');
+                    const cVal = hst.c !== undefined ? hst.c : 0.5*(hst.a + hst.b);
+                    drawPointLocal(cVal, colorC, idx === history.length-1 ? 'c' : '');
+                    // vertical lines for current step only
+                    if (idx === history.length-1 && !isAnimating) {
+                        ctx.strokeStyle = 'rgba(200,0,0,0.2)'; ctx.beginPath(); ctx.moveTo(toCanvasX(hst.a),0); ctx.lineTo(toCanvasX(hst.a),canvas.height); ctx.stroke();
+                        ctx.strokeStyle = 'rgba(0,150,0,0.2)'; ctx.beginPath(); ctx.moveTo(toCanvasX(hst.b),0); ctx.lineTo(toCanvasX(hst.b),canvas.height); ctx.stroke();
+                    }
+                } else if (method === 'secant') {
+                    // draw secant line for each step except last? draw all but lighten older lines
+                    ctx.strokeStyle = `rgba(136,136,136,${opacity})`;
+                    ctx.beginPath(); ctx.moveTo(toCanvasX(hst.x_prev), toCanvasY(f(hst.x_prev)));
+                    ctx.lineTo(toCanvasX(hst.x_curr), toCanvasY(f(hst.x_curr))); ctx.stroke();
+                    drawPointLocal(hst.x_prev, colorA, idx === history.length-1 ? 'x_{n-1}' : '', radius);
+                    drawPointLocal(hst.x_curr, colorB, idx === history.length-1 ? 'x_n' : '', radius);
+                } else if (method === 'inverse_quadratic') {
+                    const labels = ['x_{n-2}','x_{n-1}','x_n'];
+                    const colors = [colorA,colorB,colorC];
+                    hst.points.forEach((pVal,i) => {
+                        drawPointLocal(pVal, colors[i], idx === history.length-1 ? labels[i] : '', radius);
+                    });
+                } else if (method === 'dekker' || method === 'brent') {
+                    drawPointLocal(hst.a, colorA, idx === history.length-1 ? 'a' : '', radius);
+                    drawPointLocal(hst.b, colorB, idx === history.length-1 ? 'b' : '', radius);
+                    drawPointLocal(hst.c, colorC, idx === history.length-1 ? 'c' : '', radius);
+                    if (idx === history.length-1 && !isAnimating) {
+                        ctx.strokeStyle = 'rgba(200,0,0,0.2)'; ctx.beginPath(); ctx.moveTo(toCanvasX(hst.a),0); ctx.lineTo(toCanvasX(hst.a),canvas.height); ctx.stroke();
+                        ctx.strokeStyle = 'rgba(0,150,0,0.2)'; ctx.beginPath(); ctx.moveTo(toCanvasX(hst.b),0); ctx.lineTo(toCanvasX(hst.b),canvas.height); ctx.stroke();
+                    }
+                } else if (method === 'golden') {
+                    drawPointLocal(hst.a, colorA, idx === history.length-1 ? 'a' : '', radius);
+                    drawPointLocal(hst.b, colorB, idx === history.length-1 ? 'b' : '', radius);
+                    drawPointLocal(hst.c, colorC, idx === history.length-1 ? 'c' : '', radius);
+                    drawPointLocal(hst.d, colorD, idx === history.length-1 ? 'd' : '', radius);
+                    if (idx === history.length-1 && !isAnimating) {
+                        ctx.strokeStyle = 'rgba(200,0,0,0.2)'; ctx.beginPath(); ctx.moveTo(toCanvasX(hst.a),0); ctx.lineTo(toCanvasX(hst.a),canvas.height); ctx.stroke();
+                        ctx.strokeStyle = 'rgba(0,150,0,0.2)'; ctx.beginPath(); ctx.moveTo(toCanvasX(hst.b),0); ctx.lineTo(toCanvasX(hst.b),canvas.height); ctx.stroke();
+                    }
+                } else if (method === 'hyperbolic') {
+                    hst.xs.forEach((xi,i) => {
+                        drawPointLocal(xi, [colorA,colorB,colorC][i], idx === history.length-1 ? ('x'+i) : '', radius);
+                    });
+                } else if (method === 'brent_min') {
+                    drawPointLocal(hst.a, colorA, idx === history.length-1 ? 'a' : '', radius);
+                    drawPointLocal(hst.b, colorB, idx === history.length-1 ? 'b' : '', radius);
+                    drawPointLocal(hst.x, colorC, idx === history.length-1 ? 'x' : '', radius);
+                    drawPointLocal(hst.w, colorD, idx === history.length-1 ? 'w' : '', radius);
+                    drawPointLocal(hst.v, `rgba(227,119,194,${opacity})`, idx === history.length-1 ? 'v' : '', radius);
+                    if (idx === history.length-1 && !isAnimating) {
+                        ctx.strokeStyle = 'rgba(200,0,0,0.2)'; ctx.beginPath(); ctx.moveTo(toCanvasX(hst.a),0); ctx.lineTo(toCanvasX(hst.a),canvas.height); ctx.stroke();
+                        ctx.strokeStyle = 'rgba(0,150,0,0.2)'; ctx.beginPath(); ctx.moveTo(toCanvasX(hst.b),0); ctx.lineTo(toCanvasX(hst.b),canvas.height); ctx.stroke();
+                    }
+                }
+            });
+        }
+
+        // Draw function without history (for preview before initialization)
+        function drawFunctionOnly() {
+            if (!f) return;
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            // choose fixed domain for preview
+            const minX = -5;
+            const maxX = 5;
+            const sampleCount = 300;
+            let minY = Infinity;
+            let maxY = -Infinity;
+            const sampled = [];
+            for (let i=0;i<=sampleCount;i++) {
+                const xVal = minX + (i/sampleCount)*(maxX-minX);
+                let yVal = f(xVal);
+                if (!isFinite(yVal)) yVal = NaN;
+                sampled.push({x:xVal,y:yVal});
+                if (isFinite(yVal)) {
+                    if (yVal<minY) minY = yVal;
+                    if (yVal>maxY) maxY = yVal;
+                }
+            }
+            if (!isFinite(minY) || !isFinite(maxY)) {
+                minY = -10;
+                maxY = 10;
+            }
+            const yMargin = 0.1*(maxY - minY);
+            minY -= yMargin;
+            maxY += yMargin;
+            const toCanvasX = x => (x - minX) / (maxX - minX) * canvas.width;
+            const toCanvasY = y => canvas.height - (y - minY) / (maxY - minY) * canvas.height;
+            // axes
+            ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1;
+            const y0 = toCanvasY(0);
+            ctx.beginPath(); ctx.moveTo(0,y0); ctx.lineTo(canvas.width,y0); ctx.stroke();
+            const x0 = toCanvasX(0);
+            ctx.beginPath(); ctx.moveTo(x0,0); ctx.lineTo(x0,canvas.height); ctx.stroke();
+            // ticks
+            ctx.fillStyle = '#888'; ctx.font='11px sans-serif';
+            for (let i=0;i<=6;i++) {
+                const xt = minX + i*(maxX-minX)/6;
+                const px = toCanvasX(xt);
+                ctx.beginPath(); ctx.moveTo(px,y0-3); ctx.lineTo(px,y0+3); ctx.stroke();
+                ctx.fillText(xt.toFixed(2), px-12, y0+15);
+            }
+            for (let j=0;j<=6;j++) {
+                const yt = minY + j*(maxY-minY)/6;
+                const py = toCanvasY(yt);
+                ctx.beginPath(); ctx.moveTo(x0-3,py); ctx.lineTo(x0+3,py); ctx.stroke();
+                ctx.fillText(yt.toFixed(2), x0+6, py+4);
+            }
+            // draw curve
+            ctx.strokeStyle = '#0078d7'; ctx.lineWidth=2;
+            ctx.beginPath(); let start=false;
+            sampled.forEach(pt => {
+                const cx=toCanvasX(pt.x), cy=toCanvasY(pt.y);
+                if (!start) { ctx.moveTo(cx,cy); start=true;} else { ctx.lineTo(cx,cy); }
+            });
+            ctx.stroke();
+        }
+
+        function updateFormula() {
+            const st = history[history.length - 1];
+            if (!st) { formulaDiv.textContent = ''; return; }
+            let formula = '';
+            if (method === 'bisection') {
+                formula = 'c = (a + b)/2\n';
+                if (st.c !== undefined) {
+                    formula += 'c = (' + st.a.toFixed(6) + ' + ' + st.b.toFixed(6) + ')/2 = ' + st.c.toFixed(6);
+                }
+            } else if (method === 'secant') {
+                // show canonical formula and numeric substitution if possible
+                formula = 'x_{n+1} = x_{n} - f(x_{n}) * (x_{n} - x_{n-1}) / (f(x_{n}) - f(x_{n-1}))\n';
+                if (history.length >= 2) {
+                    const prevState = history[history.length - 2];
+                    const x_n = prevState.x_curr;
+                    const x_nm1 = prevState.x_prev;
+                    const f_xn = prevState.f_curr;
+                    const f_xnm1 = prevState.f_prev;
+                    const x_next = st.x_curr;
+                    formula += 'x_{n+1} = ' + x_n.toFixed(6) + ' - ' + f_xn.toFixed(6) + ' * (' + x_n.toFixed(6) + ' - ' + x_nm1.toFixed(6) + ') / (' + f_xn.toFixed(6) + ' - ' + f_xnm1.toFixed(6) + ') = ' + x_next.toFixed(6);
+                } else {
+                    formula += 'Current approximation: ' + st.x_curr.toFixed(6);
+                }
+            } else if (method === 'inverse_quadratic') {
+                formula = 'x_{n+1} = [f_{n-1}f_{n}/((f_{n-2}-f_{n-1})(f_{n-2}-f_n))]x_{n-2} + ...\n';
+                if (st.points) {
+                    const p = st.points;
+                    formula += 'x_{n+1} = ' + p[2].toFixed(6);
+                }
+            } else if (method === 'dekker' || method === 'brent') {
+                if (st.stepType === 'Bisection') {
+                    formula = 'Using bisection: s = (a + b)/2\n';
+                } else if (st.stepType === 'Secant') {
+                    formula = 'Using secant: s = b - f(b)*(b - a)/(f(b) - f(a))\n';
+                } else if (st.stepType === 'IQI') {
+                    formula = 'Using inverse quadratic interpolation\n';
+                }
+                formula += 'a = ' + st.a.toFixed(6) + ', b = ' + st.b.toFixed(6);
+            } else if (method === 'golden') {
+                formula = 'Golden section update:\n';
+                formula += 'c = b - φ*(b - a), d = a + φ*(b - a)\n';
+                // include numeric substitution with φ = (√5 - 1)/2
+                const phi = (Math.sqrt(5) - 1) / 2;
+                if (st && typeof st.c === 'number' && typeof st.d === 'number') {
+                    formula += 'c = ' + st.b.toFixed(6) + ' - ' + phi.toFixed(6) + ' * (' + st.b.toFixed(6) + ' - ' + st.a.toFixed(6) + ') = ' + st.c.toFixed(6) + '\n';
+                    formula += 'd = ' + st.a.toFixed(6) + ' + ' + phi.toFixed(6) + ' * (' + st.b.toFixed(6) + ' - ' + st.a.toFixed(6) + ') = ' + st.d.toFixed(6) + '\n';
+                }
+                formula += 'Current interval: [' + st.a.toFixed(6) + ', ' + st.b.toFixed(6) + ']';
+            } else if (method === 'hyperbolic') {
+                formula = 'Parabolic interpolation for minimum:\n';
+                formula += 'Three points: ' + st.xs.map(x => x.toFixed(6)).join(', ');
+            } else if (method === 'brent_min') {
+                formula = 'Brent minimization step (' + st.stepType + ')\n';
+                formula += 'Interval: [' + st.a.toFixed(6) + ', ' + st.b.toFixed(6) + ']';
+            }
+            formulaDiv.textContent = formula;
+        }
+
+        function updateTable() {
+            resultBody.innerHTML = '';
+            let headers = ['Step','x','f(x)'];
+            if (method === 'bisection' || method === 'dekker' || method === 'brent' || method === 'golden') {
+                headers = ['Step','a','b','c (mid)','f(c)'];
+            } else if (method === 'secant') {
+                headers = ['Step','x_{n-1}','f(x_{n-1})','x_n','f(x_n)'];
+            } else if (method === 'inverse_quadratic') {
+                headers = ['Step','x_{n-2}','f(x_{n-2})','x_{n-1}','f(x_{n-1})','x_n','f(x_n)'];
+            } else if (method === 'hyperbolic') {
+                headers = ['Step','x0','f(x0)','x1','f(x1)','x2','f(x2)'];
+            } else if (method === 'brent_min') {
+                headers = ['Step','a','b','x','f(x)'];
+            }
+            resultHeader.innerHTML = '';
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.textContent = h;
+                resultHeader.appendChild(th);
+            });
+            history.forEach((st, idx) => {
+                const tr = document.createElement('tr');
+                const tdStep = document.createElement('td');
+                tdStep.textContent = idx;
+                tr.appendChild(tdStep);
+                if (method === 'bisection') {
+                    const cVal = st.c !== undefined ? st.c : 0.5 * (st.a + st.b);
+                    const fcVal = f(cVal);
+                    [st.a, st.b, cVal, fcVal].forEach(val => {
+                        const td = document.createElement('td');
+                        td.textContent = (typeof val === 'number') ? val.toFixed(6) : '';
+                        tr.appendChild(td);
+                    });
+                } else if (method === 'secant') {
+                    [st.x_prev, st.f_prev, st.x_curr, st.f_curr].forEach(val => {
+                        const td = document.createElement('td');
+                        td.textContent = (typeof val === 'number') ? val.toFixed(6) : '';
+                        tr.appendChild(td);
+                    });
+                } else if (method === 'inverse_quadratic') {
+                    st.points.forEach((xVal, i) => {
+                        const fVal = st.values[i];
+                        const tdX = document.createElement('td');
+                        tdX.textContent = xVal.toFixed(6);
+                        const tdF = document.createElement('td');
+                        tdF.textContent = fVal.toFixed(6);
+                        tr.appendChild(tdX);
+                        tr.appendChild(tdF);
+                    });
+                } else if (method === 'dekker' || method === 'brent') {
+                    const cVal = st.c;
+                    const fcVal = f(cVal);
+                    [st.a, st.b, cVal, fcVal].forEach(val => {
+                        const td = document.createElement('td');
+                        td.textContent = (typeof val === 'number') ? val.toFixed(6) : '';
+                        tr.appendChild(td);
+                    });
+                } else if (method === 'golden') {
+                    [st.a, st.b, st.c, st.d].forEach(val => {
+                        const td = document.createElement('td');
+                        td.textContent = (typeof val === 'number') ? val.toFixed(6) : '';
+                        tr.appendChild(td);
+                    });
+                } else if (method === 'hyperbolic') {
+                    st.xs.forEach((xVal, i) => {
+                        const fVal = st.fs[i];
+                        const tdX = document.createElement('td');
+                        tdX.textContent = xVal.toFixed(6);
+                        const tdF = document.createElement('td');
+                        tdF.textContent = fVal.toFixed(6);
+                        tr.appendChild(tdX);
+                        tr.appendChild(tdF);
+                    });
+                } else if (method === 'brent_min') {
+                    [st.a, st.b, st.x, st.fx].forEach(val => {
+                        const td = document.createElement('td');
+                        td.textContent = (typeof val === 'number') ? val.toFixed(6) : '';
+                        tr.appendChild(td);
+                    });
+                }
+                resultBody.appendChild(tr);
+            });
+        }
+    })();
+    </script>
+</body>
+</html>

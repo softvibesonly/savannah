@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Conjugate Priors, Likelihoods and Predictive Distributions</title>
+  <script>
+  MathJax = {tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}};
+  </script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.4; margin: 20px; }
+    h1 { font-size: 24px; margin-bottom: 10px; }
+    h2 { font-size: 20px; margin-top: 30px; margin-bottom: 5px; }
+    section { margin-bottom: 60px; }
+    .controls { margin-top: 10px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+    .controls label { margin-right: 10px; font-size: 14px; }
+    canvas { border: 1px solid #ccc; margin-top: 10px; }
+    .graph-container { display: flex; flex-wrap: wrap; gap: 20px; }
+    .stats table { font-size: 14px; border-collapse: collapse; margin-bottom: 10px; }
+    .stats th, .stats td { padding: 2px 7px; text-align: right; }
+    .stats th { background: #f0f0f7; font-weight: 600; }
+    .stats tr:nth-child(even) td { background: #fafafd; }
+    .stats tr td:first-child { font-weight: 500; text-align: left; }
+
+    details {
+      margin-top: 15px; /* Give them some space */
+    }
+    details > summary {
+      cursor: pointer;
+      font-weight: bold;
+      color: #055897;
+    }
+    details > div {
+      background-color: #eef2f7; 
+      border: 1px solid #dbe2ea;
+      padding: 10px; 
+      border-radius: 5px; 
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Conjugate Priors, Likelihoods and Predictive Distributions</h1>
+  <p>This interactive page illustrates the relationships between likelihood functions, conjugate priors, and predictive distributions for common one‑parameter models. Adjust the sliders and input boxes to see how the prior and data combine to form the posterior and how the posterior gives rise to a predictive distribution for future observations.</p>
+
+  <details>
+    <summary><strong>Read the Lesson: The Big Picture</strong></summary>
+    <div style="background-color: #eef2f7; border: 1px solid #dbe2ea; padding: 10px; border-radius: 5px; margin-top: 10px;">
+      <h4>Updating Beliefs with Evidence</h4>
+        <p>Imagine you're a detective solving a case. You start with an initial suspicion - a hunch about who the culprit might be. This is your <strong>Prior</strong> belief. It's your state of knowledge <i>before</i> you see the hard evidence.</p>
+        <p>Then, you find a clue: a footprint at the scene. This clue doesn't scream the culprit's name, but it makes certain suspects much more likely than others. This is the <strong>Likelihood</strong>. It's the voice of the data, telling you how plausible your evidence is under different assumptions.</p>
+        <p>You combine your initial hunch with the new evidence. Your suspicion shifts, becoming stronger and more refined. This new, updated belief is your <strong>Posterior</strong>. It's the logical conclusion you reach by blending your prior belief with the likelihood from the data.</p>
+
+      <h4>The Three Key Players (First Plot)</h4>
+        <p>In a perfect world, we would know the exact, 'ground truth' process that generates our data. For example, if we were studying the heights of men, we would know with absolute certainty that they follow a Normal distribution with a true mean of 178 cm and a true standard deviation of 7 cm. We could then make perfect predictions.</p>
+        <p>But in the real world, we <strong>never</strong> see this ground truth. All we get is the data. We might use our expert knowledge to assume that the heights are Normally distributed, but we don't know the true parameters. Is the mean 178 cm or 175 cm or 199 cm? Is the standard deviation 7 cm or 70 cm? This lack of knowledge about the true parameters is called <strong>epistemic uncertainty</strong>.</p>
+        <p>The Bayesian approach gives us a powerful way to manage this uncertainty. Instead of trying to find a single "correct" value for a parameter, we use probability distributions to represent our beliefs about it. This is why there are three curves on the first plot:</p>
+      <ul>
+        <li><strong style="color:red;">The Prior (Red Curve):</strong> This is your starting belief about the parameter (like the probability of a coin toss being heads). A wide curve means you're uncertain; a narrow, peaked curve means you have a strong initial belief.</li>
+        <li><strong style="color:green;">The Likelihood (Green Curve):</strong> This represents the evidence from your data. It 'pulls' your belief towards parameter values that best explain what you observed. The more data you have, the stronger this pull becomes.</li>
+        <li><strong style="color:blue;">The Posterior (Blue Curve):</strong> This is the result: a compromise between your prior and the likelihood. Notice how it settles somewhere between the red and green curves. As you add more data, the posterior will look more and more like the likelihood, as the evidence starts to outweigh your initial hunch.</li>
+      </ul>
+
+      <h4>The Predictive Distribution: Answering "What's Next?"</h4>
+      <p>The posterior tells you what you now believe about the <i>parameter</i>. But the real goal is often to predict the <i>future</i>. The <strong>Posterior Predictive Distribution</strong> (the second plot for each section) does exactly this.</p>
+      <p>It answers the question: "Given my updated beliefs, what is the range of outcomes I can expect for a new set of observations?"</p>
+      <p>Crucially, this distribution accounts for two kinds of uncertainty:</p>
+      <ol>
+        <li><strong>Inherent Randomness (Aleatoric Uncertainty):</strong> The world is messy. Even if we knew a coin was perfectly fair (p=0.5), we wouldn't expect exactly 5 heads in 10 flips every time.</li>
+        <li><strong>Parameter Uncertainty (Epistemic Uncertainty):</strong> We don't know the exact value of the parameter. Our posterior reflects this uncertainty. The predictive distribution averages over all possible parameter values, weighted by how plausible we think they are (according to the posterior).</li>
+      </ol>
+      <p>This makes the predictive distribution more honest and robust. It gives us a more realistic picture of what to expect next by accounting for what we know still don't know.</p>
+
+    </div>
+  </details>
+
+  <section id="beta-binomial-section">
+    <h2>Binomial data with a Beta conjugate prior (Beta-Binomial model)</h2>
+    <p>The binomial likelihood for a parameter $p$ combines with a Beta prior to yield a Beta posterior.  The predictive distribution for the number of successes in a future sample of size $m$ follows a <em>Beta‑Binomial</em> distribution.</p>
+
+    <details>
+      <summary><strong>View the Equations</strong></summary>
+      <div style="background-color: #f4f4f9; padding: 10px; border-radius: 5px; margin-top: 10px;">
+        <h4>1. Prior Distribution (Beta)</h4>
+        <p>The prior belief about the probability of success, $p$, is modeled by a Beta distribution.</p>
+        $$ p \sim \text{Beta}(\alpha, \beta) \quad \implies \quad f(p | \alpha, \beta) = \frac{p^{\alpha-1} (1-p)^{\beta-1}}{B(\alpha, \beta)} $$
+        
+        <h4>2. The Likelihood Function (Binomial)</h4>
+        <p>The full likelihood of observing $k$ successes in $n$ trials is given by the Binomial Probability Mass Function (PMF), but viewed as a function of the parameter $p$.</p>
+        $$ L(p|k, n) = \binom{n}{k} p^k (1-p)^{n-k} $$
+        <p>For a Bayesian update, the key insight is that we only care about how the likelihood's <em>shape</em> changes with respect to $p$. The term $\binom{n}{k}$ (which is $n!/(k!(n-k)!)$) does not contain $p$. It's a constant that scales the function but doesn't change where its peak is. We can therefore work with a simpler, <em>proportional</em> version of the likelihood, called the <strong>likelihood kernel</strong>.</p>
+        <p>This gives us the likelihood kernel:</p>
+        $$ L(p|k, n) \propto p^k (1-p)^{n-k} $$
+
+        <h4>3. Posterior Distribution (Beta)</h4>
+        <p>By multiplying the prior by the likelihood kernel, we get the kernel of the posterior distribution. Thanks to conjugacy, this resulting shape is recognizable as another Beta distribution.</p>
+        $$ p | k, n, \alpha, \beta \sim \text{Beta}(\alpha' = \alpha + k, \quad \beta' = \beta + n - k) $$
+
+        <h4>4. Posterior Predictive Distribution (Beta-Binomial)</h4>
+        <p>The predictive distribution for $k_{\text{new}}$ successes in $m$ future trials is the Beta-Binomial distribution.</p>
+        $$ k_{\text{new}} \sim \text{Beta-Binomial}(m, \alpha', \beta') $$
+      </div>
+    </details>
+
+    <div class="controls">
+      <label>Number of trials (n): <input type="number" id="bb-n" min="1" value="10"></label>
+      <label>Number of successes (k): <input type="number" id="bb-k" min="0" value="5"></label>
+      <label>Prior α: <input type="number" id="bb-alpha" min="0.1" step="0.1" value="2"></label>
+      <label>Prior β: <input type="number" id="bb-beta" min="0.1" step="0.1" value="2"></label>
+      <label>Predictive sample size (m): <input type="number" id="bb-m" min="1" value="10"></label>
+      <label style="margin-right:15px;">
+        <input type="checkbox" id="bb-lock-nk"> Lock n and k controls
+      </label>
+      <label style="margin-left:15px;">
+        <input type="checkbox" id="bb-lock-ab"> Lock α and β controls
+      </label>
+    </div>
+    <div id="bb-stats" class="stats"></div>
+    <div class="graph-container">
+      <canvas id="bb-param-canvas" width="960" height="600" style="width:480px;height:300px;"></canvas>
+      <canvas id="bb-pred-canvas" width="960" height="600" style="width:480px;height:300px;"></canvas>
+    </div>
+  </section>
+
+  <section id="exp-gamma-section">
+    <h2>Exponential data with a Gamma conjugate prior (Exponential-Gamma model)</h2>
+    <p>An exponential likelihood for the rate parameter $\lambda$ and a Gamma prior yield a Gamma posterior.  The posterior predictive distribution for a new waiting time $x$ is a <em>Lomax (Pareto type II)</em> distribution.</p>
+
+    <details>
+      <summary><strong>View the Equations</strong></summary>
+      <div style="background-color: #f4f4f9; padding: 10px; border-radius: 5px; margin-top: 10px;">
+        <h4>1. Prior Distribution (Gamma)</h4>
+        <p>The prior belief about the rate parameter, $\lambda$, is modeled by a Gamma distribution.</p>
+        $$ \lambda \sim \text{Gamma}(\alpha, \beta) \quad \implies \quad f(\lambda | \alpha, \beta) = \frac{\beta^\alpha}{\Gamma(\alpha)} \lambda^{\alpha-1} e^{-\beta\lambda} $$
+        
+        <h4>2. The Likelihood Function (Exponential)</h4>
+        <p>For $n$ observations $\mathbf{x} = \{x_1, \dots, x_n\}$, the full likelihood is the product of the individual Exponential Probability Density Functions (PDFs).</p>
+        $$ L(\lambda|\mathbf{x}) = \prod_{i=1}^n \lambda e^{-\lambda x_i} = \lambda^n e^{-\lambda \sum x_i} $$
+        <p>In this particular case, every term in the likelihood function already depends on the parameter $\lambda$. There are no constant multipliers to discard. Therefore, the full likelihood function is the same as the <strong>likelihood kernel</strong>. It contains all the necessary information about how the likelihood varies with $\lambda$.</p>
+
+        <h4>3. Posterior Distribution (Gamma)</h4>
+        <p>The posterior for $\lambda$ is a Gamma distribution with updated parameters:</p>
+        $$ \lambda | \mathbf{x}, \alpha, \beta \sim \text{Gamma}(\alpha' = \alpha + n, \quad \beta' = \beta + \sum x_i) $$
+
+        <h4>4. Posterior Predictive Distribution (Lomax)</h4>
+        <p>The distribution for a new observation $x_{\text{new}}$ is a Lomax (Pareto Type II) distribution:</p>
+        $$ x_{\text{new}} \sim \text{Lomax}(\alpha', \beta') $$
+        <p>The PDF for the Lomax distribution with shape parameter $\alpha'$ and scale parameter $\beta'$ is:</p>
+        $$ f(x) = \frac{\alpha' \, \beta'^{\alpha'}}{(x + \beta')^{\alpha' + 1}}, \qquad x \geq 0 $$
+        <p>For large values of $x$, the denominator dominates, so the PDF decays like $1/x^{\alpha'+1}$. <b>This is a power-law decay!</b></p>
+        <p style="font-weight: bold; color: #333;">Power-law decay is fundamentally slower than exponential decay.</p>
+        <p>The function $1/x^2$ (for $\alpha' = 1$) drops off much more slowly than $e^{-x}$. This slow decay is called a <strong>heavy tail</strong>: it means that the probability of seeing a very large $x$ is small, but much larger than what an Exponential model would predict!</p>
+        <p><b>Try it yourself:</b> Adjust the prior parameters ($\alpha$, $\beta$) or the observed data ($n$, $\sum x$) using the controls above. Then look at the predictive plot: If $\alpha$ is small (try values around 1–2), you’ll notice that the tail of the predictive distribution drops off <em>very slowly</em> for large $x$.</p> <p>Compare this with how the exponential likelihood or posterior distribution decays. Watch how, as you increase $\alpha'$, the tail gets thinner (the probability of very large $x$ shrinks). For large $x$, the Lomax predictive curve hugs the horizontal axis but never quite reaches zero, falling much more slowly than an exponential. That’s the power-law's heavy tail in action.</p>
+      </div>
+    </details>
+
+    <div class="controls">
+      <label>Number of observations (n): <input type="number" id="eg-n" min="1" value="5"></label>
+      <label>Sum of waiting times (Σx): <input type="number" id="eg-sum" min="0.0" step="0.1" value="3"></label>
+      <label>Prior α: <input type="number" id="eg-alpha" min="0.1" step="0.1" value="2"></label>
+      <label>Prior β: <input type="number" id="eg-beta" min="0.1" step="0.1" value="1"></label>
+      <div>
+        <label style="margin-right:15px;">
+          <input type="checkbox" id="eg-lock-nsum"> Lock n and Σx controls
+        </label>
+        <label>
+          <input type="checkbox" id="eg-lock-ab"> Lock α and β controls
+        </label>
+      </div>
+    </div>
+    <div id="eg-stats" class="stats"></div>
+    <div class="graph-container">
+      <canvas id="eg-param-canvas" width="960" height="600" style="width:480px;height:300px;"></canvas>
+      <canvas id="eg-pred-canvas" width="960" height="600" style="width:480px;height:300px;"></canvas>
+    </div>
+  </section>
+
+  <section id="poisson-gamma-section">
+    <h2>Poisson data with a Gamma conjugate prior (Poisson-Gamma model)</h2>
+    <p>A Poisson likelihood for the count parameter $\lambda$ combined with a Gamma prior leads to a Gamma posterior.  The posterior predictive distribution for a new count is a Negative Binomial distribution.</p>
+
+    <details>
+      <summary><strong>View the Equations</strong></summary>
+      <div style="background-color: #f4f4f9; padding: 10px; border-radius: 5px; margin-top: 10px;">
+        <h4>1. Prior Distribution (Gamma)</h4>
+        <p>The prior belief about the event rate, $\lambda$, is modeled by a Gamma distribution.</p>
+        $$ \lambda \sim \text{Gamma}(\alpha, \beta) \quad \implies \quad f(\lambda | \alpha, \beta) = \frac{\beta^\alpha}{\Gamma(\alpha)} \lambda^{\alpha-1} e^{-\beta\lambda} $$
+        
+        <h4>2. The Likelihood Function (Poisson)</h4>
+        <p>For $n$ observations $\mathbf{x} = \{x_1, \dots, x_n\}$, the full likelihood is the product of the individual Poisson PMFs, viewed as a function of the parameter $\lambda$.</p>
+        $$ L(\lambda|\mathbf{x}) = \prod_{i=1}^n \frac{\lambda^{x_i} e^{-\lambda}}{x_i!} = \frac{\lambda^{\sum x_i} e^{-n\lambda}}{\prod x_i!} $$
+        <p>Similar to the Binomial case, we can simplify this for our Bayesian update. The term in the denominator, $\prod x_i!$, is a constant because it does not depend on the parameter $\lambda$. By focusing only on the terms that involve $\lambda$, we derive the proportional <strong>likelihood kernel</strong>.</p>
+        <p>This gives us the likelihood kernel:</p>
+        $$ L(\lambda|\mathbf{x}) \propto \lambda^{\sum x_i} e^{-n\lambda} $$
+
+        <h4>3. Posterior Distribution (Gamma)</h4>
+        <p>The posterior for $\lambda$ is a Gamma distribution with updated parameters:</p>
+        $$ \lambda | \mathbf{x}, \alpha, \beta \sim \text{Gamma}(\alpha' = \alpha + \sum x_i, \quad \beta' = \beta + n) $$
+
+        <h4>4. Posterior Predictive Distribution (Negative Binomial)</h4>
+        <p>The distribution for a new count $x_{\text{new}}$ is a Negative Binomial distribution:</p>
+        $$ x_{\text{new}} \sim \text{Negative-Binomial}\left(r = \alpha', \quad p = \frac{\beta'}{\beta' + 1}\right) $$
+        <p>The negative binomial distribution helps us answer the question: what is the probability that we observe $x$ failures before achieving the $r$th success, when each trial has a probability $p$ of success? In other words, it gives the probability distribution for the number of failures before reaching $r$ successes in a sequence of independent success/failure (Bernoulli) trials.</p>
+        <p>The probability mass function (PMF) for this version is:</p>
+        $$ P(x) = \binom{x + r - 1}{x} (1-p)^r p^x, \quad x = 0, 1, 2, \ldots $$
+        <p>Another common formulation gives the probability that the $r$th success occurs on the $k$th trial:</p>
+        $$ P(k) = \binom{k-1}{r-1} p^r (1-p)^{k-r}, \quad k = r, r+1, r+2, \ldots $$
+        <p>The Negative Binomial can also be thought of as a “Poisson with extra uncertainty”: it has more spread than a Poisson with the same mean, which is called <b>overdispersion</b>. This means that extreme values (very high counts) are more probable under the predictive distribution than they would be under a Poisson model.</p>
+      </div>
+    </details>
+
+    <div class="controls">
+      <label>Number of observations (n): <input type="number" id="pg-n" min="1" value="5"></label>
+      <label>Sum of counts (Σx): <input type="number" id="pg-sum" min="0" value="8"></label>
+      <label>Prior α: <input type="number" id="pg-alpha" min="0.1" step="0.1" value="2"></label>
+      <label>Prior β: <input type="number" id="pg-beta" min="0.1" step="0.1" value="1"></label>
+      <div>
+        <label style="margin-right:15px;">
+          <input type="checkbox" id="pg-lock-nsum"> Lock n and Σx controls
+        </label>
+        <label>
+          <input type="checkbox" id="pg-lock-ab"> Lock α and β controls
+        </label>
+      </div>
+    </div>
+    <div id="pg-stats" class="stats"></div>
+    <div class="graph-container">
+      <canvas id="pg-param-canvas" width="960" height="600" style="width:480px;height:300px;"></canvas>
+      <canvas id="pg-pred-canvas" width="960" height="600" style="width:480px;height:300px;"></canvas>
+    </div>
+  </section>
+
+  <section id="normal-normal-section">
+    <h2>Normal data with a Normal conjugate prior (Normal-Normal model)</h2>
+    <p>For normally distributed observations with known variance, a Normal prior for the unknown mean yields a Normal posterior.  The posterior predictive distribution for a new observation is also Normal, with mean equal to the posterior mean and variance equal to the sum of the posterior variance and the observation variance.</p>
+
+    <details>
+      <summary><strong>View the Equations</strong></summary>
+      <div style="background-color: #f4f4f9; padding: 10px; border-radius: 5px; margin-top: 10px;">
+        <h4>1. Prior Distribution (Normal)</h4>
+        <p>The prior belief about the unknown mean, $\mu$, is modeled by a Normal distribution. The data variance $\sigma^2$ is assumed known, and the prior variance is $\sigma_0^2$:</p>
+        $$ \mu \sim \mathcal{N}(\mu_0, \sigma_0^2) $$
+        <p>Here, $\sigma_0^2$ is the prior variance. The corresponding precision (the reciprocal of the variance) is $\tau_0 = 1/\sigma_0^2$.</p>
+
+        <h4>2. The Likelihood Function (Normal)</h4>
+        <p>Recall that for a single Normal observation, $x$, the PDF as a function of $\mu$ is:</p>
+        $$ f(x|\mu) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left( -\frac{(x-\mu)^2}{2\sigma^2} \right) $$
+        <p>But if we observe $n$ independent samples, the sample mean $\bar{x}$ is normally distributed as:</p>
+        $$ \bar{x} \sim \mathcal{N}\left(\mu, \frac{\sigma^2}{n}\right) $$
+        <p>This means the likelihood for $\mu$ given $\bar{x}$ is:</p>
+        $$ L(\mu|\bar{x}) = \frac{1}{\sqrt{2\pi (\sigma^2 / n)}} \exp\left( -\frac{(\bar{x} - \mu)^2}{2 (\sigma^2 / n)} \right) $$
+        <p>The variance is divided by $n$ because the sample mean $\bar{x}$ averages out the random noise across $n$ observations, making it $n$ times less variable than a single data point. $\sigma^2 / n$ is also known as the <b>Standard Error</b>, which is more often written as $\sigma / \sqrt{n}$ (the Standard Deviation divided by the Square Root of the Number of Observations). </p>
+        <p>As $n$ increases, the likelihood for $\mu$ becomes more concentrated around the mean of our sample, $\bar{x}$, reflecting our increased certainty about the true mean.</p>
+        <p>To find the posterior, we only need the parts of this function that depend on our parameter, $\mu$. The entire leading fraction, $\frac{1}{\sqrt{2\pi (\sigma^2 / n)}}$, is the normalizing constant of the Normal PDF and does not contain $\mu$. Thus, we can discard it and work instead with the proportional <strong>likelihood kernel</strong>:</p>
+        $$ L(\mu|\bar{x}) \propto \exp\left( -\frac{n(\bar{x} - \mu)^2}{2\sigma^2} \right) $$
+
+        <h4>3. Posterior Distribution (Normal)</h4>
+        <p>The posterior for $\mu$ is a Normal distribution, $\mu | \mathbf{x} \sim \mathcal{N}(\mu_{\text{post}}, \sigma_{\text{post}}^2)$, with updated parameters:</p>
+
+        <div style="text-align:center; font-weight:bold;">Posterior Precision</div>
+        $$ \tau_{\text{post}} = \frac{1}{\sigma_{\text{post}}^2} = \frac{1}{\sigma_0^2} + \frac{n}{\sigma^2} $$
+        <br>
+        <div style="text-align:center; font-weight:bold;">Posterior Mean</div>
+        $$ \mu_{\text{post}} = \sigma_{\text{post}}^2 \left( \frac{\mu_0}{\sigma_0^2} + \frac{n\bar{x}}{\sigma^2} \right) $$
+
+        <p>Here, $\sigma_{\text{post}}^2$ is the posterior variance, and its precision is $\tau_{\text{post}} = 1/\sigma_{\text{post}}^2$.</p>
+
+        <h4>4. Posterior Predictive Distribution (Normal)</h4>
+        <p>The distribution for a new observation $x_{\text{new}}$ is Normal, with its variance being the sum of the posterior variance and the data variance.</p>
+        $$ x_{\text{new}} \sim \mathcal{N}(\mu_{\text{post}}, \sigma_{\text{post}}^2 + \sigma^2) $$
+      </div>
+    </details>
+
+    <div class="controls">
+      <label>Number of observations (n): <input type="number" id="nn-n" min="1" value="5"></label>
+      <label>Sample mean (x̄): <input type="number" id="nn-mean" step="0.1" value="0.5"></label>
+      <label>Known σ: <input type="number" id="nn-sigma" min="0.1" step="0.1" value="1"></label>
+      <label>Prior μ₀: <input type="number" id="nn-mu0" step="0.1" value="0"></label>
+      <label>Prior σ₀ (std dev): <input type="number" id="nn-tau" min="0.1" step="0.1" value="1"></label>
+    </div>
+    <div id="nn-stats" class="stats"></div>
+    <div class="graph-container">
+      <canvas id="nn-param-canvas" width="960" height="600" style="width:480px;height:300px;"></canvas>
+      <canvas id="nn-pred-canvas" width="960" height="600" style="width:480px;height:300px;"></canvas>
+    </div>
+  </section>
+
+  <script>
+    // Utility functions
+    // Lanczos approximation for the gamma function
+      // Step 1: Shift z to simplify indexing
+      // Step 2: Start with an initial constant, then sum the terms using the coefficients
+      // Step 3: Compute t as an offset based on z and the number of coefficients
+      // Step 4: Compute the actual approximation
+    function gamma(z) {
+      const p = [
+        676.5203681218851,
+        -1259.1392167224028,
+        771.32342877765313,
+        -176.61502916214059,
+        12.507343278686905,
+        -0.13857109526572012,
+        9.9843695780195716e-6,
+        1.5056327351493116e-7
+      ];
+      if(z < 0.5) {
+        // Reflection formula for Gamma
+        return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+      }
+      z -= 1;
+      let x = 0.99999999999980993;
+      for(let i = 0; i < p.length; i++) {
+        x += p[i] / (z + i + 1);
+      }
+      let t = z + p.length - 0.5;
+      return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+    }
+    function betaFunc(a, b) {
+      return gamma(a) * gamma(b) / gamma(a + b);
+    }
+
+    // Beta PDF
+    function betaPdf(x, a, b) {
+      if(x < 0 || x > 1) return 0;
+      return Math.pow(x, a - 1) * Math.pow(1 - x, b - 1) / betaFunc(a, b);
+    }
+
+    // Beta-Binomial PMF
+    function betaBinomialPmf(k, m, a, b) {
+      if(k < 0 || k > m) return 0;
+      return comb(m, k) * betaFunc(k + a, m - k + b) / betaFunc(a, b);
+    }
+
+    // Combination (n choose k)
+    function comb(n, k) {
+      if(k < 0 || k > n) return 0;
+      k = Math.min(k, n - k);
+      let num = 1, den = 1;
+      for(let i = 0; i < k; i++) {
+        num *= (n - i);
+        den *= (i + 1);
+      }
+      return num / den;
+    }
+
+    // Gamma PDF (parameterization by shape a and rate b)
+    function gammaPdf(x, a, b) {
+      if(x < 0) return 0;
+      return Math.pow(b, a) * Math.pow(x, a - 1) * Math.exp(-b * x) / gamma(a);
+    }
+
+    // Exponential likelihood as Gamma PDF: shape = n+1, rate = sum of data
+    function expLikelihoodPdf(lambda, n, sumX) {
+      if(lambda < 0) return 0;
+      return Math.pow(lambda, n) * Math.exp(-lambda * sumX);
+    }
+
+    // Pareto type II (Lomax) predictive PDF for Exponential-Gamma model
+    function paretoPdf(x, shape, scale) {
+      // shape > 0, scale > 0
+      return shape * Math.pow(scale, shape) / Math.pow(scale + x, shape + 1);
+    }
+
+    // Poisson likelihood as Gamma PDF: shape = sum + 1, rate = n
+    function poissonLikelihoodPdf(lambda, sumX, n) {
+      return Math.pow(lambda, sumX) * Math.exp(-n * lambda);
+    }
+
+    // Negative Binomial PMF for predictive distribution (Poisson-Gamma)
+    function negBinomialPmf(k, r, p) {
+      // r = shape (positive real), p = probability of success (0 < p < 1)
+      return combFrac(k + r - 1, k) * Math.pow(1 - p, r) * Math.pow(p, k);
+    }
+
+    // Combination for real r: (k+r-1 choose k) = Γ(k+r)/(Γ(r)Γ(k+1))
+    function combFrac(n, k) {
+      return gamma(n + 1) / (gamma(k + 1) * gamma(n - k + 1));
+    }
+
+    // Poisson PMF (unused currently but kept for completeness)
+    function poissonPmf(k, lambda) {
+      return Math.pow(lambda, k) * Math.exp(-lambda) / gamma(k + 1);
+    }
+
+    // Normal PDF
+    function normalPdf(x, mu, sigma) {
+      return (1 / (Math.sqrt(2 * Math.PI) * sigma)) * Math.exp(-Math.pow(x - mu, 2) / (2 * sigma * sigma));
+    }
+
+    // Normal likelihood for mean μ: Normal(meanSample, σ/√n)
+    function normalLikelihoodPdf(mu, mean, sigma, n) {
+      let sigmaMu = sigma / Math.sqrt(n);
+      return normalPdf(mu, mean, sigmaMu);
+    }
+
+    // Set fixed display size for coordinate math
+    // Don't touch this part it's cursed af and breaks everything
+    const displayWidth = 480;
+    const displayHeight = 300;
+
+    // Draw axes for continuous distributions
+    function drawAxes(ctx, width, height, xMin, xMax, yMax) {
+      // Always use displayWidth/displayHeight for coordinate math
+      width = displayWidth;
+      height = displayHeight;
+      ctx.strokeStyle = "#444";
+      ctx.lineWidth = 1;
+      // x-axis
+      ctx.beginPath();
+      ctx.moveTo(40, height - 30);
+      ctx.lineTo(width - 10, height - 30);
+      ctx.stroke();
+      // y-axis
+      ctx.beginPath();
+      ctx.moveTo(40, height - 30);
+      ctx.lineTo(40, 10);
+      ctx.stroke();
+
+      // x-axis ticks and labels
+      let ticks = 5;
+      for(let i = 0; i <= ticks; i++) {
+        let x = 40 + (width - 50) * i / ticks;
+        let val = xMin + (xMax - xMin) * i / ticks;
+        ctx.beginPath();
+        ctx.moveTo(x, height - 30);
+        ctx.lineTo(x, height - 27);
+        ctx.stroke();
+        ctx.fillText(val.toFixed(2), x - 10, height - 10);
+      }
+      // y-axis ticks and labels
+      for(let i = 0; i <= ticks; i++) {
+        let y = height - 30 - (height - 40) * i / ticks;
+        let val = yMax * i / ticks;
+        ctx.beginPath();
+        ctx.moveTo(40, y);
+        ctx.lineTo(37, y);
+        ctx.stroke();
+        ctx.fillText(val.toFixed(2), 5, y + 4);
+      }
+    }
+
+    // Draw bar chart axes for discrete distributions
+    function drawAxesDiscrete(ctx, width, height, xMin, xMax, yMax) {
+      // Always use displayWidth/displayHeight for coordinate math
+      width = displayWidth;
+      height = displayHeight;
+      ctx.strokeStyle = "#444";
+      ctx.lineWidth = 1;
+      // x-axis
+      ctx.beginPath();
+      ctx.moveTo(40, height - 30);
+      ctx.lineTo(width - 10, height - 30);
+      ctx.stroke();
+      // y-axis
+      ctx.beginPath();
+      ctx.moveTo(40, height - 30);
+      ctx.lineTo(40, 10);
+      ctx.stroke();
+      // y-axis ticks
+      let ticks = 5;
+      for(let i = 0; i <= ticks; i++) {
+        let y = height - 30 - (height - 40) * i / ticks;
+        let val = yMax * i / ticks;
+        ctx.beginPath();
+        ctx.moveTo(40, y);
+        ctx.lineTo(37, y);
+        ctx.stroke();
+        ctx.fillText(val.toFixed(2), 5, y + 4);
+      }
+      // x-axis ticks: integers
+      for(let i = xMin; i <= xMax; i++) {
+        let x = 40 + (width - 50) * (i - xMin) / (xMax - xMin);
+        ctx.beginPath();
+        ctx.moveTo(x, height - 30);
+        ctx.lineTo(x, height - 27);
+        ctx.stroke();
+        ctx.fillText(i.toString(), x - 3, height - 10);
+      }
+    }
+
+    // Beta-Binomial update
+    function updateBetaBinomial() {
+      let n = parseFloat(document.getElementById('bb-n').value);
+      let k = parseFloat(document.getElementById('bb-k').value);
+      let a = parseFloat(document.getElementById('bb-alpha').value);
+      let b = parseFloat(document.getElementById('bb-beta').value);
+      let m = parseFloat(document.getElementById('bb-m').value);
+
+      if(k > n) k = n;
+      if(k < 0) k = 0;
+
+      // Parameter distributions
+      const canvas = document.getElementById('bb-param-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(2, 2);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Compute PDF values
+      let xs = [];
+      let priorVals = [];
+      let likeVals = [];
+      let postVals = [];
+      let steps = 200;
+      for(let i = 0; i <= steps; i++) {
+        let x = i / steps;
+        xs.push(x);
+        let prior = betaPdf(x, a, b);
+        let like = betaPdf(x, k + 1, n - k + 1); // normalized binomial likelihood
+        let post = betaPdf(x, a + k, b + n - k);
+        priorVals.push(prior);
+        likeVals.push(like);
+        postVals.push(post);
+      }
+      // Compute yMax using 99.5th percentile after filtering non-finite/non-positive values
+      let allY = priorVals.concat(likeVals, postVals).filter(y => Number.isFinite(y) && y > 0);
+      allY.sort(function(a, b) { return a - b; });
+      let yMax = 1;
+      if (allY.length > 0) {
+        let idx = Math.floor(0.995 * allY.length);
+        if (idx >= allY.length) idx = allY.length - 1;
+        yMax = allY[idx];
+      }
+      // Draw axes
+      drawAxes(ctx, displayWidth, displayHeight, 0, 1, yMax * 1.1);
+
+      // Draw curves (using displayWidth/displayHeight for coordinate math)
+      ctx.lineWidth = 2;
+      // prior (red)
+      ctx.beginPath();
+      ctx.strokeStyle = 'red';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * xs[i];
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (priorVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      // likelihood (green)
+      ctx.beginPath();
+      ctx.strokeStyle = 'green';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * xs[i];
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (likeVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      // posterior (blue)
+      ctx.beginPath();
+      ctx.strokeStyle = 'blue';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * xs[i];
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (postVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+
+      // Legend (draw at displayWidth, displayHeight positions)
+      ctx.fillStyle = 'black';
+      ctx.fillText('Prior (Beta)', displayWidth - 150, 20);
+      ctx.fillStyle = 'red'; ctx.fillRect(displayWidth - 180, 13, 12, 6);
+      ctx.fillStyle = 'black'; ctx.fillText('Likelihood', displayWidth - 150, 35);
+      ctx.fillStyle = 'green'; ctx.fillRect(displayWidth - 180, 28, 12, 6);
+      ctx.fillStyle = 'black'; ctx.fillText('Posterior', displayWidth - 150, 50);
+      ctx.fillStyle = 'blue'; ctx.fillRect(displayWidth - 180, 43, 12, 6);
+
+      // Beta-Binomial: compute and display table of statistics
+      // Format numbers: show up to 3 decimals, no trailing zeros, use scientific notation for small/large numbers
+      function formatNum(x) {
+        if (Math.abs(x - Math.round(x)) < 1e-10) return Math.round(x).toString();
+        if (Math.abs(x * 2 - Math.round(x * 2)) < 1e-10) return (Math.round(x * 2) / 2).toString();
+        if (Math.abs(x) >= 1e4 || (Math.abs(x) < 1e-3 && x !== 0)) return x.toExponential(2);
+        return parseFloat(x.toFixed(3)).toString();
+      }
+      let mean_prior = a / (a + b);
+      let var_prior = (a * b) / ((a + b) ** 2 * (a + b + 1));
+      let mean_like = (k + 1) / (n + 2);
+      let var_like = ((k + 1) * (n - k + 1)) / ((n + 2) ** 2 * (n + 3));
+      let mean_post = (a + k) / (a + b + n);
+      let var_post = ((a + k) * (b + n - k)) / (((a + b + n) ** 2) * (a + b + n + 1));
+      let mean_pred = m * mean_post;
+      let var_pred = m * mean_post * (1 - mean_post) * (a + b + n + m) / (a + b + n + 1);
+      let mStr = formatNum(m);
+
+      // Median calculations
+      // Beta median: If a > 1 && b > 1, median = (a - 1/3) / (a + b - 2/3); else median = mean_prior.
+      let median_prior = (a > 1 && b > 1) ? ((a - 1/3) / (a + b - 2/3)) : mean_prior;
+      // Binomial likelihood median: (k + 0.5) / (n + 1)
+      let median_like = (k + 0.5) / (n + 1);
+      // Beta posterior median: If (a + k > 1 && b + n - k > 1), median = (a + k - 1/3) / (a + b + n - 2/3); else mean_post.
+      let median_post = ((a + k > 1) && (b + n - k > 1)) ? ((a + k - 1/3) / (a + b + n - 2/3)) : mean_post;
+      // Beta-Binomial predictive median: m * median_post (approximate)
+      let median_pred = m * median_post;
+
+      // Peak density calculations:
+      // Prior (Beta)
+      let mode_prior;
+      if (a > 1 && b > 1) {
+        mode_prior = (a - 1) / (a + b - 2);
+      } else {
+        mode_prior = mean_prior;
+      }
+      let peak_prior = betaPdf(mode_prior, a, b);
+      // Likelihood (Beta kernel)
+      let mode_like = (k + 0.5) / (n + 1);
+      let peak_like = betaPdf(mode_like, k + 1, n - k + 1);
+      // Posterior (Beta)
+      let ap = a + k, bp = b + n - k;
+      let mode_post;
+      if (ap > 1 && bp > 1) {
+        mode_post = (ap - 1) / (ap + bp - 2);
+      } else {
+        mode_post = mean_post;
+      }
+      let peak_post = betaPdf(mode_post, ap, bp);
+      // Predictive (Beta-Binomial)
+      let peak_pred = 0;
+      let mode_pred = 0;
+      for (let j = 0; j <= m; j++) {
+        let p = betaBinomialPmf(j, m, ap, bp);
+        if (p > peak_pred) {
+          peak_pred = p;
+          mode_pred = j;
+        }
+      }
+
+      document.getElementById('bb-stats').innerHTML = `
+        <table>
+          <tr><th></th><th>Mean</th><th>Variance</th><th>Median</th><th>Peak Density</th></tr>
+          <tr><td>Prior (Beta)</td><td>${formatNum(mean_prior)}</td><td>${formatNum(var_prior)}</td><td>${formatNum(median_prior)}</td><td>${formatNum(peak_prior)}</td></tr>
+          <tr><td>Likelihood</td><td>${formatNum(mean_like)}</td><td>${formatNum(var_like)}</td><td>${formatNum(median_like)}</td><td>${formatNum(peak_like)}</td></tr>
+          <tr><td>Posterior (Beta)</td><td>${formatNum(mean_post)}</td><td>${formatNum(var_post)}</td><td>${formatNum(median_post)}</td><td>${formatNum(peak_post)}</td></tr>
+          <tr><td>Predictive (Beta-Binomial, m=${mStr})</td><td>${formatNum(mean_pred)}</td><td>${formatNum(var_pred)}</td><td>${formatNum(median_pred)}</td><td>${formatNum(peak_pred)}</td></tr>
+        </table>
+      `;
+      // end of code for table
+
+      // Predictive distribution (Beta-Binomial)
+      const canvasPred = document.getElementById('bb-pred-canvas');
+      const ctx2 = canvasPred.getContext('2d');
+      ctx2.setTransform(1, 0, 0, 1, 0, 0);
+      ctx2.scale(2, 2);
+      ctx2.clearRect(0, 0, canvasPred.width, canvasPred.height);
+
+      let probs = [];
+      let yMax2 = 0;
+      for(let j = 0; j <= m; j++) {
+        let p = betaBinomialPmf(j, m, a + k, b + n - k);
+        probs.push(p);
+        if(p > yMax2) yMax2 = p;
+      }
+      drawAxesDiscrete(ctx2, displayWidth, displayHeight, 0, m, yMax2 * 1.1);
+      // Bars (use displayWidth/displayHeight for coordinate math)
+      ctx2.fillStyle = '#4444aa';
+      for(let j = 0; j <= m; j++) {
+        let barWidth = (displayWidth - 50) / (m + 1);
+        let barX = 40 + barWidth * j;
+        let barHeight = (displayHeight - 40) * (probs[j] / (yMax2 * 1.1));
+        ctx2.fillRect(barX, displayHeight - 30 - barHeight, barWidth * 0.8, barHeight);
+      }
+      ctx2.fillStyle = 'black';
+      ctx2.fillText('Predictive distribution (Beta-Binomial)', displayWidth / 2 - 160, 15);
+    }
+
+    // Exponential-Gamma update
+    function updateExpGamma() {
+      let n = parseFloat(document.getElementById('eg-n').value);
+      let sumX = parseFloat(document.getElementById('eg-sum').value);
+      let a = parseFloat(document.getElementById('eg-alpha').value);
+      let b = parseFloat(document.getElementById('eg-beta').value);
+
+      // Parameter distributions canvas
+      const canvas = document.getElementById('eg-param-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(2, 2);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Exponential-Gamma: compute and display table of statistics
+      // Format numbers for table
+      function formatNum(x) {
+        if (typeof x === 'string') return x;
+        if (Math.abs(x - Math.round(x)) < 1e-10) return Math.round(x).toString();
+        if (Math.abs(x * 2 - Math.round(x * 2)) < 1e-10) return (Math.round(x * 2) / 2).toString();
+        if (Math.abs(x) >= 1e4 || (Math.abs(x) < 0.001 && x !== 0)) return x.toExponential(3);
+        return parseFloat(x.toFixed(3)).toString();
+      }
+      // Means and variances
+      let mean_prior = a / b;
+      let var_prior = a / (b * b);
+      let mean_like = (n + 1) / sumX;
+      let var_like = (n + 1) / (sumX * sumX);
+      let mean_post = (a + n) / (b + sumX);
+      let var_post = (a + n) / ((b + sumX) * (b + sumX));
+      let pred_mean = (a + n) > 1 ? (b + sumX) / (a + n - 1) : 'undefined';
+      let pred_var = (a + n) > 2 ? Math.pow(b + sumX, 2) / (Math.pow(a + n - 1, 2) * (a + n - 2)) : 'undefined';
+
+      // Median calculations
+      // Gamma median: If a > 1, median = (a - 1/3) / b; else mean_prior.
+      let median_prior = (a > 1) ? ((a - 1/3) / b) : mean_prior;
+      // Gamma likelihood median: If n + 1 > 1, median = (n + 1 - 1/3) / sumX; else mean_like.
+      let median_like = ((n + 1) > 1) ? ((n + 1 - 1/3) / sumX) : mean_like;
+      // Gamma posterior median: If (a + n > 1), median = (a + n - 1/3) / (b + sumX); else mean_post.
+      let median_post = ((a + n) > 1) ? ((a + n - 1/3) / (b + sumX)) : mean_post;
+      // Lomax median: (b + sumX) * (Math.pow(2, 1 / (a + n)) - 1) (only if a + n > 0)
+      let median_pred = (a + n > 0) ? ((b + sumX) * (Math.pow(2, 1 / (a + n)) - 1)) : 'undefined';
+
+      // Peak density calculations for each row
+      // 1. Prior (Gamma): mode = (a-1)/b if a > 1, else mean_prior
+      let mode_prior = (a > 1) ? ((a - 1) / b) : mean_prior;
+      let peak_prior = gammaPdf(mode_prior, a, b);
+      // 2. Likelihood (Gamma kernel): mode = (n+1-1)/sumX if n+1 > 1, else mean_like
+      let mode_like = ((n + 1) > 1) ? ((n + 1 - 1) / sumX) : mean_like;
+      let peak_like = gammaPdf(mode_like, n + 1, sumX);
+      // 3. Posterior (Gamma): mode = (a+n-1)/(b+sumX) if a+n > 1, else mean_post
+      let mode_post = ((a + n) > 1) ? ((a + n - 1) / (b + sumX)) : mean_post;
+      let peak_post = gammaPdf(mode_post, a + n, b + sumX);
+      // 4. Predictive (Lomax): mode always 0, peak = paretoPdf(0, a+n, b+sumX)
+      let peak_pred = paretoPdf(0, a + n, b + sumX);
+
+      document.getElementById('eg-stats').innerHTML = `
+        <table>
+          <tr><th></th><th>Mean</th><th>Variance</th><th>Median</th><th>Peak Density</th></tr>
+          <tr><td>Prior (Gamma)</td><td>${formatNum(mean_prior)}</td><td>${formatNum(var_prior)}</td><td>${formatNum(median_prior)}</td><td>${formatNum(peak_prior)}</td></tr>
+          <tr><td>Likelihood (Gamma kernel)</td><td>${formatNum(mean_like)}</td><td>${formatNum(var_like)}</td><td>${formatNum(median_like)}</td><td>${formatNum(peak_like)}</td></tr>
+          <tr><td>Posterior (Gamma)</td><td>${formatNum(mean_post)}</td><td>${formatNum(var_post)}</td><td>${formatNum(median_post)}</td><td>${formatNum(peak_post)}</td></tr>
+          <tr><td>Predictive (Lomax)</td><td>${formatNum(pred_mean)}</td><td>${formatNum(pred_var)}</td><td>${formatNum(median_pred)}</td><td>${formatNum(peak_pred)}</td></tr>
+        </table>
+      `;
+      // end of code for table
+
+      // define ranges for λ
+      let posteriorShape = a + n;
+      let posteriorRate  = b + sumX;
+      let meanPost = posteriorShape / posteriorRate;
+      let lambdaMax = meanPost * 4; // range up to 4 times posterior mean
+      if(lambdaMax < 5) lambdaMax = 5;
+
+      let steps = 200;
+      let xs = [];
+      let priorVals = [];
+      let likeVals = [];
+      let postVals = [];
+      let yMax = 0;
+      for(let i = 0; i <= steps; i++) {
+        let lam = i / steps * lambdaMax;
+        xs.push(lam);
+        let prior = gammaPdf(lam, a, b);
+        let like = gammaPdf(lam, n + 1, sumX); // normalized exponential likelihood
+        let post  = gammaPdf(lam, posteriorShape, posteriorRate);
+        priorVals.push(prior);
+        likeVals.push(like);
+        postVals.push(post);
+        yMax = Math.max(yMax, prior, like, post);
+      }
+      drawAxes(ctx, displayWidth, displayHeight, 0, lambdaMax, yMax * 1.1);
+      // curves
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.strokeStyle = 'red';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * (xs[i] / lambdaMax);
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (priorVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.strokeStyle = 'green';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * (xs[i] / lambdaMax);
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (likeVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.strokeStyle = 'blue';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * (xs[i] / lambdaMax);
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (postVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      // legend
+      ctx.fillStyle = 'black';
+      ctx.fillText('Prior (Gamma)', displayWidth - 160, 20);
+      ctx.fillStyle = 'red'; ctx.fillRect(displayWidth - 190, 13, 12, 6);
+      ctx.fillStyle = 'black';
+      ctx.fillText('Likelihood', displayWidth - 160, 35);
+      ctx.fillStyle = 'green'; ctx.fillRect(displayWidth - 190, 28, 12, 6);
+      ctx.fillStyle = 'black';
+      ctx.fillText('Posterior', displayWidth - 160, 50);
+      ctx.fillStyle = 'blue'; ctx.fillRect(displayWidth - 190, 43, 12, 6);
+
+      // Predictive distribution (Pareto type II)
+      const canvas2 = document.getElementById('eg-pred-canvas');
+      const ctx2 = canvas2.getContext('2d');
+      ctx2.setTransform(1, 0, 0, 1, 0, 0);
+      ctx2.scale(2, 2);
+      ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+
+      let shape = posteriorShape;
+      let scale = posteriorRate;
+      // compute range for x
+      let predMean = (scale) / (shape - 1);
+      let xMax = predMean * 4;
+      if(shape <= 1) {
+        xMax = scale * 4;
+      }
+      if(xMax < 5) xMax = 5;
+      let ys = [];
+      let yMaxPred = 0;
+      let xsPred = [];
+      steps = 200;
+      for(let i = 0; i <= steps; i++) {
+        let xVal = i / steps * xMax;
+        xsPred.push(xVal);
+        let pdfVal = paretoPdf(xVal, shape, scale);
+        ys.push(pdfVal);
+        yMaxPred = Math.max(yMaxPred, pdfVal);
+      }
+      drawAxes(ctx2, displayWidth, displayHeight, 0, xMax, yMaxPred * 1.1);
+      // draw predictive
+      ctx2.lineWidth = 2;
+      ctx2.beginPath();
+      ctx2.strokeStyle = '#994499';
+      for(let i = 0; i < xsPred.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * (xsPred[i] / xMax);
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (ys[i] / (yMaxPred * 1.1));
+        if(i === 0) ctx2.moveTo(xPixel, yPixel); else ctx2.lineTo(xPixel, yPixel);
+      }
+      ctx2.stroke();
+      ctx2.fillStyle = 'black';
+      ctx2.fillText('Predictive distribution (Pareto type II)', displayWidth/2 - 180, 20);
+    }
+
+    // Poisson-Gamma update
+    function updatePoissonGamma() {
+      let n = parseFloat(document.getElementById('pg-n').value);
+      let sumX = parseFloat(document.getElementById('pg-sum').value);
+      let a = parseFloat(document.getElementById('pg-alpha').value);
+      let b = parseFloat(document.getElementById('pg-beta').value);
+
+      const canvas = document.getElementById('pg-param-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(2, 2);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Poisson-Gamma: compute and display table of statistics
+      function formatNum(x) {
+        if (typeof x === 'string') return x;
+        if (Math.abs(x - Math.round(x)) < 1e-10) return Math.round(x).toString();
+        if (Math.abs(x * 2 - Math.round(x * 2)) < 1e-10) return (Math.round(x * 2) / 2).toString();
+        if (Math.abs(x) >= 1e4 || (Math.abs(x) < 0.001 && x !== 0)) return x.toExponential(3);
+        return parseFloat(x.toFixed(3)).toString();
+      }
+      let mean_prior = a / b;
+      let var_prior = a / (b * b);
+      let mean_like = (sumX + 1) / n;
+      let var_like = (sumX + 1) / (n * n);
+      let mean_post = (a + sumX) / (b + n);
+      let var_post = (a + sumX) / ((b + n) * (b + n));
+      let pred_mean = mean_post;
+      let pred_var = mean_post * (1 + 1 / (b + n));
+      // Median calculations
+      // Gamma median: If a > 1, median = (a - 1/3) / b; else mean_prior. 
+      // Btw this is a complete approximation and I have no idea why it works but it works best when a > 2, below that it kind of has a non-trivial % error.
+      let median_prior = (a > 1) ? ((a - 1/3) / b) : mean_prior;
+      // Gamma likelihood median: If sumX + 1 > 1, median = (sumX + 1 - 1/3) / n; else mean_like.
+      let median_like = ((sumX + 1) > 1) ? ((sumX + 1 - 1/3) / n) : mean_like;
+      // Gamma posterior median: If (a + sumX > 1), median = (a + sumX - 1/3) / (b + n); else mean_post.
+      let median_post = ((a + sumX) > 1) ? ((a + sumX - 1/3) / (b + n)) : mean_post;
+      // Neg. Binomial median: Math.floor(mean_post) (as a simple approximation)
+      let median_pred = Math.floor(mean_post);
+
+      // Peak density calculations:
+      // Prior (Gamma): mode = (a-1)/b if a > 1, else mean_prior; peak = gammaPdf(mode_prior, a, b)
+      let mode_prior = (a > 1) ? ((a - 1) / b) : mean_prior;
+      let peak_prior = gammaPdf(mode_prior, a, b);
+      // Likelihood (Gamma kernel): mode = (sumX+1-1)/n if sumX+1 > 1, else mean_like
+      let mode_like = ((sumX + 1) > 1) ? ((sumX + 1 - 1) / n) : mean_like;
+      let peak_like = gammaPdf(mode_like, sumX + 1, n);
+      // Posterior (Gamma): mode = (a+sumX-1)/(b+n) if a+sumX > 1, else mean_post
+      let ap = a + sumX;
+      let bp = b + n;
+      let mode_post = (ap > 1) ? ((ap - 1) / bp) : mean_post;
+      let peak_post = gammaPdf(mode_post, ap, bp);
+      // Predictive (Negative Binomial): find integer k in 0...maxK (where PMF > 1e-5 or up to 40) that maximizes negBinomialPmf(k, r, p)
+      let r = ap;
+      let p_nb = 1 / (bp + 1); // p = 1/(β + n + 1)
+      let peak_pred = 0;
+      let mode_pred = 0;
+      let maxK_pred = 0;
+      for (let k = 0; k < 40; k++) {
+        let prob = negBinomialPmf(k, r, p_nb);
+        if (prob > peak_pred) {
+          peak_pred = prob;
+          mode_pred = k;
+        }
+        if (prob < 1e-5 && k > 10) {
+          maxK_pred = k;
+          break;
+        }
+        maxK_pred = k;
+      }
+
+      document.getElementById('pg-stats').innerHTML = `
+        <table>
+          <tr><th></th><th>Mean</th><th>Variance</th><th>Median</th><th>Peak Density</th></tr>
+          <tr><td>Prior (Gamma)</td><td>${formatNum(mean_prior)}</td><td>${formatNum(var_prior)}</td><td>${formatNum(median_prior)}</td><td>${formatNum(peak_prior)}</td></tr>
+          <tr><td>Likelihood</td><td>${formatNum(mean_like)}</td><td>${formatNum(var_like)}</td><td>${formatNum(median_like)}</td><td>${formatNum(peak_like)}</td></tr>
+          <tr><td>Posterior (Gamma)</td><td>${formatNum(mean_post)}</td><td>${formatNum(var_post)}</td><td>${formatNum(median_post)}</td><td>${formatNum(peak_post)}</td></tr>
+          <tr><td>Predictive (Neg. Binomial)</td><td>${formatNum(pred_mean)}</td><td>${formatNum(pred_var)}</td><td>${formatNum(median_pred)}</td><td>${formatNum(peak_pred)}</td></tr>
+        </table>
+      `;
+      // end of code for table
+
+      let posteriorShape = a + sumX;
+      let posteriorRate  = b + n;
+      let meanPost = posteriorShape / posteriorRate;
+      let lambdaMax = meanPost * 4;
+      if(lambdaMax < 5) lambdaMax = 5;
+
+      let steps = 200;
+      let xs = [];
+      let priorVals = [];
+      let likeVals = [];
+      let postVals = [];
+      let yMax = 0;
+      for(let i = 0; i <= steps; i++) {
+        let lam = i / steps * lambdaMax;
+        xs.push(lam);
+        let prior = gammaPdf(lam, a, b);
+        let like  = gammaPdf(lam, sumX + 1, n); // Poisson likelihood
+        let post  = gammaPdf(lam, posteriorShape, posteriorRate);
+        priorVals.push(prior);
+        likeVals.push(like);
+        postVals.push(post);
+        yMax = Math.max(yMax, prior, like, post);
+      }
+      drawAxes(ctx, displayWidth, displayHeight, 0, lambdaMax, yMax * 1.1);
+      // curves
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.strokeStyle = 'red';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * (xs[i] / lambdaMax);
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (priorVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.strokeStyle = 'green';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * (xs[i] / lambdaMax);
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (likeVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.strokeStyle = 'blue';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * (xs[i] / lambdaMax);
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (postVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      // legend
+      ctx.fillStyle = 'black';
+      ctx.fillText('Prior (Gamma)', displayWidth - 160, 20);
+      ctx.fillStyle = 'red'; ctx.fillRect(displayWidth - 190, 13, 12, 6);
+      ctx.fillStyle = 'black';
+      ctx.fillText('Likelihood', displayWidth - 160, 35);
+      ctx.fillStyle = 'green'; ctx.fillRect(displayWidth - 190, 28, 12, 6);
+      ctx.fillStyle = 'black';
+      ctx.fillText('Posterior', displayWidth - 160, 50);
+      ctx.fillStyle = 'blue'; ctx.fillRect(displayWidth - 190, 43, 12, 6);
+
+      // Predictive distribution (Negative Binomial)
+      const canvas2 = document.getElementById('pg-pred-canvas');
+      const ctx2 = canvas2.getContext('2d');
+      ctx2.setTransform(1, 0, 0, 1, 0, 0);
+      ctx2.scale(2, 2);
+      ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+
+      let r2 = ap;
+      let p2 = 1 / (bp + 1);
+      let probs = [];
+      let yMaxPred = 0;
+      let maxK = 0;
+      for(let k = 0; k < 40; k++) {
+        let prob = negBinomialPmf(k, r2, p2);
+        probs.push(prob);
+        if(prob > yMaxPred) yMaxPred = prob;
+        if(prob < 1e-5 && k > 10) {
+          maxK = k;
+          break;
+        }
+        maxK = k;
+      }
+      drawAxesDiscrete(ctx2, displayWidth, displayHeight, 0, maxK, yMaxPred * 1.1);
+      ctx2.fillStyle = '#8844cc';
+      for(let k = 0; k <= maxK; k++) {
+        let barWidth = (displayWidth - 50) / (maxK + 1);
+        let barX = 40 + barWidth * k;
+        let barHeight = (displayHeight - 40) * (probs[k] / (yMaxPred * 1.1));
+        ctx2.fillRect(barX, displayHeight - 30 - barHeight, barWidth * 0.8, barHeight);
+      }
+      ctx2.fillStyle = 'black';
+      ctx2.fillText('Predictive distribution (Neg. Binomial)', displayWidth/2 - 180, 20);
+    }
+
+    // Normal-Normal update
+    function updateNormalNormal() {
+      let n = parseFloat(document.getElementById('nn-n').value);
+      let meanSample = parseFloat(document.getElementById('nn-mean').value);
+      let sigma = parseFloat(document.getElementById('nn-sigma').value);
+      let mu0 = parseFloat(document.getElementById('nn-mu0').value);
+      let tau = parseFloat(document.getElementById('nn-tau').value);
+
+      const canvas = document.getElementById('nn-param-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(2, 2);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Normal-Normal: compute and display table of statistics
+      function formatNum(x) {
+        if (typeof x === 'string') return x;
+        if (Math.abs(x - Math.round(x)) < 1e-10) return Math.round(x).toString();
+        if (Math.abs(x * 2 - Math.round(x * 2)) < 1e-10) return (Math.round(x * 2) / 2).toString();
+        if (Math.abs(x) >= 1e4 || (Math.abs(x) < 0.001 && x !== 0)) return x.toExponential(3);
+        return parseFloat(x.toFixed(3)).toString();
+      }
+      let mean_prior = mu0;
+      let var_prior = tau * tau;
+      let mean_like = meanSample;
+      let var_like = sigma * sigma / n;
+      let varPost = 1 / (n / (sigma * sigma) + 1 / (tau * tau));
+      let meanPost = varPost * ( (n / (sigma * sigma)) * meanSample + (1 / (tau * tau)) * mu0 );
+      let mean_post = meanPost;
+      let var_post = varPost;
+      let mean_pred = meanPost;
+      let var_pred = varPost + sigma * sigma;
+      // Median calculations: all medians are equal to the mean
+      let median_prior = mean_prior;
+      let median_like = mean_like;
+      let median_post = mean_post;
+      let median_pred = mean_pred;
+      // Peak density calculations:
+      // Prior (Normal): mode is mean_prior; peak = normalPdf(mean_prior, mean_prior, tau)
+      let mode_prior = mean_prior;
+      let peak_prior = normalPdf(mean_prior, mean_prior, tau);
+      // Likelihood (Normal): mode is mean_like; peak = normalPdf(mean_like, mean_like, sqrt(var_like))
+      let mode_like = mean_like;
+      let peak_like = normalPdf(mean_like, mean_like, Math.sqrt(var_like));
+      // Posterior (Normal): mode is mean_post; peak = normalPdf(mean_post, mean_post, sqrt(var_post))
+      let mode_post = mean_post;
+      let peak_post = normalPdf(mean_post, mean_post, Math.sqrt(var_post));
+      // Predictive (Normal): mode is mean_pred; peak = normalPdf(mean_pred, mean_pred, sqrt(var_pred))
+      let mode_pred = mean_pred;
+      let peak_pred = normalPdf(mean_pred, mean_pred, Math.sqrt(var_pred));
+      document.getElementById('nn-stats').innerHTML = `
+        <table>
+          <tr><th></th><th>Mean</th><th>Variance</th><th>Median</th><th>Peak Density</th></tr>
+          <tr><td>Prior (Normal)</td><td>${formatNum(mean_prior)}</td><td>${formatNum(var_prior)}</td><td>${formatNum(median_prior)}</td><td>${formatNum(peak_prior)}</td></tr>
+          <tr><td>Likelihood (Normal)</td><td>${formatNum(mean_like)}</td><td>${formatNum(var_like)}</td><td>${formatNum(median_like)}</td><td>${formatNum(peak_like)}</td></tr>
+          <tr><td>Posterior (Normal)</td><td>${formatNum(mean_post)}</td><td>${formatNum(var_post)}</td><td>${formatNum(median_post)}</td><td>${formatNum(peak_post)}</td></tr>
+          <tr><td>Predictive (Normal)</td><td>${formatNum(mean_pred)}</td><td>${formatNum(var_pred)}</td><td>${formatNum(median_pred)}</td><td>${formatNum(peak_pred)}</td></tr>
+        </table>
+      `;
+      // end of code for table
+
+      // Likelihood variance
+      let varLike = sigma * sigma / n;
+      let sdLike = Math.sqrt(varLike);
+      // Posterior variance
+      // let varPost = 1 / (n / (sigma * sigma) + 1 / (tau * tau));
+      let sdPost = Math.sqrt(varPost);
+      // Posterior mean
+      // let meanPost = varPost * ( (n / (sigma * sigma)) * meanSample + (1 / (tau * tau)) * mu0 );
+
+      // Range for μ
+      let candidates = [
+        mu0 - 4 * tau,
+        mu0 + 4 * tau,
+        meanSample - 4 * sdLike,
+        meanSample + 4 * sdLike,
+        meanPost - 4 * sdPost,
+        meanPost + 4 * sdPost
+      ];
+      let muMin = Math.min.apply(null, candidates);
+      let muMax = Math.max.apply(null, candidates);
+
+      let steps = 200;
+      let xs = [];
+      let priorVals = [];
+      let likeVals = [];
+      let postVals = [];
+      let yMax = 0;
+      for(let i = 0; i <= steps; i++) {
+        let mu = muMin + (muMax - muMin) * i / steps;
+        xs.push(mu);
+        let prior = normalPdf(mu, mu0, tau);
+        let like  = normalPdf(mu, meanSample, sdLike);
+        let post  = normalPdf(mu, meanPost, sdPost);
+        priorVals.push(prior);
+        likeVals.push(like);
+        postVals.push(post);
+        yMax = Math.max(yMax, prior, like, post);
+      }
+      drawAxes(ctx, displayWidth, displayHeight, muMin, muMax, yMax * 1.1);
+      // curves
+      ctx.lineWidth = 2;
+      // prior
+      ctx.beginPath(); ctx.strokeStyle = 'red';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * ((xs[i] - muMin) / (muMax - muMin));
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (priorVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      // likelihood
+      ctx.beginPath(); ctx.strokeStyle = 'green';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * ((xs[i] - muMin) / (muMax - muMin));
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (likeVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      // posterior
+      ctx.beginPath(); ctx.strokeStyle = 'blue';
+      for(let i = 0; i < xs.length; i++) {
+        let xPixel = 40 + (displayWidth - 50) * ((xs[i] - muMin) / (muMax - muMin));
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (postVals[i] / (yMax * 1.1));
+        if(i === 0) ctx.moveTo(xPixel, yPixel); else ctx.lineTo(xPixel, yPixel);
+      }
+      ctx.stroke();
+      // legend
+      ctx.fillStyle = 'black';
+      ctx.fillText('Prior (Normal)', displayWidth - 160, 20);
+      ctx.fillStyle = 'red'; ctx.fillRect(displayWidth - 190, 13, 12, 6);
+      ctx.fillStyle = 'black';
+      ctx.fillText('Likelihood', displayWidth - 160, 35);
+      ctx.fillStyle = 'green'; ctx.fillRect(displayWidth - 190, 28, 12, 6);
+      ctx.fillStyle = 'black';
+      ctx.fillText('Posterior', displayWidth - 160, 50);
+      ctx.fillStyle = 'blue'; ctx.fillRect(displayWidth - 190, 43, 12, 6);
+
+      // Predictive distribution
+      const canvas2 = document.getElementById('nn-pred-canvas');
+      const ctx2 = canvas2.getContext('2d');
+      ctx2.setTransform(1, 0, 0, 1, 0, 0);
+      ctx2.scale(2, 2);
+      ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+
+      // predictive mean and sd
+      let varPred = varPost + sigma * sigma;
+      let sdPred  = Math.sqrt(varPred);
+      let meanPred = meanPost;
+      // range for predictive x
+      let xMin = meanPred - 4 * sdPred;
+      let xMax = meanPred + 4 * sdPred;
+      let predVals = [];
+      let yMaxPred = 0;
+      for(let i = 0; i <= steps; i++) {
+        let xVal = xMin + (xMax - xMin) * i / steps;
+        let pdfVal = normalPdf(xVal, meanPred, sdPred);
+        predVals.push(pdfVal);
+        if(pdfVal > yMaxPred) yMaxPred = pdfVal;
+      }
+      drawAxes(ctx2, displayWidth, displayHeight, xMin, xMax, yMaxPred * 1.1);
+      // draw predictive
+      ctx2.lineWidth = 2;
+      ctx2.beginPath();
+      ctx2.strokeStyle = '#cc5500';
+      for(let i = 0; i <= steps; i++) {
+        let xPixel = 40 + (displayWidth - 50) * ((xMin + (xMax - xMin) * i / steps - xMin) / (xMax - xMin));
+        let yPixel = displayHeight - 30 - (displayHeight - 40) * (predVals[i] / (yMaxPred * 1.1));
+        if(i === 0) ctx2.moveTo(xPixel, yPixel); else ctx2.lineTo(xPixel, yPixel);
+      }
+      ctx2.stroke();
+      ctx2.fillStyle = 'black';
+      ctx2.fillText('Predictive distribution (Normal)', displayWidth/2 - 150, 20);
+    }
+
+    // Hook up input listeners
+    function init() {
+      ['bb-n','bb-k','bb-alpha','bb-beta','bb-m'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateBetaBinomial);
+      });
+      // Lock increments for alpha and beta
+      let prevAlpha = parseFloat(document.getElementById('bb-alpha').value);
+      let prevBeta  = parseFloat(document.getElementById('bb-beta').value);
+      // Lock increments for n and k
+      let prevN = parseFloat(document.getElementById('bb-n').value);
+      let prevK = parseFloat(document.getElementById('bb-k').value);
+
+      document.getElementById('bb-alpha').addEventListener('input', function(e) {
+        const lock = document.getElementById('bb-lock-ab').checked;
+        let currAlpha = parseFloat(e.target.value);
+        if (isNaN(currAlpha)) return;
+        if (lock) {
+          let delta = currAlpha - prevAlpha;
+          let betaField = document.getElementById('bb-beta');
+          let currBeta = parseFloat(betaField.value);
+          if (isNaN(currBeta)) return;
+          betaField.value = parseFloat((currBeta + delta).toFixed(3));
+          prevAlpha = currAlpha;
+          prevBeta = parseFloat(betaField.value);
+          updateBetaBinomial();
+        } else {
+          prevAlpha = currAlpha;
+        }
+      });
+      document.getElementById('bb-beta').addEventListener('input', function(e) {
+        const lock = document.getElementById('bb-lock-ab').checked;
+        let currBeta = parseFloat(e.target.value);
+        if (isNaN(currBeta)) return;
+        if (lock) {
+          let delta = currBeta - prevBeta;
+          let alphaField = document.getElementById('bb-alpha');
+          let currAlpha = parseFloat(alphaField.value);
+          if (isNaN(currAlpha)) return;
+          alphaField.value = parseFloat((currAlpha + delta).toFixed(3));
+          prevBeta = currBeta;
+          prevAlpha = parseFloat(alphaField.value);
+          updateBetaBinomial();
+        } else {
+          prevBeta = currBeta;
+        }
+      });
+      // When the lock checkbox is toggled, reset prevAlpha/prevBeta to avoid drift.
+      document.getElementById('bb-lock-ab').addEventListener('change', function() {
+        prevAlpha = parseFloat(document.getElementById('bb-alpha').value);
+        prevBeta  = parseFloat(document.getElementById('bb-beta').value);
+      });
+      // Lock increments for n and k
+      document.getElementById('bb-n').addEventListener('input', function(e) {
+        const lock = document.getElementById('bb-lock-nk').checked;
+        let currN = parseFloat(e.target.value);
+        if (isNaN(currN)) return;
+        if (lock) {
+          let delta = currN - prevN;
+          let kField = document.getElementById('bb-k');
+          let currK = parseFloat(kField.value);
+          if (isNaN(currK)) return;
+          let newK = currK + delta;
+          // Clamp k so it is never > n or < 0
+          if (newK > currN) newK = currN;
+          if (newK < 0) newK = 0;
+          kField.value = parseFloat(newK.toFixed(3));
+          prevN = currN;
+          prevK = parseFloat(kField.value);
+          updateBetaBinomial();
+        } else {
+          prevN = currN;
+        }
+      });
+      document.getElementById('bb-k').addEventListener('input', function(e) {
+        const lock = document.getElementById('bb-lock-nk').checked;
+        let currK = parseFloat(e.target.value);
+        if (isNaN(currK)) return;
+        if (lock) {
+          let delta = currK - prevK;
+          let nField = document.getElementById('bb-n');
+          let currN = parseFloat(nField.value);
+          if (isNaN(currN)) return;
+          let newN = currN + delta;
+          // Clamp n so it is at least k, and clamp k to 0 if needed
+          if (newN < currK) newN = currK;
+          if (newN < 0) newN = 0;
+          nField.value = parseFloat(newN.toFixed(3));
+          prevK = currK;
+          prevN = parseFloat(nField.value);
+          updateBetaBinomial();
+        } else {
+          prevK = currK;
+        }
+      });
+      document.getElementById('bb-lock-nk').addEventListener('change', function() {
+        prevN = parseFloat(document.getElementById('bb-n').value);
+        prevK = parseFloat(document.getElementById('bb-k').value);
+      });
+
+      // Exponential-Gamma lock increments for n and sum
+      let prevEgN = parseFloat(document.getElementById('eg-n').value);
+      let prevEgSum = parseFloat(document.getElementById('eg-sum').value);
+      document.getElementById('eg-n').addEventListener('input', function(e) {
+        const lock = document.getElementById('eg-lock-nsum').checked;
+        let currEgN = parseFloat(e.target.value);
+        if (isNaN(currEgN)) return;
+        if (lock) {
+          let delta = currEgN - prevEgN;
+          let sumField = document.getElementById('eg-sum');
+          let currEgSum = parseFloat(sumField.value);
+          if (isNaN(currEgSum)) return;
+          let newSum = currEgSum + delta;
+          // Clamp sum to at least 0.0
+          if (newSum < 0) newSum = 0;
+          sumField.value = parseFloat(newSum.toFixed(3));
+          prevEgN = currEgN;
+          prevEgSum = parseFloat(sumField.value);
+          updateExpGamma();
+        } else {
+          prevEgN = currEgN;
+        }
+      });
+      document.getElementById('eg-sum').addEventListener('input', function(e) {
+        const lock = document.getElementById('eg-lock-nsum').checked;
+        let currEgSum = parseFloat(e.target.value);
+        if (isNaN(currEgSum)) return;
+        if (lock) {
+          let delta = currEgSum - prevEgSum;
+          let nField = document.getElementById('eg-n');
+          let currEgN = parseFloat(nField.value);
+          if (isNaN(currEgN)) return;
+          let newN = currEgN + delta;
+          // Clamp n to at least 1
+          if (newN < 1) newN = 1;
+          nField.value = parseFloat(newN.toFixed(3));
+          prevEgSum = currEgSum;
+          prevEgN = parseFloat(nField.value);
+          updateExpGamma();
+        } else {
+          prevEgSum = currEgSum;
+        }
+      });
+      document.getElementById('eg-lock-nsum').addEventListener('change', function() {
+        prevEgN = parseFloat(document.getElementById('eg-n').value);
+        prevEgSum = parseFloat(document.getElementById('eg-sum').value);
+      });
+
+      // Exponential-Gamma lock increments for alpha and beta
+      let prevEgAlpha = parseFloat(document.getElementById('eg-alpha').value);
+      let prevEgBeta = parseFloat(document.getElementById('eg-beta').value);
+      document.getElementById('eg-alpha').addEventListener('input', function(e) {
+        const lock = document.getElementById('eg-lock-ab').checked;
+        let currAlpha = parseFloat(e.target.value);
+        if (isNaN(currAlpha)) return;
+        if (lock) {
+          let delta = currAlpha - prevEgAlpha;
+          let betaField = document.getElementById('eg-beta');
+          let currBeta = parseFloat(betaField.value);
+          if (isNaN(currBeta)) return;
+          betaField.value = parseFloat((currBeta + delta).toFixed(3));
+          prevEgAlpha = currAlpha;
+          prevEgBeta = parseFloat(betaField.value);
+          updateExpGamma();
+        } else {
+          prevEgAlpha = currAlpha;
+        }
+      });
+      document.getElementById('eg-beta').addEventListener('input', function(e) {
+        const lock = document.getElementById('eg-lock-ab').checked;
+        let currBeta = parseFloat(e.target.value);
+        if (isNaN(currBeta)) return;
+        if (lock) {
+          let delta = currBeta - prevEgBeta;
+          let alphaField = document.getElementById('eg-alpha');
+          let currAlpha = parseFloat(alphaField.value);
+          if (isNaN(currAlpha)) return;
+          alphaField.value = parseFloat((currAlpha + delta).toFixed(3));
+          prevEgBeta = currBeta;
+          prevEgAlpha = parseFloat(alphaField.value);
+          updateExpGamma();
+        } else {
+          prevEgBeta = currBeta;
+        }
+      });
+      document.getElementById('eg-lock-ab').addEventListener('change', function() {
+        prevEgAlpha = parseFloat(document.getElementById('eg-alpha').value);
+        prevEgBeta  = parseFloat(document.getElementById('eg-beta').value);
+      });
+
+      // Poisson-Gamma lock increments for n and sum
+      let prevPgN = parseFloat(document.getElementById('pg-n').value);
+      let prevPgSum = parseFloat(document.getElementById('pg-sum').value);
+
+      document.getElementById('pg-n').addEventListener('input', function(e) {
+        const lock = document.getElementById('pg-lock-nsum').checked;
+        let currPgN = parseFloat(e.target.value);
+        if (isNaN(currPgN)) return;
+        if (lock) {
+          let delta = currPgN - prevPgN;
+          let sumField = document.getElementById('pg-sum');
+          let currPgSum = parseFloat(sumField.value);
+          if (isNaN(currPgSum)) return;
+          let newSum = currPgSum + delta;
+          if (newSum < 0) newSum = 0;
+          sumField.value = parseFloat(newSum.toFixed(3));
+          prevPgN = currPgN;
+          prevPgSum = parseFloat(sumField.value);
+          updatePoissonGamma();
+        } else {
+          prevPgN = currPgN;
+        }
+      });
+
+      document.getElementById('pg-sum').addEventListener('input', function(e) {
+        const lock = document.getElementById('pg-lock-nsum').checked;
+        let currPgSum = parseFloat(e.target.value);
+        if (isNaN(currPgSum)) return;
+        if (lock) {
+          let delta = currPgSum - prevPgSum;
+          let nField = document.getElementById('pg-n');
+          let currPgN = parseFloat(nField.value);
+          if (isNaN(currPgN)) return;
+          let newN = currPgN + delta;
+          if (newN < 1) newN = 1;
+          nField.value = parseFloat(newN.toFixed(3));
+          prevPgSum = currPgSum;
+          prevPgN = parseFloat(nField.value);
+          updatePoissonGamma();
+        } else {
+          prevPgSum = currPgSum;
+        }
+      });
+      document.getElementById('pg-lock-nsum').addEventListener('change', function() {
+        prevPgN = parseFloat(document.getElementById('pg-n').value);
+        prevPgSum = parseFloat(document.getElementById('pg-sum').value);
+      });
+
+      // Poisson-Gamma lock increments for alpha and beta
+      let prevPgAlpha = parseFloat(document.getElementById('pg-alpha').value);
+      let prevPgBeta = parseFloat(document.getElementById('pg-beta').value);
+
+      document.getElementById('pg-alpha').addEventListener('input', function(e) {
+        const lock = document.getElementById('pg-lock-ab').checked;
+        let currAlpha = parseFloat(e.target.value);
+        if (isNaN(currAlpha)) return;
+        if (lock) {
+          let delta = currAlpha - prevPgAlpha;
+          let betaField = document.getElementById('pg-beta');
+          let currBeta = parseFloat(betaField.value);
+          if (isNaN(currBeta)) return;
+          betaField.value = parseFloat((currBeta + delta).toFixed(3));
+          prevPgAlpha = currAlpha;
+          prevPgBeta = parseFloat(betaField.value);
+          updatePoissonGamma();
+        } else {
+          prevPgAlpha = currAlpha;
+        }
+      });
+      document.getElementById('pg-beta').addEventListener('input', function(e) {
+        const lock = document.getElementById('pg-lock-ab').checked;
+        let currBeta = parseFloat(e.target.value);
+        if (isNaN(currBeta)) return;
+        if (lock) {
+          let delta = currBeta - prevPgBeta;
+          let alphaField = document.getElementById('pg-alpha');
+          let currAlpha = parseFloat(alphaField.value);
+          if (isNaN(currAlpha)) return;
+          alphaField.value = parseFloat((currAlpha + delta).toFixed(3));
+          prevPgBeta = currBeta;
+          prevPgAlpha = parseFloat(alphaField.value);
+          updatePoissonGamma();
+        } else {
+          prevPgBeta = currBeta;
+        }
+      });
+      document.getElementById('pg-lock-ab').addEventListener('change', function() {
+        prevPgAlpha = parseFloat(document.getElementById('pg-alpha').value);
+        prevPgBeta = parseFloat(document.getElementById('pg-beta').value);
+      });
+      // Normal update for alpha and beta if not using lock
+      // (already handled above)
+      ['pg-n','pg-sum','pg-alpha','pg-beta'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updatePoissonGamma);
+      });
+      ['nn-n','nn-mean','nn-sigma','nn-mu0','nn-tau'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateNormalNormal);
+      });
+      updateBetaBinomial();
+      updateExpGamma();
+      updatePoissonGamma();
+      updateNormalNormal();
+    }
+    window.onload = init;
+  </script>
+</body>
+</html>
