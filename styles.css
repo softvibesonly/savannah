@@ -2,6 +2,7 @@
   --text: #1f2937;
   --primary: #66CBE3;
   --primarymuted: #175A69;
+  --primarymutedlight: #0e98bb;
   --secondary: #286784;
   --secondarymuted: #4D7185;
   --thirdblue: #143963;
@@ -121,15 +122,22 @@ header.site {
   padding-block: var(--header-pad-b);
 }
 
+header.site .container.header {
+  max-width: none;
+}
+
 .header-left,
 .header-mid {
   display: flex;
   align-items: center;
   gap: 20px;
-  margin: 0 1rem;
 }
 .header-left {
   align-self: stretch;
+  margin-right: 1rem; /* Only apply margin to the right */
+}
+.header-mid {
+  margin: 0 1rem; /* The middle section can keep its side margins */
 }
 
 .header-right {
@@ -152,7 +160,7 @@ details.contact > summary {
   align-items: center;
   height: 100%;
   gap: 10px;
-  padding: 6px 10px; /* slightly larger target */
+  padding: 6px 10px 6px calc(10px + 0.7rem);
   border: none;
   border-radius: 10px;
   background: transparent;
@@ -514,6 +522,20 @@ h2:hover {
   text-align: center;
 }
 
+#blog {
+  padding-top: 25px;
+}
+
+#blog h2 {
+  margin-bottom: 25px;
+}
+
+#blog .lead {
+  color: var(--muted);
+  margin-inline: auto; 
+  font-size: 1.1rem;   
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -541,6 +563,29 @@ h2:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 28px rgba(0, 0, 0, .12);
   text-decoration: none;
+}
+
+/* Glassy reveal effect for blog post cards */
+#posts .card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit; /* Match the parent's border radius */
+  
+  /* The "glass" is composed of two layers: a top highlight and a radial glow */
+  background: 
+    /* A sharp, reflective top edge */
+    linear-gradient(180deg, rgba(255,255,255,.3) 0%, rgba(255,255,255,0) 10%),
+    /* A soft overhead light source */
+    radial-gradient(150% 150% at 50% -20%, rgba(255,255,255,.5), transparent 50%);
+
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.35s ease-in-out;
+  pointer-events: none; /* Let clicks pass through to the link */
+}
+
+#posts .card:hover::before {
+  opacity: 1; /* Reveal the glass on hover */
 }
 
 @media (max-width: 800px) {
@@ -697,22 +742,34 @@ footer {
 }
   */
 
-html[data-theme="dark"] details.contact > summary:hover::after,
-html[data-theme="dark"] details.contact > summary:focus-visible::after {
-  background:
-    /* Softer top highlight for dark mode */
-    linear-gradient(180deg, rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 50%),
-    /* Subtle radial glow */
-    radial-gradient(150% 150% at 50% 0%, rgba(255,255,255,.12), rgba(255,255,255,0) 40%),
-    /* Base color */
-    color-mix(in oklab, var(--bg) 88%, transparent);
-  /* Deeper drop shadow for dark mode and a crisp inner edge */
-  box-shadow: 0 8px 32px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.2);
+/* TEST: Blog Post Card Styling Adjustments */
+#posts .card h3 {
+  font-size: 1.1rem;
 }
-html[data-theme="dark"] .btn::after {
-  /* creates a more subtle, ghostly shimmer for dark mode */
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .15) 50%, transparent 100%);
+
+#posts .card .post-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem; /* This creates the perfect space around the dot */
+  font-size: 1rem;
+  color: var(--text); /* Ensures the date is black in light mode */
+  text-transform: capitalize; /* Makes 'blog' -> 'Blog' */
 }
+
+#posts .card .post-type {
+  font-weight: 500; /* Bolds the post type */
+}
+
+#posts .card div:last-of-type {
+  font-size: 1rem;
+  transition: transform 0.25s ease, color 0.25s ease; /* Smooth transitions */
+}
+
+#posts .card:hover div:last-of-type {
+  color: #0e98bb; /* Your requested hover color */
+  transform: translateX(4px); /* Move text to the right on hover */
+}
+/* END: New Blog Post Card Styling */
 
 @keyframes colorCycle {
   0% {
@@ -875,4 +932,27 @@ html[data-theme="dark"] .btn::after {
   max-width: 65ch; /* Constrains the line length for readability */
   color: var(--muted);
   margin-bottom: 32px;
+}
+
+/* DEMON/DARK MODE NONSENSE mwhahahah */
+
+html[data-theme="dark"] details.contact > summary:hover::after,
+html[data-theme="dark"] details.contact > summary:focus-visible::after {
+  background:
+    /* Softer top highlight for dark mode */
+    linear-gradient(180deg, rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 50%),
+    /* Subtle radial glow */
+    radial-gradient(150% 150% at 50% 0%, rgba(255,255,255,.12), rgba(255,255,255,0) 40%),
+    /* Base color */
+    color-mix(in oklab, var(--bg) 88%, transparent);
+  /* Deeper drop shadow for dark mode and a crisp inner edge */
+  box-shadow: 0 8px 32px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.2);
+}
+html[data-theme="dark"] .btn::after {
+  /* creates a more subtle, ghostly shimmer for dark mode */
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .15) 50%, transparent 100%);
+}
+
+html[data-theme="dark"] #posts .card::after {
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, .15) 50%, transparent 100%);
 }

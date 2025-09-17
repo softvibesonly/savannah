@@ -170,9 +170,18 @@ const projects = [
 ];
 
 const posts = [
-  { title:'Why hyperlegible UI matters for ML tools', date:'2025-08-18', href:'blog/hyperlegible-ui.html' },
-  { title:'Lightweight audio UX: using Web Audio under 1KB', date:'2025-07-10', href:'blog/web-audio-micro.html' },
-  { title:'When not to use a framework', date:'2025-06-02', href:'blog/no-framework.html' },
+  { title:'Why hyperlegible UI matters for ML tools', date:'2025-08-18', href:'blog/hyperlegible-ui.html', type: 'blog' },
+  { title:'Evolving Legal Frameworks in the Post-Generative AI Era: User Data, AI Training Permissions, and Platform Policies at Google, Meta, and X', 
+    date:'2025-08-18', 
+    href:'assets/papers/Evolving_Legal_Frameworks_GenAI_Era_Draft1.1.pdf', 
+    type: 'paper' },
+
+  { title:'Lightweight audio UX: using Web Audio under 1KB', date:'2025-07-10', href:'blog/web-audio-micro.html', type: 'paper' },
+
+  { title:'Fix PDFs with Unselectable Text using OCR', 
+    date:'2025-10-16', 
+    href:'blog/fix-unselectable-pdfs-ocr.html', 
+    type: 'tangent' },
 ];
 
 function renderProjects(){
@@ -196,7 +205,14 @@ function renderPosts(){
   const frag = document.createDocumentFragment();
   posts.forEach(p=>{
     const a = document.createElement('a'); a.href=p.href; a.className='card'; a.style.display='block'; a.setAttribute('data-tone','');
-    a.innerHTML = `<div class="muted">${p.date}</div><h3 style="margin:4px 0 6px">${p.title}</h3><div class="muted">Read →</div>`;
+    a.innerHTML = `
+      <div class="post-meta muted">
+        <span>${p.date}</span>
+        <span>•</span>
+        <span class="post-type">${p.type}</span>
+      </div>
+      <h3 style="margin:4px 0 6px">${p.title}</h3>
+      <div class="muted">Read →</div>`;
     frag.appendChild(a);
   });
   wrap.replaceChildren(frag);
