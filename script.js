@@ -113,7 +113,13 @@ function syncPrefsUI(){
   motionBtn.textContent = (prefs.motion? '✨' : '🛑') + ' ' + 'Motion effects';
 }
 muteBtn.addEventListener('click', ()=>{ prefs.mute=!prefs.mute; localStorage.setItem('mute', prefs.mute); syncPrefsUI(); tone(); });
-motionBtn.addEventListener('click', ()=>{ prefs.motion=!prefs.motion; document.body.style.setProperty('--motion', prefs.motion?'1':'0'); localStorage.setItem('motion', prefs.motion); syncPrefsUI(); tone(); });
+motionBtn.addEventListener('click', ()=>{
+  prefs.motion = !prefs.motion;
+  localStorage.setItem('motion', prefs.motion);
+  syncPrefsUI();
+  applyMotionPreference();
+  tone();
+});
 syncPrefsUI();
 
 let ticking = false;
@@ -146,11 +152,15 @@ function playTone(freq=98.0, dur=0.18, vol=Number(getComputedStyle(document.docu
   osc.connect(gain).connect(audioCtx.destination);
   osc.start(); osc.stop(t0 + dur + 0.02);
 }
-const tone = ()=> playTone(98.00, 0.12, 0.25);
+const DEFAULT_TONE_FREQ = 98.00;
+const tone = (freq=DEFAULT_TONE_FREQ)=> playTone(freq, 0.12, 0.25);
 
 document.addEventListener('click', (e)=>{
   const el = e.target.closest('[data-tone]');
-  if(el) tone();
+  if(el){
+    const freq = parseFloat(el.dataset.toneFreq);
+    tone(Number.isFinite(freq) ? freq : DEFAULT_TONE_FREQ);
+  }
 });
 
 const projects = [
@@ -170,13 +180,20 @@ const projects = [
 ];
 
 const posts = [
-  { title:'Why hyperlegible UI matters for ML tools', date:'2025-08-18', href:'blog/hyperlegible-ui.html', type: 'blog' },
+  { title:'Why hyperlegible UI matters for ML tools', 
+    date:'2025-08-18', 
+    href:'blog/hyperlegible-ui.html', 
+    type: 'blog' },
+
   { title:'Evolving Legal Frameworks in the Post-Generative AI Era: User Data, AI Training Permissions, and Platform Policies at Google, Meta, and X', 
     date:'2025-08-18', 
     href:'assets/papers/Evolving_Legal_Frameworks_GenAI_Era_Draft1.1.pdf', 
     type: 'paper' },
 
-  { title:'Lightweight audio UX: using Web Audio under 1KB', date:'2025-07-10', href:'blog/web-audio-micro.html', type: 'paper' },
+  { title:'The Normal Equations (Simple Lesson): Part 1', 
+    date:'2025-09-18', 
+    href:'blog/normal-equations-lesson', 
+    type: 'post' },
 
   { title:'Fix PDFs with Unselectable Text using OCR', 
     date:'2025-10-16', 
@@ -298,3 +315,10 @@ const revealObserver = new IntersectionObserver((entries) => {
 selectAll('.reveal-on-scroll').forEach(category => {
   revealObserver.observe(category);
 });
+
+function applyMotionPreference(){
+  document.body.style.setProperty('--motion', prefs.motion ? '1' : '0');
+  document.body.classList.toggle('motion-off', !prefs.motion);
+}
+
+applyMotionPreference();

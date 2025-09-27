@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Savannah's Blog</title>
+  
+  <!-- Main Stylesheet (Path Fixed) -->
+  <link rel="stylesheet" href="../../styles.css">
+  
+  <!-- Styles for GitHub-style Markdown and Code Highlighting -->
+  <link rel="stylesheet" href="../../assets/css/github-markdown-lite.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+
+  <!-- MathJax for Equations -->
+  <script>
+    MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] } };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    .markdown-body { 
+      box-sizing: border-box; 
+      min-width: 200px; 
+      max-width: 72ch; 
+      margin: 40px auto; 
+      padding: 20px;
+      font-family: sans-system-ui, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+      
+      /* Define the code color variable for normal/light mode */
+      --code-text: #c74444; 
+    }
+
+    /* Define the code color variable for dark mode*/
+    html[data-theme="dark"] .markdown-body {
+      --code-text: #f07178;
+    }
+
+    .back-link { 
+      display: inline-block; 
+      margin-bottom: 24px; 
+    }
+
+    /* Style inline code snippets using the scoped variable */
+    .markdown-body :not(pre) > code {
+      color: var(--code-text);
+    }
+  </style>
+</head>
+<body class="markdown-body">
+  <!-- Back to Blog Link (Path Fixed) -->
+  <a href="../../index.html#blog" class="back-link">← Back to Blog</a>
+  
+  <div id="content"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <!-- JavaScript Logic Adapted for Colocation -->
+  <script>
+    (async function() {
+      try {
+        // Fetch the 'index.md' file from this same directory
+        const response = await fetch('index.txt');
+        if (!response.ok) throw new Error('Post not found');
+        const markdown = await response.text();
+        
+        document.getElementById('content').innerHTML = marked.parse(markdown);
+        
+        await MathJax.typesetPromise();
+        hljs.highlightAll();
+      } catch (error) {
+        document.getElementById('content').innerHTML = `<h2>Error: Post not found</h2>`;
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Savannah's Blog</title>
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Styles for GitHub-style Markdown and code highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+
+  <!-- MathJax for Equations -->
+  <script>
+    MathJax = { tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] } };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    /* scoping the GitHub styles to content area */
+    .markdown-body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 72ch;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .back-link { display: inline-block; margin-bottom: 24px; }
+  </style>
+</head>
+<body class="markdown-body">
+  <a href="index.html#blog" class="back-link">← Back to Blog</a>
+  
+  <!-- Markdown content will be loaded here -->
+  <div id="content"></div>
+
+  <!-- JS libraries to render markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <script>
+    // This script will fetch and render the markdown file
+    (async function() {
+      // Get the post filename from the URL (e.g., ?post=normal-equations-tutorial)
+      const params = new URLSearchParams(window.location.search);
+      const postFile = params.get('post');
+
+      if (postFile) {
+        try {
+          // Fetch markdown content
+          const response = await fetch(`blog/${postFile}.md`);
+          if (!response.ok) throw new Error('Post not found');
+          const markdown = await response.text();
+          
+          // Convert markdown to HTML using the marked.js library
+          const html = marked.parse(markdown);
+          
+          // Put the HTML into the content container
+          document.getElementById('content').innerHTML = html;
+          
+          // Re-run MathJax and Highlight.js to style the content
+          MathJax.typesetPromise();
+          hljs.highlightAll();
+
+        } catch (error) {
+          document.getElementById('content').innerHTML = `<h2>Error: Post not found</h2><p>Could not load the requested blog post.</p>`;
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

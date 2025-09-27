@@ -19,6 +19,27 @@
   --btnScale: 1;
   --shimmerX: 0%;
   --toneVolume: .25;
+  --btn-text: #06262e; /* Button label color in light mode */
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src:
+    url("/assets/fonts/atkinson-hyperlegible-next/AtkinsonHyperlegibleNext-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;   /* variable range */
+  font-stretch: 100%;
+  font-style: normal;
+  font-display: swap;     /* prevents invisible text while the font loads */
+}
+
+/* Separate italic variable file: */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src:
+    url("/assets/fonts/atkinson-hyperlegible-next/AtkinsonHyperlegibleNext-Italic-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
 }
 
 /*  Global polish & accessibility  */
@@ -39,6 +60,14 @@ html[data-theme="dark"] {
   --border: #1f2937;
   --shadow: 0 8px 24px rgba(0, 0, 0, .35);
   --glassOpacity: .08;
+  --primary: #4ccff7; /* Main accent teal for dark mode; bump toward white for extra punch. */
+  --primarymuted: #2a9fc8; /* Softer accent used in gradients; slide toward #3ab0da to brighten. */
+  --primarymutedlight: #3ad1f2; /* Hover/shine tint; raise brightness for a glowier look. */
+  --secondary: #8dcfff; /* Link color; push closer to #b7e3ff if you crave more contrast. */
+  --secondarymuted: #aac8e4; /* Secondary text tone; lower the value for moodier vibes. */
+  --thirdblue: #7ca9ff; /* Deepest blue accent; tilt toward violet if you want a cooler palette. */
+  --muted: #9aa9c5; /* Body-muted copy; nudge lighter if it still feels low contrast. */
+  --btn-text: #e7f7ff; /* Button label color in dark mode; shift toward #ffffff for max contrast. */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,12 +78,22 @@ html[data-theme="dark"] {
     --border: #1f2937;
     --shadow: 0 8px 24px rgba(0, 0, 0, .35);
     --glassOpacity: .08;
+    --primary: #4ccff7; /* Mirror manual dark-mode accent so auto theme matches tweaks above. */
+    --primarymuted: #2a9fc8; /* Keep gradients consistent when the OS toggles dark mode. */
+    --primarymutedlight: #3ad1f2; /* Hover shine for auto-dark; adjust alongside the manual value. */
+    --secondary: #8dcfff; /* Link color in auto dark mode; brighten for more standout. */
+    --secondarymuted: #aac8e4; /* Secondary tone in auto dark; darken slightly if it feels washed out. */
+    --thirdblue: #7ca9ff; /* Deep accent for auto dark; skew warmer if you prefer teal-greens. */
+    --muted: #9aa9c5; /* Muted copy tone; tiny tweaks make a big difference in perceived contrast. */
+    --btn-text: #e7f7ff; /* Auto dark button label; slide to #d8f0ff for a subtler glow. */
   }
 }
 
 * {
   box-sizing: border-box;
 }
+
+
 
 html,
 body {
@@ -63,7 +102,7 @@ body {
 
 body {
   margin: 0;
-  font-family: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Helvetica Neue", Helvetica, Arial, -apple-system, system-ui, sans-serif;
+  font-family: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Helvetica Neue", Helvetica, Arial, -apple-system, system-ui, ui-sans-serif;
   color: var(--text);
   background: var(--bg);
   line-height: 1.6;
@@ -287,6 +326,16 @@ details.contact[open] > summary {
   border-radius: 10px;
 }
 
+html[data-theme="dark"] .contact-panel a {
+  color: #ffffff; /* Make contact links pop in dark mode without touching the muted intro text. */
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] .contact-panel a {
+    color: #ffffff; /* Ensure auto dark mode uses the same bright links inside the contact drawer. */
+  }
+}
+
 .contact-panel a:hover {
   background: color-mix(in oklab, var(--primary) 10%, transparent);
   text-decoration: none;
@@ -330,15 +379,12 @@ details.contact[open] > summary {
   height: 318.2px;        /* Sets the height of the circle */
   object-position: 50% 40%;
   object-fit: cover;
-
   
   /* border-radius: 100%; */   /* Set to 50% for a circle ( I think) */
-  
   /* Deprecated for now */
   /* This is the magic part for non-square images: 
   Ensures the image fills the circle without being distorted */
 
-  /* A little polish to match site's design */
   margin-bottom: 8px; /* Adds some space below the photo */
   margin-top: 0px;
   border: 3px solid var(--border);
@@ -401,6 +447,24 @@ details.contact[open] > summary {
   font-weight: 400;
   font-size: 1.05rem; 
   transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+html[data-theme="dark"] .settings-btn {
+  background: linear-gradient(180deg,
+    color-mix(in oklab, #ffffff 18%, var(--bg) 82%),
+    color-mix(in oklab, #c7d8f0 35%, var(--bg) 65%)); /* Recreates the light glass glow against the dark shell. */
+  border: 1px solid color-mix(in oklab, #ffffff 28%, var(--border) 72%);
+  color: #f3f7ff; /* Lift the label so it stays legible over the lighter pill. */
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] .settings-btn {
+    background: linear-gradient(180deg,
+      color-mix(in oklab, #ffffff 18%, var(--bg) 82%),
+      color-mix(in oklab, #c7d8f0 35%, var(--bg) 65%));
+    border: 1px solid color-mix(in oklab, #ffffff 28%, var(--border) 72%);
+    color: #f3f7ff;
+  }
 }
 
 .settings-btn:hover {
@@ -470,7 +534,7 @@ section {
   text-align: center;
 }
 
-/* We will create a NEW rule to target the home section specifically */
+/* New rule to target the home section specifically */
 #home {
   padding-top: 20px; /* Reduce the top padding just for the home section */
 }
@@ -488,8 +552,18 @@ section:last-of-type {
 .home-text {
   max-width: 60ch; /* Limit the line length for readability */
   text-align: center; /* Match the alignment of the heading */
-  color: #06214f;
+  color: #06214f; /* Deep navy in light mode; nudge toward var(--secondary) if you want more teal. */
   margin-top: 5px;
+}
+
+html[data-theme="dark"] .home-text {
+  color: var(--muted); /* Gentle muted blue-gray in dark mode */
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] .home-text {
+    color: #E0E0E0; /* Auto dark mode mirrors the manual soft white for a gentle intro blurb. */
+  }
 }
 
 
@@ -520,6 +594,7 @@ h2:hover {
   color: var(--secondarymuted);
   max-width: 62ch;
   text-align: center;
+  margin-inline: auto; /* Center the narrower paragraph block within its section. */
 }
 
 #blog {
@@ -620,7 +695,7 @@ h2:hover {
     color-mix(in oklab, var(--primary) 30%, var(--bg) 70%),
     color-mix(in oklab, var(--primarymuted) 18%, var(--bg) 82%)
   );
-  color: #06262e;
+  color: var(--btn-text); /* Pulls from the theme token so button text tracks light/dark tweaks. */
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0,0,0,.05);
   text-decoration: none;
@@ -704,7 +779,12 @@ h2:hover {
 }
 
 footer {
-  padding: 30px 0;
+  padding: 18px 0; /* Trim vertical padding to shrink footer height without cramping content. */
+}
+
+footer .muted {
+  font-size: 0.9rem; /* Slightly smaller footer copy; adjust toward 1rem if it feels too tight. */
+  line-height: 1.4; /* Maintain readability even at the reduced size. */
 }
 
 .social {
@@ -745,6 +825,16 @@ footer {
 /* TEST: Blog Post Card Styling Adjustments */
 #posts .card h3 {
   font-size: 1.1rem;
+}
+
+html[data-theme="dark"] #posts .card h3 {
+  color: var(--primarymuted); /* Try the brighter accent for post titles in dark mode. */
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] #posts .card h3 {
+    color: var(--secondary); /* Mirror the dark-mode accent when the OS toggles the theme. */
+  }
 }
 
 #posts .card .post-meta {
@@ -816,6 +906,16 @@ footer {
   text-align: center;
 }
 
+html[data-theme="dark"] .interest-category h3 {
+  color: var(--primarymuted); /* Swap to the richer teal at night; adjust the token above to taste. */
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] .interest-category h3 {
+    color: var(--primarymuted); /* Ensure auto-dark follows the same teal when system theme flips. */
+  }
+}
+
 /* This is where the magic starts Mwhaha */
 .interest-details {
   list-style-type: '- '; /* Custom bullet point style */
@@ -846,11 +946,19 @@ footer {
   transform: translateY(0);
 }
 
+body.motion-off .interest-details {
+  overflow: visible;
+  max-height: none;
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
 #useful-tools {
   text-align: center; /* Center the h2 and lead paragraph */
 }
 
-/* Style the cards in our new grid */
+/* Style the cards in the new grid */
 .tool-card {
   display: flex;
   flex-direction: column;
@@ -880,13 +988,23 @@ footer {
   object-fit: contain; /* Ensures the image scales without being stretched or cropped */
 }
 
-/* The bold 1.2rem title */
-.tool-title {
+/* Other websites section titles */
+.other-websites-title {
   font-size: 1.2rem;
   font-weight: 700; /* Bold */
   margin: 0 0 6px 0;
-  color: var(--secondary);
+  color: var(--secondary); /* Light-mode accent for the other websites titles; align this token with your palette. */
   text-align: center;
+}
+
+html[data-theme="dark"] .other-websites-title {
+  color: var(--primarymuted); /* Dark-mode titles switch to the same teal as interest headers. */
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] .other-websites-title {
+    color: var(--primarymuted); /* Auto dark mode mirrors the manual teal for consistent cards. */
+  }
 }
 
 .tool-card p {
@@ -924,8 +1042,18 @@ footer {
 }
 
 #useful-tools .useful-tools-title {
-    color: #154865;
+    color: var(--secondary); /* Uses the secondary accent so it brightens automatically in dark mode. */
     animation: none; /* Disable colorCycle animation for tool titles */
+}
+
+html[data-theme="dark"] #useful-tools .useful-tools-title {
+    color: #ffffff; /* Pure white in dark mode; swap to var(--text) if you prefer the softer gray. */
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] #useful-tools .useful-tools-title {
+    color: #ffffff; /* Auto theme mirrors the manual white so you can compare the look easily. */
+  }
 }
 
 .useful-tools-subtitle {

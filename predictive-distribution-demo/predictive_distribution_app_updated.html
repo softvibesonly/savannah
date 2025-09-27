@@ -1042,21 +1042,26 @@
       });
       updatePosteriorCdfShading();
 
-      /* After constructing the posterior chart, initialise the CDF shading based on the current
-         probability and tail controls.  This ensures that the shading reflects the user's
+      /* After constructing the posterior chart, this function intialises the CDF shading based on
+         current probability and tail controls.  This ensures that the shading reflects the user's
          specified probability even before interacting with the plot.  The shading will be
          cleared if the CDF toggle is off.
-         Attach mousemove and mouseleave listeners for interactive hover effects.  Use
-         addEventListener instead of assigning directly to the on* properties, since Chart.js
-         may internally override those properties. To avoid accumulating multiple listeners
-         on subsequent calls, remove any previously registered handlers stored in the
+        
+         Notes to self:
+         - Attach mousemove and mouseleave listeners for interactive hover effects. 
+         - Use addEventListener instead of assigning directly to the on* properties, since Chart.js
+         may internally override those properties. 
+         - To avoid accumulating multiple listeners on subsequent calls, remove any previously registered handlers stored in the
          global variables and then register new ones.
-         Remove existing handlers if present. Use the chart's internal canvas (posteriorChart.canvas)
-         if available; otherwise use the DOM canvas.
-         Determine the element on which to attach event listeners.  Chart.js wraps the canvas
-         inside a parent div which captures pointer events, so we bind listeners to that
-         parent rather than the raw canvas. If a previous chart exists, we remove its
-         listeners from the prior element. */
+         - Remove existing handlers if present. 
+         
+         
+         Use the chart's internal canvas (posteriorChart.canvas) if available; otherwise use the DOM canvas. Likely no difference.
+         Determine the element on which to attach event listeners.  
+         - Chart.js wraps the canvas inside a parent div which captures pointer events, so you should bind listeners to that
+         parent rather than the raw canvas.
+         - If a previous chart exists, we remove its listeners from the prior element so that nothing happens.
+         */
       const targetCanvas = (posteriorChart && posteriorChart.canvas) ? posteriorChart.canvas : canvas;
       const targetElement = (posteriorChart && posteriorChart.canvas && posteriorChart.canvas.parentNode) ? posteriorChart.canvas.parentNode : targetCanvas;
       if (posteriorMouseMoveHandler) targetElement.removeEventListener('mousemove', posteriorMouseMoveHandler);
@@ -1359,6 +1364,7 @@
       }
       const sorted = paramSamples.slice().sort((a,b) => a - b);
       // Determine number of bins: for small m show one bar per sample, up to 25 bars maximum
+      // ADJUST LATER: still need to fine-tune and tweak the bins
       let bins;
       if (m <= 25) {
         bins = m;
@@ -1579,7 +1585,7 @@
         }
         modeVal = minVal + (modeIdx + 0.5) * binWidth;
       }
-      // Determine user preferences for additional means and decimal precision
+      // Determine user preferences for additional means and decimal precision and choice of shoewear
       const showMeans = document.getElementById('predShowMeans')?.checked;
       const decInput = document.getElementById('predStatsDecimals');
       let decs = parseInt(decInput?.value);
@@ -1729,9 +1735,13 @@
     }
 
     // -----------------------------------------------------------------------------
-    /* New helper functions to support dynamic prior/likelihood visualisation and
-       enhanced posterior interactivity. These functions are defined after all
-       existing logic to avoid interfering with the original behaviour. */
+    /* New helper functions to support the dynamic prior/likelihood visualisation and
+       enhance the interactivity of the posterior. These functions are defined after all
+       existing logic to avoid interfering with the original behaviour. 
+       
+       Well... I guess AGI is here because I literally tried for 2 days to do this part 
+       and then Gemini smoked me in a 2-shot attempt lmaoo
+       */
 
     // Attach listeners to prior parameter inputs so that changes immediately
     // propagate through the posterior and prior/likelihood plots.
@@ -1772,9 +1782,7 @@
           <label>t (time): <input type="number" id="model_t" min="0.1" step="0.1" value="1" style="width:70px;"></label>
         `;
       } else if (currentModel === 'expGamma') {
-        // For exponential data with gamma prior, allow the user to control the number of observations
-        // and the total sum of observed times. These parameters influence the likelihood shape
-        // λ^n * exp(−λ * sumX). Default to the current data summary if available.
+        // For exponential data with gamma prior, let the user to control the number of observations and total sum of observed times. These parameters influence the likelihood's shape λ^n * exp(−λ * sumX). Default to the current data summary if available.
         let defaultN = (typeof unsortedData !== 'undefined' && Array.isArray(unsortedData)) ? unsortedData.length : 0;
         let defaultSum = 0;
         if (defaultN > 0) {
@@ -1785,9 +1793,7 @@
           <label>Σx (sum): <input type="number" id="model_sum" min="0" step="0.1" value="${defaultSum.toFixed(2)}" style="width:70px;"></label>
         `;
       } else if (currentModel === 'normalNormal') {
-        // For the normal data with normal prior on the mean, allow the user to specify the
-        // sample size and sample mean used to construct the likelihood. Default to the
-        // current data summary if available.
+        // For the normal data with a normal prior on the mean, allow the user to specify the sample size and sample mean used to construct the likelihood. Default to the current data summary if available.
         let defaultN = (typeof unsortedData !== 'undefined' && Array.isArray(unsortedData)) ? unsortedData.length : 0;
         let defaultMean = 0;
         if (defaultN > 0) {
@@ -1944,8 +1950,8 @@
           likUnnorm[i] = (maxLik > 0) ? likUnnorm[i] / maxLik : 0;
         }
       } else if (currentModel === 'expGamma') {
-        // For exponential data with a gamma prior on the rate, allow the user to specify the effective sample size n and total time sumX via model inputs.  
-        // If these are not provided (or invalid), fall back to the actual data summary.
+        // For exponential data with a gamma prior on the rate, let the user to specify the effective sample size n and total time sumX via model inputs.  
+        // If these are not provided (or invalid), fall back to the actual data summary
         let dataN = unsortedData.length;
         let dataSum = 0;
         if (dataN > 0) {
@@ -1983,7 +1989,8 @@
            to provide an effective sample size and sample mean to construct the
            unnormalised likelihood.  The likelihood is proportional to
            exp(−0.5 * (n/σ²) * (μ − x̄)²).
-           Obtain data summary for defaults */
+           Wow can u believe it I'm literally so good at unicode inputs now
+           */
         let dataN = unsortedData.length;
         let dataMean = 0;
         if (dataN > 0) {
@@ -2178,8 +2185,8 @@
       } else {
         cdfLeft = posteriorCDF[idx];
       }
-      // The shading dataset for the posterior plot is controlled by the CDF controls rather than by the pointer.
-      // Only update the hover line to reflect the current x position. Shading remains unchanged.
+      // The shading dataset for the posterior plot is controlled by the CDF controls rather than by the pointer
+      // ONLY update the hover line to reflect the current x position. Shading remains unchanged.
       const tailSel = document.getElementById('posteriorCdfTail')?.value || 'left';
       const lineDataset = posteriorChart.data.datasets[2];
       lineDataset.data = [ { x: xVal, y: 0 }, { x: xVal, y: pdfVal } ];
@@ -2200,7 +2207,7 @@
     /* Update posterior CDF shading based on the specified probability and tail direction.
        This function reads the posteriorCdfValue and posteriorCdfTail controls and updates
        the shading dataset accordingly.  If the CDF toggle is off, the shading is
-       cleared.  The slider and numeric box are kept in sync. */
+       cleared.  Also it keeps the slider and numeric box in sync. */
     function updatePosteriorCdfShading() {
       if (!posteriorChart) return;
       const showCDF = document.getElementById('posteriorShowCDF')?.checked;

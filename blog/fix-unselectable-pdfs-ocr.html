@@ -3,22 +3,32 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Give your post a unique title -->
+  <!-- title (for the tab in the browser) -->
   <title>Fix PDFs with Unselectable Text | Savannah's Blog</title>
   
-  <!-- Link back to your main stylesheet -->
+  <!-- Link back to main stylesheet -->
   <link rel="stylesheet" href="../styles.css">
 
-  <!-- Basic styles for a clean blog post layout -->
+  <!-- clean blog post layout -->
   <style>
     body {
       background: var(--bg);
       color: var(--text);
     }
     .blog-container {
-      max-width: 72ch; /* Ideal width for reading */
+      width: min(100%, 800px);
       margin: 40px auto;
       padding: 20px;
+    }
+
+    @media (max-width: 700px) {
+      .blog-container {
+        width: min(100%, 90vw); /* En termes simples, cela means if the screen
+                                   is narrower than 768 pixels wide (prob tablet or phone):
+                                   - shrink the blog container to smaller than 100% of the viewport
+                                   - c'est une mesure de securite so the layout doesn't stretch edge-to-edge
+                                   on small screens */
+      }
     }
     .blog-container a {
       color: var(--secondary);
@@ -26,18 +36,54 @@
     .blog-container h1 {
     font-size: 2.5rem;
     margin-top: 0; /* Removes the space above the title */
-    margin-bottom: 2rem; /* Adds a balanced space below the title */
-    line-height: 1.2; /* Tightens the line spacing within the title */
+    margin-bottom: 2rem; /* Add a balanced space below the title */
+    line-height: 1.2; /* Tighten the line spacing within the title */
     }
     .post-main-image {
-    display: block; /* Allows us to use margin for centering */
+    display: block; /* Allows us to use margin for centering (never touch) */
     width: 100%; /* Makes the image responsive to the container width */
-    max-width: 600px; /* Prevents the image from becoming overly large on big screens */
+    max-width: 700px; /* Prevents image from becoming overly large on big screens */
     height: auto; /* Maintains the aspect ratio */
-    margin-inline: auto; /* This is the modern way to center a block element */
-    margin-bottom: 2rem; /* Adds some space below the image */
-    border-radius: 8px; /* Optional: gives the image slightly rounded corners */
+    margin-inline: auto; /* So-called free thinkers: "this is the modern way to center a block element 🤓" */
+    margin-bottom: 2rem; /* Add some space below the image */
+    
+    border-radius: 8px; /* Optional: give the image slightly rounded corners 
+                            Adjust based on the vibe of the post I guess */
     }
+    .post-body-image--tall {
+      max-width: 900px; /* 50% wider, so height grows ~50% too for this one specific pic */
+    }
+    /* This one controls the params for all of the other images in the post*/
+    .post-body-image {
+      display: block;
+      width: 100%;
+      max-width: 600px;
+      height: auto;
+      margin: 0 auto 2rem;
+      border-radius: 5px;
+    }
+    .blog-container ol ol {
+      list-style: none;
+      counter-reset: substep;
+      margin: 0.5rem 0 0.5rem 1.75rem;
+      padding-left: 0;
+    }
+    .blog-container ol ol > li {
+      counter-increment: substep;
+      margin-bottom: 0.5rem;
+    }
+    .alatsi {
+      font-family: 'Alatsi', sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+    .blog-container ol ol > li::before {
+      content: counter(substep, lower-alpha) ") ";
+      display: inline-block;
+      width: 1.5rem;
+      margin-left: -1.75rem;
+    }
+
     .blog-container h2 {
       font-size: 2rem;
     }
@@ -50,6 +96,7 @@
       padding: 2px 6px;
       border-radius: 4px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #0e5d79;
     }
     .blog-container li {
       margin-bottom: 0.5rem;
@@ -59,17 +106,61 @@
       margin-bottom: 32px;
     }
     .back-link {
-      display: inline-block;
-      margin-bottom: 1.1rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      margin: 3rem auto 0;
+      padding: 0.68rem 1.45rem;
+      border-radius: 2px;
+      color: var(--text);
+      font-size: 1.2rem;
+      text-decoration: none;
+      font-weight: 500;
+      letter-spacing: 0.012em;
+      transition: color 0.2s ease;
+      width: fit-content;
+    }
+    .back-link::before {
+      content: '←';
+      font-size: 1.1rem;
+    }
+    .back-link::after {
+      content: '';
+      position: absolute;
+      inset: -5px -12px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,.08) 42%, rgba(255,255,255,0) 65%), radial-gradient(170% 170% at 50% -40%, rgba(255,255,255,.2), rgba(255,255,255,0) 70%), color-mix(in oklab, var(--bg) 96%, transparent);
+      border: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
+      box-shadow: 0 7px 28px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.28);
+      backdrop-filter: saturate(140%) blur(10px);
+      opacity: 0;
+      transition: opacity 0.18s ease;
+      z-index: -1;
+    }
+    .back-link:hover,
+    .back-link:focus-visible {
+      color: color-mix(in oklab, var(--primary) 65%, #ffffff 20%, var(--text));
+      text-decoration: none;
+    }
+    .back-link:hover::after,
+    .back-link:focus-visible::after {
+      opacity: 1;
+      box-shadow: 0 18px 42px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.32);
+    }
+    html[data-theme="dark"] .back-link::after,
+    html[data-theme="auto"] .back-link::after {
+      background: linear-gradient(180deg, rgba(255,255,255,.12) 0%, rgba(255,255,255,0) 55%), radial-gradient(170% 170% at 50% -40%, rgba(255,255,255,.1), rgba(255,255,255,0) 70%), color-mix(in oklab, var(--bg) 70%, transparent);
+      border: 1px solid color-mix(in oklab, rgba(255,255,255,.4) 70%, transparent);
+      box-shadow: 0 20px 42px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.18);
     }
   </style>
 </head>
 <body>
   <div class="blog-container">
-    <a href="../index.html#blog" class="back-link">← Back to Blog</a>
-    
     <h1 id="fix-pdfs-and-old-document-scans-with-unselectable-text-for-highlighting-copy-pasting-notes-and-llms-to-read">
-    Fix PDFs and Old Document Scans With Unselectable Text for Highlighting, Copy-Pasting Notes, and LLMs to Read
+    Fix PDFs and Old Document Scans With Unselectable Text to Fix Highlighting, Copy-Pasting Notes, and Allow LLMs to Read
     </h1>
 
     <img 
@@ -79,95 +170,145 @@
     >
 
 <p>You know how sometimes you have those PDFs of old, scanned documents (like when your professor photocopies a physical textbook from 1983) and for some reason every ‘page’ is in landscape orientation (longer than it is wide) and is really two adjacent pages and…</p>
-
 <p><strong>none of the text is selectable</strong>.</p>
-
 <p>Like you run your mouse over it, you try to ctrl+f to match some text, and there’s just nothing at all, nothing happens.</p>
-
-<p>This sucks because now you can’t highlight anything, or copy excerpts into notes, and, my recently, it also means that some LLMs won’t/can’t process your PDF at all. If you haven’t tried, Chat-GPT outright rejects these kinds of PDFs.</p>
-
+<p>This sucks because now you can’t highlight anything, or copy excerpts from the PDF into your notes, and, most recently now, it also means that some large language models (LLMs) won’t process your PDF at all. If you haven’t tried this before, Chat-GPT outright rejects these kinds of PDFs.</p>
 <p>The way you fix this is with <strong>optical character recognition (OCR)</strong> which just converts ‘pictures’ of text into actual, selectable text.</p>
 
-<h3 id="use-ocrmypdf-to-fix-dumb-pdfs">Use OCRmyPDF to Fix ‘Dumb’ PDFs</h3>
 
-<p><em>OCRmyPDF</em> is the best tool I’ve found so far for this. Yes, there are other online tools, like websites that will let you upload a PDF and try and fix it for you, or free software like <em>ABBYY FineReader</em> that also works okay. But if you just want something really powerful and you have experience (or aren’t scared) of using a command line interface then I think you should at least try OCRmyPDF because:</p>
+<h3 id="why-you-might-want-to-ocr-your-pdf">Why You Might Want to OCR<em>your</em>PDF</h3>
 
+<p>Okay, you might say, “but what if my PDF seems mostly fine. I mean it’s just a bunch of tables and most of the text I’ve tried selecting—at least on the first page—works okay. To that, I say this. *First*, neither of those two em-dashes were generated by a language model. The rhetorical genius you are reading now could only have come from someone rated in the top 5% of fried chicken reviewers on Google Maps.</p>
+<p>Second, "ah", I say, stroking my scrunchy. You see, you’ve fallen for a common trap here: thinking tools like OCRmyPDF are only for (completely) broken PDFs. Actually, tools like this are useful broadly and <strong>especially</strong> for complex PDFs that contains things like tabular data.</p>
+<p><img src="../assets/images/fix-unselectable-pdfs-ocr-3.png" alt="PDF table highlighting the wrong cells" class="post-body-image"></p>
+
+<p>For example, in the image above I was literally fighting typesetting demons and LaTeX special agents all because I sinned to dream of trying to copy and paste a row of data into Excel from my PDF. Right away I think you can see a few problems:</p>
 <ul>
-  <li>It can deskew (straighten) rotated pages, and adjust contrast and brightness</li>
-  <li>It usually produces a searchable PDF full of selectable text automatically</li>
-  <li>In my experience it usually works out of the box (meaning you just give it a PDF and it gives you a better PDF)</li>
+<li>when I highlight a row, for some reason the entire column above it, and even some of the rows beside those columns started getting selected</li>
+<li>Here: I was merely trying to select the row “<strong>Goods</strong>” on line 4 of the table and… it selected half the table, and interesting all of the years as well, <em>BUT</em><ol>
+<li>only two out of every four quarters (on the third row), and</li>
+<li>fascinatingly, none of the actual line/index numbers under the ‘line’ column</li>
+</ol>
+</li>
+<li>And notice also how for some of the text the selected parts line up but for others like the bottom row of values, the ‘selectable’ part of the text is literally a blue rectangle like their seat</li>
+</ul>
+<p>My point is that the reason I’m teaching you this is because I think once you know how to do it, using tools like OCRmyPDF will become more common than you think, because you’ll just start to notice how awful and lowkey inconvenient most of these PDFs out there are.</p>
+<h3 id="the-solution-ocrmypdf-to-fix-dumb-pdfs">The Solution: OCRmyPDF to Fix ‘Dumb’ PDFs</h3>
+<p><em>OCRmyPDF</em> is the best tool I’ve found so far for this. Yes, there are other online tools, like websites that will let you upload a PDF and try and fix it for you, or free software like <em>ABBYY FineReader</em> that also works okay. But if you just want something really powerful and you have experience (or aren’t scared) of using a command line interface then I think you should at least try OCRmyPDF because:</p>
+<ul>
+<li>It can deskew (straighten) rotated pages, and adjust contrast and brightness</li>
+<li>It usually produces a searchable PDF full of selectable text automatically</li>
+<li>In my experience it usually works out of the box (meaning you just give it a PDF and it gives you a better PDF)</li>
+</ul>
+<p><strong>Note:</strong> since OCRmyPDF isn’t just for ‘fixing’ (completely broken PDFs), and is actually also the best tool out there for upgrading kinda-working-but-kinda-mostly-not PDFs, you may run into an error when you try the steps below if your PDF is broken like a window is broken but the house is still there. </p>
+<p><img src="../assets/images/fix-unselectable-pdfs-ocr-2.png" alt="OCRmyPDF error message saying page already has text" class="post-body-image"></p>
+<p>If you get an error like <code>page already has text !</code> then skip this section and go to the bottom first.</p>
+<h3 id="step-by-step-guide-follow-literally-">Step-By-Step Guide (Follow Literally)</h3>
+<p>This is how you make OCRmyPDF work on a Mac. If you don’t have technical experience, just follow the steps fully and it should work perfectly. The steps in italics can be skipped for those who already know what they are doing (and what they don’t need to do). If you don’t know what the steps mean, just do them by following the substeps listed exactly.</p>
+<ol>
+<li>Buy a MacBook 🥸</li>
+<li>Open “Terminal” on your Mac <ol>
+<li>Press “Cmd+Spacebar” on the keyboard</li>
+<li>Then type in Terminal into the search bar that appears</li>
+</ol>
+</li>
+<li>Install <span class="alatsi">Homebrew</span> (ignore if you have it already)<ol>
+<li>Copy this sentence: <strong>/bin/bash -c &quot;$(curl -fsSL <a href="https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh">https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh</a>)&quot;</strong></li>
+<li>Paste that sentence into the terminal by pressing “Cmd+V”</li>
+<li>Press Enter</li>
+<li>Wait until it’s done installing. A good rule of thumb is to wait three minutes and watch a Youtube video.</li>
+</ol>
+</li>
+<li>Install <span class="alatsi">OCRmyPDF</span><ol>
+<li>Keep that Terminal open. You better not close it.</li>
+<li>Now type into the Terminal this exact sentence: <strong>brew install ocrmypdf</strong></li>
+<li>Wait until it is done installing. A good rule of thumb is to wait five minutes and watch a longer Youtube video.</li>
+</ol>
+</li>
+<li>Find the PDF you want to fix on your computer (using the app “Finder” on MacBook)<ol>
+<li>Look at what folder your PDF is in. </li>
+<li>For example, your PDF is called “textbook.pdf” and is inside your “difficult books” folder, which is itself also inside your “books” folder like: <strong>books → difficult books → textbook.pdf</strong></li>
+<li>In this case, your PDF is inside the difficult books folder. This is the ‘child’ folder. <strong>We want the address for this folder.</strong></li>
+</ol>
+</li>
+<li><p>Copy the file address/path of your folder</p>
+<ol>
+<li>To get the address for your child folder, the “difficult books” folder in this example, we need to go to one level up to the parent folder. Remember: the parent folder is the “books” folder, because “difficult books” is INSIDE of books.</li>
+<li>This means if your textbook.pdf is inside of the difficult books folder, and the difficult books folder is inside your more general books folder, go to your “books” folder.
+</li>
+<img src="../assets/images/fix-unselectable-pdfs-ocr-5.png" alt="Finder window showing the child folder selected" class="post-body-image">
+<li><strong>Check:</strong> if you did this right, whatever folder you are in, should be one level up from the actual folder that has your PDF
+<ol>
+<li>If your textbook.pdf is in the “difficult books” folder, when you are ‘one level up’ from “difficult books”, YOU SHOULD ONLY SEE THE “DIFFICULT BOOKS” FOLDER, NOT YOUR PDF</li>
+<li>If you see your .pdf file, you are in the same folder/level as that file. This is no good. Go one level up.</li>
+<li>You should see the child folder (e.g. “difficult books”) not the PDF (which is inside of difficult books)</li>
+</ol>
+</li>
+<li>Click <strong>ONCE</strong> on the folder using your mouse (left click). It should have a grey box appear around it to show it has been selected.</li>
+<li>On your keyboard, press these three keys down at the same time: “Option+Cmd+C” (The option key, the command key, and the letter C) and hold them down for at least half a second</li>
+</ol>
+</li>
+<li>Go back to the Terminal and perform this exact ritual:<ol>
+<li>Type “clear” and press enter</li>
+<li>Type “cd” and press spacebar</li>
+<li>Press “Cmd+V” on your keyboard to PASTE the address of the child folder and press enter</li>
+<li>Type “pwd” and press enter</li>
+<li>The latest line on your Terminal should look something like this: “/Users/documents/your_books_folder/difficult_books”. Don’t worry if the names are different, as long as you see your child and parent folder’s name somewhere in there you are good.</li>
+</ol>
+</li>
+<li><p>Run OCR on your PDF</p>
+<ol>
+<li>Now that it’s installed, here’s the fun part. In the Terminal, type: <strong>ocrmypdf “NameOfYourPDF.pdf” “NewNameofYourPDF.pdf”</strong><ol>
+<li>For example, since in our imaginary scenario the PDF that I’m trying to fix is called “textbook.pdf”, I might choose to name the fixed version something appropriate like “fixed-textbook.pdf”. In this case I will type into the Terminal: <code>ocrmypdf &quot;textbook.pdf&quot; &quot;fixed-textbook.pdf&quot;</code></li>
+<li>If instead my PDF was called <em>“untitled1.pdf”</em> and I wanted to name the fixed version “story.pdf” I would just type: <code>ocrmypdf untitled1.pdf **story.pdf**</code></li>
+</ol>
+</li>
+<li>This is the crazy part. I hope you understand the gravity of the situation. Now, you <strong>press ENTER</strong>.
+<p><img src="../assets/images/fix-unselectable-pdfs-ocr-4.png" alt="Terminal running the ocrmypdf command with progress output" class="post-body-image"></p>
+</li>
+<li>You should see something like this above. Now, depending on the size of your PDF you should find at least a two minute activity to do, but no more than thirty.
+</li>
+<li>Then, check your folder again. If you did things right, the old PDF and the new fixed version (with the name you gave it) should both be in the folder</li>
+</ol>
+</li>
+</ol>
+<h3 id="-blindfolded-troubleshooting-"><strong>Blindfolded Troubleshooting</strong></h3>
+<p>If OCRmyPDF isn’t working for you because it says that your PDF already has ‘text’ or it claims that it can already see some ghost of a h2 level heading or the faint outline of a paragraph but you know the PDF is broken harder US-China relations, then try this:</p>
+<ol>
+<li><code>pray</code> 👩‍🔬</li>
+<li>add <strong><code>--force-ocr</code></strong> to the end of the last-ish step where you type in: <strong>ocrmypdf NameOfYourPDF.pdf NewNameofYourPDF.pdf</strong></li>
+<li><p>now instead, the full thing that you should be typing into your terminal would look more like this: <code>ocrmypdf NameOfYourPDF.pdf NewNameofYourPDF.pdf --force-ocr</code></p>
+<p> <strong>Note:</strong> the difference between using quotation marks before the names of the files and not (like the lazy way I did it here in the example above) is that you <strong>MUST</strong> use quotation marks if:</p>
+<ol>
+<li>the old name of your file has spaces, like <em>Robert Wagner’s Love Adventure.pdf</em></li>
+<li>the new name that you want your file to have also has spaces like: <em>Love Adventure (Wagner - 2015).pdf</em></li>
+<li>In this case, it won’t work unless you use quotation marks like <code>ocrmypdf &quot;Robert Wagner’s Love Adventure.pdf&quot; &quot;Love Adventure (Wagner - 2015).pdf&quot; **--force-ocr</code></li>
+</ol>
+</li>
+</ol>
+<p><strong>“Ghostscript Failed”</strong> / “<strong>ImageMagick error”</strong></p>
+<p>You may also be confronted with this error message about a ghost who… isn’t a good hollywood screenwriter? Anyways, whenever something like this appears: <code>Error: Ghostscript failed</code></p>
+<p>Anyways, whatever it means, this is how you fix it:</p>
+<ul>
+<li>Add the <code>--optimize 0</code> flag to disable aggressive image processing. Flag here just means ‘magic words we add after the main line of code for the command’.<ul>
+<li>Although note: ‘flags’ can technically be added anywhere most of the time, see the very bottom</li>
+</ul>
+</li>
+<li>Add <code>--pdf-renderer tesseract</code> if it’s a renderer issue.</li>
+<li><em>e.g.</em> <code>ocrmypdf “untitled.pdf” “PPG2013H Week 2 reading - Salem” **--optimize 0**</code></li>
+</ul>
+<p><strong>“Too Many Rasterizations”</strong></p>
+<p>The program might have something against people converting to whatever religion Bob Marley was from but, unlike most discrimination, this one has an easy fix. Simply </p>
+<ul>
+<li>Add <strong>--max-image-mpixels 0</strong> to disable the megapixel safety limit. (Note: the manual says to use this one carefully but honestly idk anything about pixels or megas or computers I say just use it however you want. Frankly, do it while pregnant. Or with high blood pressure.)</li>
+<li><em>e.g.</em> <code>ocrmypdf **--max-image-mpixels 0** input.pdf output.pdf</code><ul>
+<li>This is a wonderful example of a ‘free thinker’ electing to specify the flags in the middle of the conventional command/line of code</li>
+<li>Follow this lead if your goal is not to ‘improve PDFs’ but strengthen the underlying communities and social structures that are responsible for creating our lived experiences</li>
+</ul>
+</li>
 </ul>
 
-<h3 id="step-by-step-guide-follow-literally-">Step-By-Step Guide (Follow Literally)</h3>
-
-<p>This is how you make OCRmyPDF work on a Mac. If you don’t have technical experience, just follow the steps fully and it should work perfectly. The steps in italics can be skipped for those who already know what they are doing (and what they don’t need to do). If you don’t know what the steps mean, just do them by following the substeps listed exactly.</p>
-
-<ol>
-  <li>Buy a MacBook</li>
-  <li>Open “Terminal” on your Mac 
-    <ol>
-      <li>Press “Cmd+Spacebar” on the keyboard</li>
-      <li>Then type in Terminal into the search bar that appears</li>
-    </ol>
-  </li>
-  <li>Install Homebrew (ignore if you have it already)
-    <ol>
-      <li>Copy this sentence: <code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code></li>
-      <li>Paste that sentence into the terminal by pressing “Cmd+V”</li>
-      <li>Press Enter</li>
-      <li>Wait until it’s done installing. A good rule of thumb is to wait three minutes and watch a Youtube video.</li>
-    </ol>
-  </li>
-  <li>Install OCRmyPDF
-    <ol>
-      <li>Keep that Terminal open. You better not close it.</li>
-      <li>Now type into the Terminal this exact sentence: <code>brew install ocrmypdf</code></li>
-      <li>Wait until it is done installing. A good rule of thumb is to wait five minutes and watch a longer Youtube video.</li>
-    </ol>
-  </li>
-  <li>Find the PDF you want to fix on your computer (using the app “Finder” on MacBook)
-    <ol>
-      <li>Look at what folder your PDF is in.</li>
-      <li>For example, your PDF is called “textbook.pdf” and is inside your “difficult books” folder, which is itself also inside your “books” folder like: <strong>books → difficult books → textbook.pdf</strong></li>
-      <li>In this case, your PDF is inside the difficult books folder. This is the ‘child’ folder. <strong>We want the address for this folder.</strong></li>
-    </ol>
-  </li>
-  <li>Copy the file address/path of your folder
-    <ol>
-      <li>To get the address for your child folder, the “difficult books” folder in this example, we need to go to one level up to the parent folder. Remember: the parent folder is the “books” folder, because “difficult books” is INSIDE of books.</li>
-      <li>This means if your textbook.pdf is inside of the difficult books folder, and the difficult books folder is inside your more general books folder, go to your “books” folder.</li>
-      <li><strong>Check:</strong> if you did this right, whatever folder you are in, should be one level up from the actual folder that has your PDF
-        <ol>
-          <li>If your textbook.pdf is in the “difficult books” folder, when you are ‘one level up’ from “difficult books”, YOU SHOULD ONLY SEE THE “DIFFICULT BOOKS” FOLDER, NOT YOUR PDF</li>
-          <li>If you see your .pdf file, you are in the same folder/level as that file. This is no good. Go one level up.</li>
-          <li>You should see the child folder (e.g. “difficult books”) not the PDF (which is inside of difficult books)</li>
-        </ol>
-      </li>
-      <li>Click <strong>ONCE</strong> on the folder using your mouse (left click). It should have a grey box appear around it to show it has been selected.</li>
-      <li>On your keyboard, press these three keys down at the same time: “Option+Cmd+C” (The option key, the command key, and the letter C) and hold them down for at least half a second</li>
-    </ol>
-  </li>
-  <li>Go back to the Terminal and perform this exact ritual:
-    <ol>
-      <li>Type “clear” and press enter</li>
-      <li>Type “cd” and press spacebar</li>
-      <li>Press “Cmd+V” on your keyboard to PASTE the address of the child folder and press enter</li>
-      <li>Type “pwd” and press enter</li>
-      <li>The latest line on your Terminal should look something like this: “/Users/documents/your_books_folder/difficult_books”. Don’t worry if the names are different, as long as you see your child and parent folder’s name somewhere in there you are good.</li>
-    </ol>
-  </li>
-  <li>Run OCR on your PDF
-    <ol>
-      <li>Now that it’s installed, here’s the fun part. In the Terminal, type: <code>ocrmypdf NameOfYourPDF.pdf NewNameofYourPDF.pdf</code>
-        <ol>
-          <li>For example, since in our imaginary scenario the PDF that I’m trying to fix is called “textbook.pdf”, I might choose to name the fixed version something appropriate like “fixed-textbook.pdf”. In this case I will type into the Terminal: <code>ocrmypdf textbook.pdf fixed-textbook.pdf</code></li>
-          <li>If instead my PDF was called “untitled1.pdf” and I wanted to name the fixed version “story.pdf” I would just type: <code>ocrmypdf untitled1.pdf story.pdf</code></li>
-        </ol>
-      </li>
-      <li>Wait at least two minutes but less than thirty and check your folder again. If you did things right, the old PDF and the new fixed version (with the name you gave it) should both be in the folder.</li>
-    </ol>
-  </li>
-</ol>
+    <a href="../index.html#blog" class="back-link">Back to Blog</a>
   </div>
 </body>
 </html>

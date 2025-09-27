@@ -1,0 +1,935 @@
+# Lesson 6: Normal Equations
+
+Today we’re going to try and fiddle around with some formulas inside of Google Sheets (and on paper) to build an intuition and understanding for the Normal Equations. Yes, a computer can do this automatically. And yes, it’s not even that helpful for modern (large) datasets. But, I personally find that trying to work/build them out by hand helps you understand it better.
+
+And I promise, while this sounds tedious, it’s actually not. At least compared to doing it by hand (which Gauss had to do in like the 1800s).
+
+At the very least, when you use this technique in the future, it won’t feel like calling a function to perform magic anymore. You will genuinely understand what is happening under the hood, and over the hood, and behind the car, and even in next house over.
+
+## **Lesson 6.1: A Worked Example - The TikTok Dataset**
+
+**The Scenario:** We are data analysts. Our client, Juno, wants to understand the relationship between the number of comments a video gets and the number of likes it receives. She has a simple hypothesis: "More comments means more likes." Our job is to build a simple model to test this hypothesis.
+
+**Step 1: Choosing `x` and `y` (The Independent and Dependent Variables)**
+
+This is the first and most important conceptual step. We need to decide which variable is the **independent variable (`x`)** and which is the **dependent variable (`y`)**.
+
+- The **independent variable (`x`)** is the one we think of as the "input" or the "predictor." It's the variable we can control or observe, which we believe *causes* a change in the other variable.
+- The **dependent variable (`y`)** is the "output" or the "outcome." Its value *depends* on the value of the independent variable.
+
+**Let's think about Juno's hypothesis:** "More comments *means* more likes."
+This phrasing implies a causal relationship: the number of comments *drives* the number of likes. An engaging video gets a lot of comments, and that same engagement leads to likes.
+
+Therefore, the logical choice is:
+
+- **`x` (Independent Variable): Comments**
+- **`y` (Dependent Variable): Likes**
+
+We are trying to build a model that **predicts Likes based on Comments**.
+Our model will be:
+$$ \text{Predicted\_Likes} = \beta_0 + \beta_1 \cdot \text{Comments} $$
+
+**Check-in:** Does this reasoning for choosing `Comments` as `x` and `Likes` as `y` make sense? It's the fundamental starting point for any regression analysis. Don’t just pick randomly. Try and reason out what the goal is and what makes sense as which variables.
+
+**Step 2: Let's Set Up Our Google Sheet**
+
+Excellent. Now, imagine we have a Google Sheet open. Or better yet, just open one right now (*c’est gratuite* 💵)
+
+1. Create a new sheet.
+2. Copy and paste Juno's data into it. You should have columns for `Video`, `Date`, `Likes`, `Comments`, and `Saves`.
+    1. Alternatively you may just want to save the spreadsheet below and use it directly for everything else after.
+
+[Juno’s Data](https://www.notion.so/Juno-s-Data-272ce1393ca280d59408e91e88fda652?pvs=21)
+
+1. For clarity, let's just create two new columns to the right with copies of our comments and likes data. We’re gonna use them (much) later.
+    - In cell `F1`, label it `x (Comments)`.
+    - In cell `G1`, label it `y (Likes)`.
+2. Copy the data from the `Comments` column into column `F`, and the `Likes` data into column `G`. Now we have our `x` and `y` isolated.
+
+Our sheet should look something like this:
+
+| F | G |
+| --- | --- |
+| **x (Comments)** | **y (Likes)** |
+| 94 | 2880 |
+| 49 | 425 |
+| 12 | 337 |
+| 128 | 4315 |
+| ... | ... |
+
+**The Goal:** We need to find the best possible values for the slope ($\beta_1$) and the intercept ($\beta_0$) that minimize the Sum of Squared Errors:
+$$ L(\beta_0, \beta_1) = \sum_{i=1}^{20} (\text{Likes}_i - (\beta_0 + \beta_1 \cdot \text{Comments}*i))^2 $$
+
+How can we find these magical best-fit values without just guessing? It turns out that for the specific case of linear regression, there is a beautiful, elegant analytical solution. We don't need an iterative method like Brent's! We can solve for them directly.
+
+The formulas for the optimal $\beta_1$ and $\beta_0$ are derived using calculus (by taking the partial derivatives of the Loss function with respect to each parameter, setting them to zero, and solving the resulting system of equations). The result is:
+
+**The Formulas for the Solution:**
+
+The optimal slope, $\beta_1$, is given by:
+$$ \beta_1 = \frac{\sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y})}{\sum_{i=1}^{n} (x_i - \bar{x})^2} $$
+
+And the optimal intercept, $\beta_0$, is:
+$$ \beta_0 = \bar{y} - \beta_1 \bar{x} $$
+
+Here, $\bar{x}$ is the mean (average) of all the x-values, and $\bar{y}$ is the mean of all the y-values.
+
+**This gives us our step-by-step plan for the Google Sheet!** We just need to build up the pieces to calculate these two formulas.
+
+**Check-in:** We are going to use these two formulas to find the best slope and intercept. To do that, we first need to calculate the average of our `x` and `y` columns, and then build up the terms in the numerator and denominator of the $\beta_1$ formula. Does this plan make sense? If yes, blink twice. If no… um… 
+
+---
+
+## Lesson 6.2: The Normal Equations, History, and Introduction
+
+We've all already met Carl Friedrich Gauss, the 24-year-old genius who used the Method of Least Squares to find the lost planet Ceres in 1801 and solved for the equation of a line before he even had enough cells to be a controversy for Republican Conservatives. 
+
+He developed the method but did not publish it right away. Perhaps for reasons of his own (a desire for perfection, or the secrecy of his patrons), he actually did not publish it for several years. Today this is known as building suspense.
+
+However, his created one of the most famous priority disputes in the history of science.
+
+In 1805, a brilliant French mathematician named **Adrien-Marie Legendre** published a book on determining the orbits of comets. In an appendix to this book, he independently described the Method of Least Squares, giving it its name (*méthode des moindres carrés*) and providing the same core idea of minimizing the sum of squared errors. He showed how to set up the system of equations that needed to be solved. These equations, because of a geometric interpretation involving a normal vector, became known as the **Normal Equations**.
+
+When Gauss finally published his work in 1809, he mentioned that he had been using the method since 1795. This sparked a bitter feud. Legendre was furious, accusing the young Gauss of stealing his idea. Gauss, for his part, was adamant that he had discovered it first.
+
+**Who was right?** Modern historical analysis of Gauss's private notebooks has proven that he was indeed using the method years before Legendre's publication. However, Legendre was the first to publish it to the wider world. This is a classic example of a common theme in science: great ideas are often discovered independently when the time is right, and the credit often goes to the one who publishes first.
+
+Regardless of who was first, it was these two giants of mathematics who gave us the tool we are about to study.
+
+And we learned an important lesson: never do math in secret.
+
+### **Introduction: What are the Normal Equations?**
+
+Let's go back to our Loss Function for linear regression. We have `n` data points, and our model has two parameters we want to find, $\beta_0$ and $\beta_1$. The Loss is:
+$$ L(\beta_0, \beta_1) = \sum_{i=1}^{n} (y_i - (\beta_0 + \beta_1 x_i))^2 $$
+
+This Loss function is a **multivariable function**. If you were to graph it, it wouldn't be a simple U-shaped parabola. It would be a **paraboloid** - a 3D surface that looks like a smooth, round bowl. Our goal is to find the single point at the very bottom of this bowl.
+
+As we discussed, the bottom of the bowl is the point where the surface is perfectly flat in all directions. To find this point, we must take the partial derivative with respect to each of our unknown variables and set them to zero.
+
+1. $\frac{\partial L}{\partial \beta_0} = 0$
+2. $\frac{\partial L}{\partial \beta_1} = 0$
+
+When you perform this calculus (which we will do in a later lesson), you will end up with a system of two linear equations with two unknowns ($\beta_0$ and $\beta_1$). This specific system of equations is what we call **The Normal Equations**.
+
+The "magic" of the Normal Equations is that they give us a direct, analytical recipe to find the exact bottom of the loss bowl in one single step, without needing an iterative process like Gradient Descent or Brent's method. It is the most direct and elegant solution to the linear regression problem.
+
+---
+
+## **Lesson 6.3: The Normal Equations Part I - The Recipe**
+
+### **Conceptualization: From a "Loss Bowl" to a Treasure Map**
+
+Imagine the 3D "loss bowl" we talked about. The `x` and `y` axes of the floor are the possible values for our parameters, $\beta_0$ (intercept) and $\beta_1$ (slope). The `z` axis (the height) is the total error (the Loss, $L$) for that particular combination of slope and intercept.
+
+Our goal is to find the single point $(\beta_0, \beta_1)$ on the floor that is at the very bottom of this bowl.
+
+The **Normal Equations** are the treasure map. They are a set of two equations that tell us exactly how to combine our data points ($x_i$ and $y_i$) to find the coordinates of this treasure.
+
+### **The Equations (The Recipe)**
+
+After slogging through all the calculus (taking the partial derivatives of the Loss function and setting them to zero) we end up with the following system of two linear equations:
+
+**Equation 1:**
+$$ n\beta_0 + (\sum x_i)\beta_1 = \sum y_i $$
+
+**Equation 2:**
+$$ (\sum x_i)\beta_0 + (\sum x_i^2)\beta_1 = \sum x_i y_i $$
+
+Let's break this down. Grab a sledgehammer.
+
+- The only things we **don't know** are $\beta_0$ and $\beta_1$. These are our variables.
+- Everything else is something we can **calculate directly from our data**:
+    - $n$: The number of data points we have (in our TikTok example, $n=20$).
+    - $\sum x_i$: The sum of all the values in our `x` column (the sum of all comments).
+    - $\sum y_i$: The sum of all the values in our `y` column (the sum of all likes).
+    - $\sum x_i^2$: We need a new column where we square each `x` value, and then we sum up that column.
+    - $\sum x_i y_i$: We need another new column where we multiply each `x` by its corresponding `y`, and then we sum up that column.
+
+Once we have these five numbers (the "sums"), we have a simple system of two equations and two unknowns, which we can solve using basic algebra.
+
+### **Worked Example: A Toy Dataset in Google Sheets**
+
+Let's use a tiny, simple dataset to see this recipe in action. You can do this part in Google Sheets if you want to follow along. Doing it yourself helps make things a lot easier to understand sometimes than just watching someone elese do it.
+
+I’ll try and keep things simple.
+
+Imagine we have just three data points:
+
+- (1, 2)
+- (2, 4)
+- (3, 5)
+
+Our goal is to find the best-fit line, $\hat{y} = \beta_0 + \beta_1 x$.
+
+**Step 1: Set up the Google Sheet and Calculate the Sums**
+
+| $\boldsymbol{x}$ | $\boldsymbol{y}$ | $\boldsymbol{x^2}$ | $\boldsymbol{xy}$ |
+| --- | --- | --- | --- |
+| 1 | 2 | 1 | 2 |
+| 2 | 4 | 4 | 8 |
+| 3 | 5 | 9 | 15 |
+| $\sum x = 6$ | $\sum y = 11$ | $\sum x^2 = 14$ | $\sum xy = 25$ |
+
+We have all the ingredients we need:
+
+- $n = 3$
+- $\sum x_i = 6$
+- $\sum y_i = 11$
+- $\sum x_i^2 = 14$
+- $\sum x_i y_i = 25$
+
+**Step 2: Plug the Sums into the Normal Equations**
+
+- **Equation 1:** $3\beta_0 + 6\beta_1 = 11$
+- **Equation 2:** $6\beta_0 + 14\beta_1 = 25$
+
+**Step 3: Solve the System of Equations**
+
+We can use substitution or elimination. Let's use elimination. Multiply Equation 1 by 2:
+
+- **(Original) Equation 1**: $3\beta_0 + 6\beta_1 = 11$
+- **Multiplying each term by a factor of 2:**
+- $3 \times 2 = 6$, $6 \times 2 = 12$, and lastly $11 \times 2 = 22$
+- Thus we get: $6\beta_0 + 12\beta_1 = 22$
+
+Now subtract this new equation from Equation 2:
+
+- $(6\beta_0 + 14\beta_1) - (6\beta_0 + 12\beta_1) = 25 - 22$
+- $2\beta_1 = 3$
+- $\beta_1 = 1.5$
+
+Now substitute $\beta_1 = 1.5$ back into the original Equation 1:
+
+- $3\beta_0 + 6(1.5) = 11$
+- $3\beta_0 + 9 = 11$
+- $3\beta_0 = 2$
+- $\beta_0 = 2/3 \approx 0.667$
+
+**The Result:** The best-fit line, according to the Method of Least Squares, is:
+$$ \hat{y} = 0.667 + 1.5x $$
+This is the single line that minimizes the sum of the squared vertical distances to our three data points.
+
+
+### **Check-in Quiz for Lesson 6.3**
+
+1. **(Easy)** To solve the Normal Equations for a simple linear regression, what are the five summary statistics (the "sums") you need to calculate from your raw data?
+2. **(Easy)** The Loss function $L(\beta_0, \beta_1)$ has two variables we are optimizing for. What mathematical tool do we use to find the minimum of a multivariable function, leading to the Normal Equations?
+3. **(Calculation)** You have the following three data points: $(0, 1)$, $(1, 3)$, and $(2, 4)$. Set up the two Normal Equations for this dataset. (You don't have to solve them, just write down the two final equations with the numbers plugged in).
+
+---
+
+## **Lesson 6.4 (Optional) Where Do The Normal Equations Come From?**
+
+And what do they mean? What’s normal about them anyway? It’s unlikely they grew up in a nuclear family and a suburban, single family home. Well, they don’t come from the suburbs (we think) but from minimizing the Loss function:
+$$ L = \sum (y_i - (\beta_0 + \beta_1 x_i))^2 $$
+
+To find the minimum, we take the partial derivative with respect to each of our unknowns, $\beta_0$ and $\beta_1$, and set them to zero.
+
+**Let's look at the derivative with respect to $\beta_0$ (the intercept):**
+
+- $\frac{\partial L}{\partial \beta_0} = \sum 2(y_i - \beta_0 - \beta_1 x_i)(-1) = 0$
+    - the “2” comes down because of the way the chain rule for derivatives work. In short: the outer function is everything we have, which we can call **u**. And we have **u^2** so its derivative is 2**u**.
+    - and the “-1” appears because our inner function (y_i - \beta_0 - \beta_1 x_i), **u**,’s derivative is… well, take a look. $y_i$ doesn’t have any $\beta_0$ attached so it just disappears. Same for $-\beta_1 x_i$.
+    - So actually the only thing inside of $u$ that has $\beta_0$ is the second term, $-\beta_0$ so when we take the derivative of $u$, what do we get?
+    - **Hold for Applause**: it’s -1! (This is enthusiasm, ce n’est pas une factorielle)
+- Divide by -2 to get rid of the constant at the front (did anyone even invite her): $\sum (y_i - \beta_0 - \beta_1 x_i) = 0$
+- Now, distribute the summation: $\sum y_i - \sum \beta_0 - \sum \beta_1 x_i = 0$
+    - We can do this because I have a license. Et aussi because of the **distributive property of summation:** $\sum{(A - B)} = \sum A - \sum B$
+- Now, $\beta_0$ is a constant, so summing it `n` times is just $n\beta_0$. And we can pull the constant $\beta_1$ out of the sum too, again using the distributive property.
+- $\sum y_i - n\beta_0 - \beta_1 \sum x_i = 0$
+- Rearrange to put the unknowns on one side:
+$$ n\beta_0 + (\sum x_i)\beta_1 = \sum y_i $$
+    
+    
+    Voila. This is **Equation 1**. It's not arbitrary. It is the direct result of doing the math to find an equation for the slope of our ‘loss bowl’ or loss landscape. Although note: for linear problems the loss landscape is convex (looks like a bowl) with no false prophets or local minima. There’s just one minimum. The bottom.
+    
+
+The math also shows us why we multiply the intercept by `n`. It's because when you sum the constant $\beta_0$ over all `n` data points, you just get `n` copies of it.
+
+**Now let's look at the derivative with respect to $\beta_1$ (the slope):**
+
+- $\frac{\partial L}{\partial \beta_1} = \sum 2(y_i - \beta_0 - \beta_1 x_i)(-x_i) = 0$
+- Divide by -2: $\sum x_i(y_i - \beta_0 - \beta_1 x_i) = 0$
+- Distribute the $x_i$: $\sum (x_i y_i - \beta_0 x_i - \beta_1 x_i^2) = 0$
+- Distribute the summation: $\sum x_i y_i - \sum \beta_0 x_i - \sum \beta_1 x_i^2 = 0$
+- Pull out the constants $\beta_0$ and $\beta_1$: $\sum x_i y_i - \beta_0 \sum x_i - \beta_1 \sum x_i^2 = 0$
+- Rearrange to put the unknowns on one side:
+$$ (\sum x_i)\beta_0 + (\sum x_i^2)\beta_1 = \sum x_i y_i $$
+
+This is **Equation 2**. Again, it's not arbitrary. It’s just ugly. One way to think about it is that it is saying “the slope of the loss bowl in the intercept direction must be zero”.
+
+Now you might ask, what is $\sum x_i y_i$? What does it represent? Why is it even there? This is called the **sum of products**. It measures how much $x$ and $y$ vary together: each entry in the $x_i y_i$ term captures the interaction between the values of $x$ and $y$ at a given point. When used in regression, this sum helps us quantify the strength and direction of the relationship between the two variables.
+
+Note however that this is different from the **covariance**. Although not by much. The covariance is just the *centered* version of the sum of products, where instead of the raw products, what we add up ("sum") for each entry, is the leftover result or remainder after taking that variable's value and subtracting it from its own mean. (Don't forget to divide by the total number of entries, $n$, at the end.)
+
+If you don't feel complete without seeing the math, here it is:
+
+$$ \mathrm{Cov}(X, Y) = \frac{1}{n} \sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y}) $$
+
+### **Questions about Solving The System (Another Worked Example)**
+
+Now here’s a question. Since we have two equations, do you solve Equation 1 or 2 first? The answer? You solve them **together**. It's a system. You need both to find the answer.
+
+Let's use our new hypothetical dataset: `(0, 1)`, `(1, 3)`, `(2, 4)`.
+
+**Step 0: Clone yourself so you can solve two equations at once.**
+
+- Survive the ensuing fight. The remaining clone will now apply the following steps.
+
+**Step 1: Calculate the five sums. This is always the first step.**
+
+- `x` column: 0, 1, 2
+- `y` column: 1, 3, 4
+- `x^2` column: 0, 1, 4
+- `xy` column: 0, 3, 8
+
+Now, sum them up:
+
+- $n = 3$
+- $\sum x_i = 0 + 1 + 2 = 3$
+- $\sum y_i = 1 + 3 + 4 = 8$
+- $\sum x_i^2 = 0 + 1 + 4 = 5$
+- $\sum x_i y_i = 0 + 3 + 8 = 11$
+
+**Step 2: Build the two equations.**
+
+- **Eq 1:** $n\beta_0 + (\sum x_i)\beta_1 = \sum y_i \implies 3\beta_0 + 3\beta_1 = 8$
+- **Eq 2:** $(\sum x_i)\beta_0 + (\sum x_i^2)\beta_1 = \sum x_i y_i \implies 3\beta_0 + 5\beta_1 = 11$
+
+**Step 3: Solve the system.** Let's use subtraction. Subtract Equation 1 from Equation 2:
+
+- $(3\beta_0 + 5\beta_1) - (3\beta_0 + 3\beta_1) = 11 - 8$
+- $2\beta_1 = 3$
+- $\beta_1 = 1.5$ (This is our slope)
+
+Now, put $\beta_1=1.5$ back into Equation 1:
+
+- $3\beta_0 + 3(1.5) = 8$
+- $3\beta_0 + 4.5 = 8$
+- $3\beta_0 = 3.5$
+- $\beta_0 = 3.5 / 3 \approx 1.167$ (This is our intercept)
+
+**Result:** The best-fit line is $\hat{y} = 1.167 + 1.5x$.
+
+---
+
+**Minor Warning:** Don’t confuse the slope of the regression line ($\beta_1$) with the slope of the loss bowl.
+
+- $\beta_1$ is a parameter we are trying to find. It’s the coordinate on the floor of our bowl.
+- The *slope* of the loss bowl is the derivative of $L$, the loss function.
+- We are not setting $\beta_1$ to zero. We are finding the specific values of $\beta_0$ and $\beta_1$ where the slope of the loss function becomes zero
+
+### Okay But… Why Are There Two Equations?
+
+We have 2 equations here because we have 2 variables to solve for! See, normally in math when you have an equation like $y = ax^2 + bx$ ...*etc* we think of $x$ as the unknown variable.
+
+But think about our situation right now. We have our data already. We know what $x$ is for each of the samples in our dataset. And we also know what the correct or 'true' y-value is for each of those cases. We're not solving for x or y. We're trying to find the line of best fit.
+
+Aka what we *are* solving for, are the coefficients in our equation, the things that are not x or y. In the typical equation of a line, $y = mx + c$ our coefficients are $m$ and $c$.
+
+The idea is that by solving the resulting system of partial differential equations, we get values/numbers for the slope in both (or all) dimensions.
+
+**This is the core of multivariable optimization**
+
+- We have **two unknown parameters** ($\beta_0, \beta_1$) that we need to find.
+- To uniquely pin down the values of two unknowns, you need a system of **two independent equations**.
+- The first equation, $\frac{\partial L}{\partial \beta_0} = 0$, pins down the solution in the "intercept" dimension. It finds the entire north-south line at the bottom of the bowl.
+- The second equation, $\frac{\partial L}{\partial \beta_1} = 0$, pins down the solution in the "slope" dimension. It finds the entire east-west line at the bottom of the bowl.
+- The only point that satisfies *both* equations at the same time is the single point where these two lines cross: the absolute bottom of the bowl.
+
+In more technical terms, we are solving for the point where the gradient vector, $\nabla L = (\frac{\partial L}{\partial \beta_0}, \frac{\partial L}{\partial \beta_1})$, is the zero vector, $(0,0)$.
+
+### **Check-in Quiz for Lesson 6.4 (Let's Try Again)**
+
+1. **(Easy)** To solve the Normal Equations for a simple linear regression, what are the five summary statistics (the "sums") you need to calculate from your raw data?
+2. **(Easy)** The Loss function $L(\beta_0, \beta_1)$ has two variables we are optimizing for. What mathematical tool do we use to find the minimum of a multivariable function, leading to the Normal Equations?
+3. **(Calculation)** You have the following three data points: $(0, 1)$, $(1, 3)$, and $(2, 4)$. Set up the two Normal Equations for this dataset.
+
+---
+
+## **Lesson 6.5: A (Gentle) Linear Algebra Refresher**
+
+### **Part 1: The First Lego Brick - The Vector**
+
+Forget about matrices, ranks, and everything else. Let's just start with a **vector**.
+
+A vector is just a **list of numbers** in a specific order. That's it.
+
+Imagine you're going shopping and you need:
+
+- 2 apples
+- 1 banana
+- 3 carrots
+
+You could write this as a shopping list vector:
+
+$$
+ \begin{bmatrix} 2 \\ 1 \\ 3 \end{bmatrix}
+$$
+
+This is a **column vector**. It's just a list of numbers stacked vertically. Most of the time in machine learning and stats, this is how we write our vectors. Actually, to be clear, there is another more controversial view I learned about recently, held by the Youtuber-Statistician-Future-Fields-Medallist, Grant from 3Blue1Brown.
+
+He described all vectors as being columns, and when a row vector appeared on the screen he referred to it as a $1\times n$ matrix. I don’t know what to make of this and I haven’t been back to church or office hours since.
+
+**Connecting this to our TikTok data:**
+You have already been working with vectors this whole time!
+
+- The `y (Likes)` column in our Google Sheet? That's a vector with 20 numbers in it. We can call it $\mathbf{y}$
+- The `x (Comments)` column? That's another vector. We can call it $\mathbf{x}.$
+
+$$
+ \mathbf{y} = \begin{bmatrix} 2880 \\ 425 \\ 337 \\ \vdots \\ 10000 \end{bmatrix} \quad \mathbf{x} = \begin{bmatrix} 94 \\ 49 \\ 12 \\ \vdots \\ 463 \end{bmatrix} 
+$$
+
+So, a vector is not scary. It's just a column from our spreadsheet.
+
+---
+
+### **Part 2: The Second Lego Brick - The Matrix**
+
+A **matrix** is just a **grid of numbers**, organized into rows and columns. That's it.
+
+A spreadsheet is a matrix. Our entire TikTok dataset is a matrix. The computations that were needed to render the complicated CGI effects in the 1999 movie The Matrix were also matrices (note: the plural of matrix is matrices, not matrixes, although no one really cares.)
+
+For our linear regression problem, we need to build a very specific matrix. It's called the **Design Matrix**, and we always give it a capital letter, usually $\mathbf{X}$.
+
+Our goal is to represent our model, $\hat{y} = \beta_0 + \beta_1 x$, in this new grid format.
+($\hat{y} = \beta_0 + \beta_1 x$)
+
+We have one "variable" we are using to predict `Likes`, and that's `Comments`. But our model has two **parameters**: the intercept ($\beta_0$) and the slope ($\beta_1$). To handle this, our Design Matrix $\mathbf{X}$ will have **two columns**.
+
+- **The first column** is a clever trick to handle the intercept, $\beta_0$. It's just a column of all ones.
+- **The second column** is just our `x` data, the `Comments` vector.
+
+So, for our TikTok data, the Design Matrix $\mathbf{X}$ would look like this:
+
+$$
+ \mathbf{X} = \begin{bmatrix} 1 & 94 \\ 1 & 49 \\ 1 & 12 \\ \vdots & \vdots \\ 1 & 463 \end{bmatrix}
+$$
+
+This matrix has 20 rows (one for each video) and 2 columns (one for the intercept trick, one for the `Comments` data).
+
+**Check-in:** Let's pause here. We have defined our only two ingredients.
+
+1. A **vector**, which is just a single column of data (our `y` vector of Likes).
+2. A **matrix**, which is a grid of data (our `X` matrix, made of a column of ones and our `x` vector of Comments).
+
+Does this simple, non-scary definition of a vector (a list) and a matrix (a grid) make sense? We haven't done any operations yet. We're just defining our ingredients. Don’t watch any 3Blue1Brown videos yet; we can leave the linear transformations of a vector space defined by its basis vectors for later (next century).
+
+But now let’s address the *one* elephant in the room:
+
+"Why is there a column of ones? What does it do?"
+
+### **The "Why" of the Column of Ones**
+
+If you thought this was weird, you are absolutely right. Our model has four letters:
+$$ \hat{y} = \beta_0 + \beta_1 x $$
+
+But our Design Matrix only seems to have `x` in it (and the mysterious ones). Where did $\beta_0$ and $\beta_1$ go? And where is `y`?
+
+The answer is that we need to define one more ingredient: the **parameter vector**. This is the vector that holds the unknown values we are trying to find. Let's call it $\boldsymbol{\beta}$.
+$$ \boldsymbol{\beta} = \begin{bmatrix} \beta_0 \\ \beta_1 \end{bmatrix} $$
+
+Now we have all three of our Lego bricks:
+
+- The Design Matrix $\mathbf{X}$ (the column of ones and the `x` data).
+- The parameter vector $\boldsymbol{\beta}$ (the unknowns we want to find).
+- The output vector $\mathbf{y}$ (the `Likes` data).
+
+The entire goal of linear algebra here is to find a way to combine $\mathbf{X}$ and $\boldsymbol{\beta}$ to produce our vector of predicted `y` values, which we call $\hat{\mathbf{y}}$. The rule for doing this is called **matrix-vector multiplication**.
+
+Let's look at just the **first row** of our data.
+
+- The first row of our matrix $\mathbf{X}$ is `[1, 94]`.
+- Our parameter vector is `[β₀, β₁]`.
+
+The rule for matrix-vector multiplication says: to get the first predicted `y` value ($\hat{y}_1$), you "dot" the first row of the matrix with the parameter vector. This means you multiply the first element of the row by the first element of the vector, multiply the second by the second, and add them up.
+$$ \hat{y}_1 = (1 \cdot \beta_0) + (94 \cdot \beta_1) = \beta_0 + 94\beta_1 $$
+
+Look at that result. It is the **exact equation of our model** for the first data point!
+
+Now let's do the second row.
+
+- The second row of $\mathbf{X}$ is `[1, 49]`.
+$$ \hat{y}_2 = (1 \cdot \beta_0) + (49 \cdot \beta_1) = \beta_0 + 49\beta_1 $$
+
+Again, it's our model, this time for the second data point.
+
+**This is the reason for the column of ones.** The `1` in that column is a placeholder. Its only job is to "pick up" the intercept term, $\beta_0$, during the multiplication and place it in the equation. The intercept itself is not 1. The `1` in the matrix is just the coefficient that gets multiplied by the unknown intercept $\beta_0$. It's a clever algebraic trick to make the math work out perfectly.
+
+So, the full matrix-vector product $\mathbf{X}\boldsymbol{\beta}$ is a neat, compact way of writing down the entire set of predictions for all our data points at once:
+$$ \mathbf{X}\boldsymbol{\beta} = \begin{bmatrix} 1 & 94 \\ 1 & 49 \\ \vdots & \vdots \\ 1 & 463 \end{bmatrix} \begin{bmatrix} \beta_0 \\ \beta_1 \end{bmatrix} = \begin{bmatrix} \beta_0 + 94\beta_1 \\ \beta_0 + 49\beta_1 \\ \vdots \\ \beta_0 + 463\beta_1 \end{bmatrix} = \hat{\mathbf{y}} $$
+
+The equation of our entire model is simply:
+$$ \hat{\mathbf{y}} = \mathbf{X}\boldsymbol{\beta} $$
+
+**Check-in Question:** We have just shown that the linear algebra form is a generalized way of writing our old system of equations. What is the major advantage of using this matrix form, especially if we wanted to build a model with not one, but ten predictor variables (e.g., Comments, Saves, Shares, Video Length, etc.)?
+
+---
+
+Okay now it’s time for an (easy) quiz.
+
+### **Quiz for Lesson 6.5: Linear Algebra Foundations**
+
+**Instructions:** This quiz will test your conceptual and practical understanding of the vectors, matrices, and operations we just discussed, and your memory of what item in my room I broke earlier.
+
+**Question 1: Conceptual Understanding of the Design Matrix**
+A data scientist is building a linear model to predict a student's final exam score. They have two predictor variables:
+
+1. `hours_studied`
+2. `previous_gpa`
+
+They have data for 100 students.
+
+- **Part A:** What are the dimensions (rows x columns) of their Design Matrix, $\mathbf{X}$? Explain your reasoning for the number of rows and the number of columns.
+- **Part B:** Write down what the first row of their Design Matrix, $\mathbf{X}$, would look like for a student who studied for 15 hours and had a previous GPA of 3.5.
+
+**Question 2: Applying Matrix-Vector Multiplication**
+Using the scenario from Question 1, suppose the data scientist has solved the Normal Equations and found the optimal parameter vector to be:
+$$ \boldsymbol{\beta} = \begin{bmatrix} 20 \\ 5 \\ 10 \end{bmatrix} $$
+
+This vector corresponds to the intercept, the coefficient for `hours_studied`, and the coefficient for `previous_gpa`, in that order.
+
+What is the predicted final exam score ($\hat{y}$) for the student who studied for 15 hours and had a GPA of 3.5? Show the matrix-vector multiplication (the dot product) for this single prediction.
+
+**Question 3: The "Why" of the Dot Product**
+We have two vectors in a 2D space:
+
+- $\mathbf{u} = \begin{bmatrix} 10 \\ 0 \end{bmatrix}$ (Points straight right along the x-axis)
+- $\mathbf{v} = \begin{bmatrix} 3 \\ 4 \end{bmatrix}$ (Points up and to the right)
+- **Part A:** Calculate the dot product $\mathbf{u} \cdot \mathbf{v}$.
+- **Part B:** The vector $\mathbf{v}$ has a total length of 5 (this is from the Pythagorean theorem, $\sqrt{3^2 + 4^2} = 5$). Geometrically, what does the result of your dot product in Part A represent in terms of "projection" or "shadows"? Explain the relationship between the number you calculated, the vector $\mathbf{u}$, and the vector $\mathbf{v}$.
+
+**Question 4: Probing the Limits**
+Could you use a vector to represent a grayscale image? If so, how? And could you use a matrix? If so, how would the matrix representation be different and potentially more useful than the vector representation? (This is a conceptual question about data representation).
+
+**Answers**
+
+1A: The dimensions are 100 (row) x 3 (columns) representing the 100 students or data points and the 3 columns represent the intercept (a column of all 1s), the first coefficient for the first variable (hours_studied) and the second coefficient for the second variable (previous_gpa).
+
+1B: The first row of the design matrix X would look like: [1, 15, 3.5]
+
+2.  Since the first row of the design matrix X_{1}{j} will be: [1, 15, 3.5] and the parameter vector is beta = [20, 5, 10], the resulting dot product will be a scalar and given by this equation: [1 * 20 + 15 * 5 + 3.5 * 10] = [130] so the predicted final exam score is 130.
+
+3A: The dot product of **u** \times **v** is $(10 \times 3) + (12 \times 4) = 30$
+
+3B: The result of the dot product in Part A represents the projection of the vector v onto the vector u, multiplied by the length of the vector u itself. The relationship is as such: (projected_length_of_v) * (length_of_u) = uv
+
+---
+
+## **Lesson 6.6: Linear Algebra for the Normal Equations**
+
+Excellent. We now have all of our main ingredients: vectors and matrices. Now we need to learn the key operations that let us combine them to solve our problem.
+
+### **Part 1: Matrix-Vector Multiplication (Formalized)**
+
+We've already seen the intuition for this. It's how we get our vector of predictions, $\hat{\mathbf{y}}$, from our Design Matrix, $\mathbf{X}$, and our parameter vector, $\boldsymbol{\beta}$.
+
+$$ \hat{\mathbf{y}} = \mathbf{X}\boldsymbol{\beta} $$
+
+Let's be very precise about the rule and the required dimensions.
+
+**The Rule:** To multiply a matrix $\mathbf{A}$ by a vector $\mathbf{v}$, the number of **columns** in the matrix must be equal to the number of **rows** in the vector.
+
+**The Process:** The $i$-th element of the resulting vector is the **dot product** of the $i$-th row of the matrix with the vector.
+
+**Worked Example:**
+Let's define a matrix $\mathbf{A}$ and a vector $\mathbf{v}$.
+$$ \mathbf{A} = \begin{bmatrix} 1 & 2 \\ 3 & 4 \\ 5 & 6 \end{bmatrix} \quad \mathbf{v} = \begin{bmatrix} 10 \\ 20 \end{bmatrix} $$
+
+- **Check Dimensions:** $\mathbf{A}$ is a `3x2` matrix (3 rows, 2 columns). $\mathbf{v}$ is a `2x1` vector. The inner dimensions match (2 columns = 2 rows), so the multiplication is valid. The resulting vector will have the outer dimensions: `3x1`.
+- **Calculate the first element:** Dot product of the first row of $\mathbf{A}$ with $\mathbf{v}$.
+    - $(1 \cdot 10) + (2 \cdot 20) = 10 + 40 = 50$.
+- **Calculate the second element:** Dot product of the second row of $\mathbf{A}$ with $\mathbf{v}$.
+    - $(3 \cdot 10) + (4 \cdot 20) = 30 + 80 = 110$.
+- **Calculate the third element:** Dot product of the third row of $\mathbf{A}$ with $\mathbf{v}$.
+    - $(5 \cdot 10) + (6 \cdot 20) = 50 + 120 = 170$.
+
+**The Result:**
+$$ \mathbf{A}\mathbf{v} = \begin{bmatrix} 50 \\ 110 \\ 170 \end{bmatrix} $$
+
+This is the fundamental operation that lets our Design Matrix $\mathbf{X}$ and parameter vector $\boldsymbol{\beta}$ generate our predictions $\hat{\mathbf{y}}$.
+
+### **Part 2: The Transpose Operation**
+
+Before we can multiply two matrices, we need one simple helper operation: the **transpose**.
+
+The transpose of a matrix, written as $\mathbf{A}^T$, is what you get if you "flip" the matrix along its main diagonal. The rows become the columns, and the columns become the rows.
+
+**Par Exemple:**
+If our matrix $\mathbf{A}$ is:
+$$ \mathbf{A} = \begin{bmatrix} 1 & 2 \\ 3 & 4 \\ 5 & 6 \end{bmatrix} $$
+This is a `3x2` matrix.
+
+Its transpose, $\mathbf{A}^T$, will be a `2x3` matrix:
+$$ \mathbf{A}^T = \begin{bmatrix} 1 & 3 & 5 \\ 2 & 4 & 6 \end{bmatrix} $$
+
+The first row `[1, 2]` became the first column. The second row `[3, 4]` became the second column, and so on.
+
+### **Part 3: Matrix-Matrix Multiplication**
+
+This operation looks intimidating, and it should be. I’d give up here right now if I were you. You’re wading into waters too deep for your own understanding.
+
+But, on the other hand, it's just a repeated application of the dot product rule we already know.
+
+**The Rule:** To multiply a matrix $\mathbf{A}$ by a matrix $\mathbf{B}$ to get a result $\mathbf{C} = \mathbf{A}\mathbf{B}$, the number of **columns** in $\mathbf{A}$ must equal the number of **rows** in $\mathbf{B}$.
+
+**The Process:** The element in the $i$-th row and $j$-th column of the result matrix, $\mathbf{C}$, is the **dot product** of the $i$-th row of $\mathbf{A}$ with the $j$-th column of $\mathbf{B}$.
+
+**Worked Example:**
+Let's use our matrix $\mathbf{A}$ from before, but let's define a new matrix $\mathbf{B}$.
+$$ \mathbf{A} = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix} \quad \mathbf{B} = \begin{bmatrix} 10 & 11 \\ 20 & 22 \end{bmatrix} $$
+
+- **Check Dimensions:** $\mathbf{A}$ is `2x2`, $\mathbf{B}$ is `2x2`. The inner dimensions match (2=2). The result $\mathbf{C}$ will be `2x2`.
+- **Calculate $C_{11}$ (Row 1, Column 1):** Dot product of Row 1 of $\mathbf{A}$ with Column 1 of $\mathbf{B}$.
+    
+    `$$[1, 2] \\cdot [10, 20] = (1 \\cdot 10) + (2 \\cdot 20) = 10 + 40 = 50$$`
+    
+- **Calculate $C_{12}$ (Row 1, Column 2):** Dot product of Row 1 of $\mathbf{A}$ with Column 2 of $\mathbf{B}$.
+    
+    `$$[1, 2] \\cdot [11, 22] = (1 \\cdot 11) + (2 \\cdot 22) = 11 + 44 = 55$$`
+    
+- **Calculate $C_{21}$ (Row 2, Column 1):** Dot product of Row 2 of $\mathbf{A}$ with Column 1 of $\mathbf{B}$.
+    
+    `$$[3, 4] \\cdot [10, 20] = (3 \\cdot 10) + (4 \\cdot 20) = 30 + 80 = 110$$`
+    
+- **Calculate $C_{22}$ (Row 2, Column 2):** Dot product of Row 2 of $\mathbf{A}$ with Column 2 of $\mathbf{B}$.
+    
+    `$$[3, 4] \\cdot [11, 22] = (3 \\cdot 11) + (4 \\cdot 22) = 33 + 88 = 121$$`
+    
+
+**The Result:**
+$$ \mathbf{C} = \mathbf{A}\mathbf{B} = \begin{bmatrix} 50 & 55 \\ 110 & 121 \end{bmatrix} $$
+
+This operation is what allows us to form the term $\mathbf{X}^T\mathbf{X}$ in the Normal Equations. We take our Design Matrix, transpose it, and then multiply it by itself. This single operation will magically produce a small square matrix that contains all the "sums" we had to calculate manually before.
+
+**Check-in:** We have now defined the three key operations: transpose, matrix-vector multiplication, and matrix-matrix multiplication. The last two are just repeated applications of the dot product. Does the mechanical process of these operations make sense?
+
+It better… because THERE’S A QUIZ 😱
+
+### **Quiz for Lesson 6.6: Applying Linear Algebra**
+
+**Instructions:** For this quiz, we will use a simplified "mini" version of our TikTok dataset. Let's imagine we only have the first three data points.
+
+| Comments (x) | Likes (y) |
+| --- | --- |
+| 94 | 2880 |
+| 49 | 425 |
+| 12 | 337 |
+
+**Question 1: Constructing the Pieces (Easy)**
+Based on the "mini" dataset above, write down the following:
+
+- **Part A:** The target vector, $\mathbf{y}$.
+- **Part B:** The Design Matrix, $\mathbf{X}$.
+- **Part C:** The transpose of the Design Matrix, $\mathbf{X}^T$.
+
+**Question 2: Matrix-Matrix Multiplication (Moderate)**
+The first major term in the Normal Equations is $\mathbf{X}^T\mathbf{X}$. Using the matrices you defined in Question 1, perform this matrix-matrix multiplication. Show the resulting 2x2 matrix.
+
+**(Fun Tangent:** The resulting matrix should look very familiar. Look closely at the numbers that appear in it and compare them to the "sums" we calculated for the Normal Equations in Lesson 6.32). Anything… interesting seems to be the case?
+
+**Question 3: Matrix-Vector Multiplication (Moderate)**
+The second major term in the Normal Equations is $\mathbf{X}^T\mathbf{y}$. Using the matrices you defined in Question 1, perform this matrix-vector multiplication. Show the resulting 2x1 vector.
+
+**Question 4: Synthesis and Probing (Hard)**
+Matrix multiplication is generally **not commutative**. That is, in most cases, $\mathbf{A}\mathbf{B} \neq \mathbf{B}\mathbf{A}$.
+
+- **Part A:** Using the matrices $\mathbf{X}$ and $\mathbf{X}^T$ that you defined in Question 1, can you even compute the product in the other order, $\mathbf{X}\mathbf{X}^T$? Check the dimensions and explain why or why not.
+- **Part B:** In the specific case of the Normal Equations, we multiply $\mathbf{X}^T\mathbf{X}$. The result of this is always a **square matrix** (e.g., 2x2, 3x3, etc.). Why is it essential that this part of the equation results in a square matrix? What would break down later if it wasn't square? (This is a deep question about the structure of the overall equation $\mathbf{X}^T\mathbf{X}\boldsymbol{\beta} = \mathbf{X}^T\mathbf{y}$).
+
+**Answers**
+
+Question 1
+
+PART A: the target vector, y_hat, is as follows: [2880, 425, 337]
+
+PART B: the design matrix looks like this: [1, 94 | 1, 49 | 1, 12]
+
+PART C: the transpose of the design matrix looks like this: [1, 1, 1 | 94, 49, 12]
+
+Question 2: Your final matrix should be [3, 155 | 155, 11381].
+
+- Did you notice something? That the top-left entry 3 is just $n$
+- That the bottom right entry, 11381, is just $\sum x_{i}{^2}$
+- And the two 155 entries on the bottom left and top right? Let’s calculate it: $94 + 49 + 12 = 155$. It's simply $\sum x_i$.
+- **Conclusion:** You should have just proven to yourself that the operation $\mathbf{X}^T\mathbf{X}$ is a compact, elegant way to automatically generate a matrix containing three of the five "sums" we needed for our old recipe:
+$$ \mathbf{X}^T\mathbf{X} = \begin{bmatrix} n & \sum x_i \\ \sum x_i & \sum x_i^2 \end{bmatrix} $$
+This is not a coincidence; this is the very reason we use this formulation.
+
+**Question 3: Matrix-Vector Multiplication ($\mathbf{X}^T\mathbf{y}$)**
+
+**First:** Let's check the calculation.
+
+- First element: `(1 * 2880) + (1 * 425) + (1 * 337) = 2880 + 425 + 337 = 3642`.
+- Second element: `(94 * 2880) + (49 * 425) + (12 * 337) = 270720 + 20825 + 4044 = 295589`.
+
+**Answer:** The final vector in your answer should be `[3642 | 295589]` .
+
+- And what are these two numbers? They are the remaining two "sums" from our old recipe: $\sum y_i$ and $\sum x_i y_i$!
+
+$$ \mathbf{X}^T\mathbf{y} = \begin{bmatrix} \sum y_i \\ \sum x_i y_i \end{bmatrix} $$
+
+**Question 4: Synthesis and Probing (Hard)**
+
+4A: Yes, you can compute the product, but it’ll be the outer product and not the inner/dot product, which is what we want, and the outer product will give us a 3x3 matrix, as opposed to a 2x2, which would be the result of the dot product.
+
+4B: Okay, I’ll admit this one was hard. Mostly because I haven’t even taught you about determinants, and invertibility, or singular matrices yet. You get full marks on this one just for trying.
+
+- The main reason is that to solve for our unknown vector $\boldsymbol{\beta}$, we need to **invert** the matrix $\mathbf{X}^T\mathbf{X}$.
+- A fundamental rule of linear algebra is that **only square matrices can be inverted**. If $\mathbf{X}^T\mathbf{X}$ weren't square, the entire problem would be unsolvable.
+
+---
+
+## Lesson 6.7: The Matrix Inverse
+
+**You (🤓)**: wait hold on - what? Invert who? Invert what? You’re just saying random new words now.
+
+**Me (🧐)**: yeah that’s on me I kinda just said that outta nowhere eh? Okay, so, let's do a quick, essential detour on this. We’ll need to understand this before we can proceed.
+
+Inverting a function is about finding a way to "undo" its operation. Inverting a matrix is also about finding another matrix that "undoes" its operation.
+
+### **The Analogy: Undoing Simple Multiplication**
+
+Let's start with basic algebra. If you have the equation:
+$$ 5x = 10 $$
+
+How do you solve for `x`? You want to "undo" the multiplication by 5. To do this, you multiply by the **multiplicative inverse** of 5, which is `1/5` or $5^{-1}$.
+$$ (5^{-1}) \cdot 5x = (5^{-1}) \cdot 10 $$
+
+The term $(5^{-1} \cdot 5)$ becomes 1, which is the **identity element** for multiplication (multiplying by 1 does nothing).
+$$ 1 \cdot x = \frac{10}{5} $$
+($1 * x = 10/5$)
+$$ x = 2 $$
+($x = 2$)
+
+The key idea is that for a number `a`, its inverse `a⁻¹` has the property that `a⁻¹ * a = 1`.
+
+### **The Matrix Equivalent**
+
+Matrix inversion is the exact same idea, but for matrices (clearly).
+
+Let's say we have a matrix equation:
+$$ \mathbf{A}\mathbf{x} = \mathbf{b} $$
+
+Here, $\mathbf{A}$ is a known matrix, $\mathbf{x}$ is our vector of unknowns, and $\mathbf{b}$ is a known vector. We want to solve for $\mathbf{x}$.
+
+To do this, we need to find a special matrix called the **inverse of A**, which we write as $\mathbf{A}^{-1}$. This matrix is defined by a similar magic property:
+$$ \mathbf{A}^{-1}\mathbf{A} = \mathbf{I} $$
+
+Here, $\mathbf{I}$ is the **Identity Matrix**. It's the matrix equivalent of the number 1. It's a square matrix with 1s on the main diagonal and 0s everywhere else. For a 2x2 case:
+$$ \mathbf{I} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix} $$
+
+Multiplying any matrix or vector by the Identity matrix doesn't change it. So, $\mathbf{I}\mathbf{x} = \mathbf{x}$.
+
+**Solving the Equation:**
+To solve for $\mathbf{x}$, we just multiply both sides of our equation by the inverse matrix, $\mathbf{A}^{-1}$:
+
+$$ \mathbf{A}^{-1} (\mathbf{A}\mathbf{x}) = \mathbf{A}^{-1} \mathbf{b} $$
+
+$$ (\mathbf{A}^{-1} \mathbf{A})\mathbf{x} = \mathbf{A}^{-1} \mathbf{b} $$
+
+$$ \mathbf{I}\mathbf{x} = \mathbf{A}^{-1} \mathbf{b} $$
+
+$$ \mathbf{x} = \mathbf{A}^{-1} \mathbf{b} $$
+
+This is the general solution to a system of linear equations.
+
+### **Why Only Square Matrices?**
+
+Now you might ask:
+
+> "I not sure I fully understand what you mean by only square matrices can be inverted"
+> 
+
+Okay, so think about the dimensions. The Identity matrix $\mathbf{I}$ is, by definition, **square** (it must have the same number of rows and columns, e.g., 2x2, 3x3, etc.).
+
+Let's look at the equation that defines the inverse: $\mathbf{A}^{-1}\mathbf{A} = \mathbf{I}$.
+
+- Let's say $\mathbf{A}$ is a `3x2` matrix.
+- For the multiplication to even be possible, its inverse $\mathbf{A}^{-1}$ must have dimensions `?x3`.
+- The result of this `(?x3) * (3x2)` multiplication will be a `?x2` matrix.
+- But the result must be the Identity matrix $\mathbf{I}$, which is square. So it would have to be, for example, a `2x2` Identity matrix. This means `?` must be 2.
+- So now we have $\mathbf{A}^{-1}$ as a `2x3` matrix.
+
+Now, let's check the other side of the multiplication. In general, we also require $\mathbf{A}\mathbf{A}^{-1} = \mathbf{I}$.
+
+- Let's multiply them in this order: `(3x2) * (2x3)`.
+- The result will be a `3x3` matrix.
+- This would have to be a `3x3` Identity matrix.
+
+So, for a non-square matrix, the product $\mathbf{A}^{-1}\mathbf{A}$ gives a `2x2` matrix, but the product $\mathbf{A}\mathbf{A}^{-1}$ gives a `3x3` matrix. It's impossible for them both to be "the" Identity matrix. The entire concept of a single, unique inverse that "undoes" the matrix breaks down since changing the order of the operation gives us completely different results. 
+
+This is fine for most of linear algebra, but an inverse can only be uniquely defined for **square matrices**, where the dimensions work out perfectly in both directions.
+
+**Check-in:** Does this explanation, starting with the simple analogy of `1/5` and building up to the dimensional requirements for the Identity matrix, clarify what a matrix inverse is and why it's a property exclusive to square matrices?
+
+- If it doesn’t, try to identify what the identity matrix is conceptually (on your own)
+- Then determine the conditions necessary for it to ‘work’
+- Now try playing around with edge cases and see when it breaks
+- Hopefully, you should converge on something similar to the explanation I’ve given above. If not, well, I… think there’s always a better explanation somewhere on Youtube
+
+---
+
+**Okay But Now How Do We Actually Invert A Matrix?**
+
+### **Worked Example: Inverting Our Matrix A**
+
+Let's apply this recipe to our matrix $\mathbf{A} = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}$.
+
+1. **Identify a, b, c, d:**
+    - `a = 1`, `b = 2`, `c = 3`, `d = 4`.
+2. **Calculate the Determinant:**
+    - `ad - bc = (1)(4) - (2)(3) = 4 - 6 = -2`.
+    - The determinant is -2. Since it's not zero, we know the inverse exists. Pop some champagne (if you are of age).
+3. **Find the Adjugate Matrix:**
+    - Swap `a` and `d`: $\begin{bmatrix} 4 & b \\ c & 1 \end{bmatrix}$
+    - Negate `b` and `c`: $\begin{bmatrix} 4 & -2 \\ -3 & 1 \end{bmatrix}$
+4. **Put It All Together:**
+    - Multiply the adjugate matrix by `1 / (determinant)`.
+    $$ \mathbf{A}^{-1} = \frac{1}{-2} \begin{bmatrix} 4 & -2 \\ -3 & 1 \end{bmatrix} = \begin{bmatrix} -2 & 1 \\ 1.5 & -0.5 \end{bmatrix} $$
+
+**Let's Check Our Work (Really, I’m the one doing everything):**
+Does $\mathbf{A}^{-1}\mathbf{A} = \mathbf{I}$? Let's do the matrix multiplication:
+$$ \begin{bmatrix} -2 & 1 \\ 1.5 & -0.5 \end{bmatrix} \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix} = \begin{bmatrix} (-2\cdot1 + 1\cdot3) & (-2\cdot2 + 1\cdot4) \\ (1.5\cdot1 + -0.5\cdot3) & (1.5\cdot2 + -0.5\cdot4) \end{bmatrix} $$
+$$ = \begin{bmatrix} (-2+3) & (-4+4) \\ (1.5-1.5) & (3-2) \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix} = \mathbf{I} $$
+
+It works perfectly! We have successfully found the inverse of your matrix by hand.
+
+---
+
+## **Lesson 6.8: The Normal Equations Part II - The "Hard Math"**
+
+Hold on now, we’re *almost* there. Sorta.
+
+**The Goal:** To translate our old, clunky "system of equations" for linear regression into a single, clean matrix equation and explain how all the stuff we were doing earlier is the same as what we’re about to see.
+
+**Let's Recall the Pieces:**
+
+1. **Our Old System:**
+    - Equation 1: $n\beta_0 + (\sum x_i)\beta_1 = \sum y_i$
+    - Equation 2: $(\sum x_i)\beta_0 + (\sum x_i^2)\beta_1 = \sum x_i y_i$
+2. **Our Linear Algebra Ingredients:**
+    - The Design Matrix: $\mathbf{X} = \begin{bmatrix} 1 & x_1 \\ 1 & x_2 \\ \vdots & \vdots \\ 1 & x_n \end{bmatrix}$
+    - The Parameter Vector: $\boldsymbol{\beta} = \begin{bmatrix} \beta_0 \\ \beta_1 \end{bmatrix}$
+    - The Target Vector: $\mathbf{y} = \begin{bmatrix} y_1 \\ y_2 \\ \vdots \\ y_n \end{bmatrix}$
+
+**The Key Insight from Before:**
+In the last quiz, you (hopefully, if you got the answers right) brilliantly discovered that the matrix products $\mathbf{X}^T\mathbf{X}$ and $\mathbf{X}^T\mathbf{y}$ magically produced all the "sum" components we needed for our old system.
+
+Let's write that out again formally:
+$$ \mathbf{X}^T\mathbf{X} = \begin{bmatrix} n & \sum x_i \\ \sum x_i & \sum x_i^2 \end{bmatrix} $$
+
+$$ \mathbf{X}^T\mathbf{y} = \begin{bmatrix} \sum y_i \\ \sum x_i y_i \end{bmatrix} $$
+
+Now, look very closely. 
+
+No. Even more closely.
+
+I’m talking press your face up against the screen. This isn’t going to work otherwise. You need to play ball here.
+
+Now look: the elements of these resulting matrices and vectors are the **exact coefficients and results** from our old system of equations.
+
+Let's see what happens if we write out the matrix equation:
+$$ (\mathbf{X}^T\mathbf{X}) \boldsymbol{\beta} = \mathbf{X}^T\mathbf{y} $$
+
+Let's substitute the pieces:
+$$ \begin{bmatrix} n & \sum x_i \\ \sum x_i & \sum x_i^2 \end{bmatrix} \begin{bmatrix} \beta_0 \\ \beta_1 \end{bmatrix} = \begin{bmatrix} \sum y_i \\ \sum x_i y_i \end{bmatrix} $$
+
+Now, let's perform the matrix-vector multiplication on the left side:
+
+- **Top element:** (First row of matrix) $\cdot$ (Beta vector) = $(n \cdot \beta_0) + ((\sum x_i) \cdot \beta_1)$.
+- **Bottom element:** (Second row of matrix) $\cdot$ (Beta vector) = $((\sum x_i) \cdot \beta_0) + ((\sum x_i^2) \cdot \beta_1)$.
+
+So the left side becomes the vector:
+$$ \begin{bmatrix} n\beta_0 + (\sum x_i)\beta_1 \\ (\sum x_i)\beta_0 + (\sum x_i^2)\beta_1 \end{bmatrix} $$
+
+And our full equation is:
+$$ \begin{bmatrix} n\beta_0 + (\sum x_i)\beta_1 \\ (\sum x_i)\beta_0 + (\sum x_i^2)\beta_1 \end{bmatrix} = \begin{bmatrix} \sum y_i \\ \sum x_i y_i \end{bmatrix} $$
+($\begin{bmatrix} ... \end{bmatrix} = \begin{bmatrix} ... \end{bmatrix}$)
+
+For two vectors to be equal, their corresponding elements must be equal.
+
+- The top elements must be equal: $n\beta_0 + (\sum x_i)\beta_1 = \sum y_i$. **This is our old Equation 1.**
+- The bottom elements must be equal: $(\sum x_i)\beta_0 + (\sum x_i^2)\beta_1 = \sum x_i y_i$. **This is our old Equation 2.**
+
+**The Grand Conclusion?**
+Tada! The compact, elegant linear algebra equation $(\mathbf{X}^T\mathbf{X}) \boldsymbol{\beta} = \mathbf{X}^T\mathbf{y}$ turns out **not to be a new formula**. It is simply a beautiful, generalized, and powerful way of writing the exact same system of Normal Equations that we derived from calculus. This is the "hard math", the realization that these two worlds, calculus and linear algebra, have arrived at the exact same solution.
+
+---
+
+### **The Final Step: Solving for Beta**
+
+Now we can use the concept of the matrix inverse to solve this. We have an equation of the form $\mathbf{A}\boldsymbol{\beta} = \mathbf{b}$, where $\mathbf{A} = \mathbf{X}^T\mathbf{X}$ and $\mathbf{b} = \mathbf{X}^T\mathbf{y}$.
+
+To solve for our unknown vector $\boldsymbol{\beta}$, we just multiply both sides by the inverse of the matrix $(\mathbf{X}^T\mathbf{X})$:
+$$ (\mathbf{X}^T\mathbf{X})^{-1} (\mathbf{X}^T\mathbf{X}) \boldsymbol{\beta} = (\mathbf{X}^T\mathbf{X})^{-1} (\mathbf{X}^T\mathbf{y}) $$
+
+The first part becomes the Identity matrix, which disappears with your rent money, leaving us with the final solution:
+$$ \boldsymbol{\beta} = (\mathbf{X}^T\mathbf{X})^{-1} (\mathbf{X}^T\mathbf{y}) $$
+
+This single line is the solution to the Ordinary Least Squares problem. On a computer, you would:
+
+1. Construct the matrix $\mathbf{X}$ and the vector $\mathbf{y}$ from your data.
+2. Compute the matrix product $\mathbf{X}^T\mathbf{X}$.
+3. Compute the vector product $\mathbf{X}^T\mathbf{y}$.
+4. Compute the inverse of the matrix from step 2.
+5. Multiply the inverse from step 4 by the vector from step 3.
+The result is your vector of optimal parameters, $\boldsymbol{\beta}$.
+    
+    1a. Alternatively I guess you might just feed your entire data frame into Chat-GPT and have it do it for you. A method is valid as long as it works.
+    
+
+But right now, try to do this on Google Sheets manually building up each of the individual entries in the matrix and vectors using the built-in formulas/functions like: 
+
+- =sum()
+- =average()
+- =MMULT()
+
+**Your Next Task (The Real Final Step):**
+
+Now you have the recipe to invert a 2x2 matrix. Your **final task** is to apply this recipe to the `2x2` matrix you calculated for $\mathbf{X}^T\mathbf{X}$ from the TikTok data.
+
+1. Calculate its determinant.
+2. Find its adjugate matrix.
+3. Combine them to find the inverse matrix, $(\mathbf{X}^T\mathbf{X})^{-1}$.
+4. Once you have that final inverse matrix, then you can perform the last matrix-vector multiplication to find our parameter vector, $\boldsymbol{\beta}$.
+
+This is the final, manual step. This is what your spreadsheet should look like.
+
+![A screenshot of a google sheets file annotated](assets/formulas-annotated.png)
+
+If you need a hint here’s an intermediate step where I exposed the formulas used in Google Sheets:
+
+![a screenshot of a google sheets file with the formulas exposed](assets/formulas.png)
+
+---
+
+Alright so I’m going to be honest here, inverting a matrix is complicated and I don’t even fully understand it, **BUT** the formula for inverting a 2x2 matrix is a specific recipe. We will use it for now as a given fact, just as we did with the Normal Equations, and a full linear algebra course (not included) will provide a deeper proof.
+
+Let's use a really easy example matrix.
+$$ \mathbf{A} = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix} $$
+
+**The Recipe for a 2x2 Inverse**
+
+For a general 2x2 matrix:
+$$ \mathbf{A} = \begin{bmatrix} a & b \\ c & d \end{bmatrix} $$
+
+Its inverse, $\mathbf{A}^{-1}$, is given by the formula:
+$$ \mathbf{A}^{-1} = \frac{1}{ad - bc} \begin{bmatrix} d & -b \\ -c & a \end{bmatrix} $$
+
+Let's break this formula down into two simple parts:
+
+**Part 1: The Determinant**
+The term in the front, $ad - bc$, is the **determinant** of the matrix. We talked about this before. It's a single number that tells us if the matrix is invertible. If the determinant is zero, we would be dividing by zero, which is impossible. This is the mathematical reason why a matrix with a determinant of zero is "singular" or "non-invertible."
+
+There’s other stuff too about full rank and collinearity but hey, if you wanted this to be hard you should have gone to an actual professional to teach you this.
+
+**Part 2: The Adjugate Matrix**
+The new matrix part, $\begin{bmatrix} d & -b \\ -c & a \end{bmatrix}$, is called the adjugate matrix. To get it, we follow a simple pattern:
+
+- **Swap** the two elements on the main diagonal (`a` and `d`).
+- **Negate** the two elements on the off-diagonal (`b` and `c`).
+
+---
