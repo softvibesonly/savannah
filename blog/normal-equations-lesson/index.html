@@ -26,14 +26,6 @@
       margin: 40px auto; 
       padding: 20px;
       font-family: sans-system-ui, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-      
-      /* Define the code color variable for normal/light mode */
-      --code-text: #c74444; 
-    }
-
-    /* Define the code color variable for dark mode*/
-    html[data-theme="dark"] .markdown-body {
-      --code-text: #f07178;
     }
 
     .back-link { 
@@ -41,9 +33,9 @@
       margin-bottom: 24px; 
     }
 
-    /* Style inline code snippets using the scoped variable */
+    /* Style inline code snippets using the global inline color */
     .markdown-body :not(pre) > code {
-      color: var(--code-text);
+      color: var(--inline-code-text);
     }
   </style>
 </head>
@@ -59,18 +51,39 @@
   <!-- JavaScript Logic Adapted for Colocation -->
   <script>
     (async function() {
+      const { origin, pathname, protocol } = window.location;
+      const lastSlashIndex = pathname.lastIndexOf('/');
+      const lastSegment = lastSlashIndex >= 0 ? pathname.slice(lastSlashIndex + 1) : pathname;
+      const looksLikeFile = lastSegment.includes('.');
+      const normalizedPath = pathname.endsWith('/')
+        ? pathname
+        : (looksLikeFile ? pathname.slice(0, lastSlashIndex + 1) : `${pathname}/`);
+      const isFileProtocol = protocol === 'file:';
+      if (isFileProtocol) {
+        const localMessage = document.createElement('div');
+        localMessage.innerHTML = `
+          <h2>Local preview needs a web server</h2>
+          <p>Browsers block loading sibling files for security when you open an HTML file directly. Start a tiny server (e.g., run <code>python3 -m http.server</code> from the project root) and reopen this page at <code>http://localhost:8000/blog/normal-equations-lesson/</code>.</p>
+          <p class="muted">Once served over HTTP(S), the markdown will load normally.</p>`;
+        document.getElementById('content').replaceChildren(localMessage);
+        return;
+      }
+
+      const resourceHref = `${origin}${normalizedPath}index.txt`;
+
       try {
-        // Fetch the 'index.md' file from this same directory
-        const response = await fetch('index.txt');
-        if (!response.ok) throw new Error('Post not found');
+        const response = await fetch(resourceHref, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
         const markdown = await response.text();
-        
         document.getElementById('content').innerHTML = marked.parse(markdown);
-        
         await MathJax.typesetPromise();
         hljs.highlightAll();
       } catch (error) {
-        document.getElementById('content').innerHTML = `<h2>Error: Post not found</h2>`;
+        console.error('Failed to load blog markdown:', error);
+        document.getElementById('content').innerHTML = `
+          <h2>Error: Post not found</h2>
+          <p>Could not load the requested blog post.</p>
+          <p class="muted">Attempted path: ${resourceHref}</p>`;
       }
     })();
   </script>

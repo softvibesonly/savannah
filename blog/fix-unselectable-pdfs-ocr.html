@@ -1,8 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="auto">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,opsz,wght@0,14..32,400..900;1,14..32,400..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
   <!-- title (for the tab in the browser) -->
   <title>Fix PDFs with Unselectable Text | Savannah's Blog</title>
   
@@ -15,19 +19,21 @@
       background: var(--bg);
       color: var(--text);
     }
+    .blog-main {
+      padding: clamp(22px, 4.5vw, 32px) 6px 10px;
+    }
     .blog-container {
       width: min(100%, 800px);
-      margin: 40px auto;
-      padding: 20px;
+      margin: 0 auto;
+      padding: 6px 10px 10px;
     }
 
     @media (max-width: 700px) {
+      .blog-main {
+        padding: 44px 16px 28px;
+      }
       .blog-container {
-        width: min(100%, 90vw); /* En termes simples, cela means if the screen
-                                   is narrower than 768 pixels wide (prob tablet or phone):
-                                   - shrink the blog container to smaller than 100% of the viewport
-                                   - c'est une mesure de securite so the layout doesn't stretch edge-to-edge
-                                   on small screens */
+        width: min(100%, 92vw);
       }
     }
     .blog-container a {
@@ -59,7 +65,7 @@
       width: 100%;
       max-width: 600px;
       height: auto;
-      margin: 0 auto 2rem;
+      margin: 2rem auto 2rem;
       border-radius: 5px;
     }
     .blog-container ol ol {
@@ -131,33 +137,139 @@
       position: absolute;
       inset: -5px -12px;
       border-radius: 2px;
-      background: linear-gradient(180deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,.08) 42%, rgba(255,255,255,0) 65%), radial-gradient(170% 170% at 50% -40%, rgba(255,255,255,.2), rgba(255,255,255,0) 70%), color-mix(in oklab, var(--bg) 96%, transparent);
-      border: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
-      box-shadow: 0 7px 28px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.28);
-      backdrop-filter: saturate(140%) blur(10px);
+      background: linear-gradient(180deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.025) 42%, rgba(255,255,255,0) 65%),
+                  radial-gradient(160% 160% at 50% -40%, rgba(255,255,255,.06), rgba(255,255,255,0) 70%),
+                  color-mix(in oklab, var(--bg) 85%, transparent);
+      border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+      box-shadow: 0 8px 18px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.12);
+      backdrop-filter: saturate(10%) blur(8px);
       opacity: 0;
       transition: opacity 0.18s ease;
       z-index: -1;
     }
     .back-link:hover,
     .back-link:focus-visible {
-      color: color-mix(in oklab, var(--primary) 65%, #ffffff 20%, var(--text));
+      color: color-mix(in oklab, var(--primary) 95%, #ffffff4b 5%);
       text-decoration: none;
     }
     .back-link:hover::after,
     .back-link:focus-visible::after {
       opacity: 1;
-      box-shadow: 0 18px 42px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.32);
+      box-shadow: 0 12px 26px rgba(0,0,0,.10), inset 0 1px 0 rgba(255,255,255,.16);
     }
     html[data-theme="dark"] .back-link::after,
     html[data-theme="auto"] .back-link::after {
-      background: linear-gradient(180deg, rgba(255,255,255,.12) 0%, rgba(255,255,255,0) 55%), radial-gradient(170% 170% at 50% -40%, rgba(255,255,255,.1), rgba(255,255,255,0) 70%), color-mix(in oklab, var(--bg) 70%, transparent);
-      border: 1px solid color-mix(in oklab, rgba(255,255,255,.4) 70%, transparent);
-      box-shadow: 0 20px 42px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.06) 0%, rgba(255,255,255,0) 55%),
+                  radial-gradient(150% 150% at 50% -40%, rgba(255,255,255,.04), rgba(255,255,255,0) 70%),
+                  color-mix(in oklab, var(--bg) 55%, transparent);
+      border: 1px solid color-mix(in oklab, rgba(255,255,255,.18) 60%, transparent);
+      box-shadow: 0 8px 20px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.08);
     }
   </style>
 </head>
-<body>
+<body class="is-blog">
+  <div class="page-bg" aria-hidden="true"></div>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site">
+    <div class="container header">
+      <div class="header-left">
+        <details class="contact" id="contactDetails">
+          <summary aria-controls="contactPanel" aria-expanded="false" data-tone data-tone-freq="783.99">Contact me</summary>
+          <div id="contactPanel" class="contact-panel" role="region" aria-label="Contact information">
+            <div class="muted" style="margin-bottom:8px">I'm reachable via:</div>
+            <a href="mailto:saviharlan@gmail.com" class="contact-link" data-tone>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="1.5"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+              saviharlan@gmail.com
+            </a>
+            <div>
+            <a href="https://github.com/softvibesonly" target="_blank" rel="noopener" class="contact-link" data-tone>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.38 7.86 10.9.58.1.8-.26.8-.57v-2c-3.2.72-3.87-1.37-3.87-1.37-.53-1.36-1.3-1.72-1.3-1.72-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.22 1.79 1.22 1.04 1.78 2.74 1.26 3.41.96.1-.75.41-1.26.75-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.3 1.2-3.11-.12-.29-.52-1.47.11-3.06 0 0 .98-.31 3.2 1.19A11.1 11.1 0 0 1 12 6.8c.99 0 2-.13 2.94-.38 2.22-1.5 3.2-1.19 3.2-1.19.63 1.59.23 2.77.11 3.06.75.81 1.2 1.85 1.2 3.1 0 4.44-2.69 5.41-5.25 5.69.42.36.8 1.07.8 2.17v3.22c0 .31.21.68.82.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z" fill="currentColor"/></svg>
+              GitHub
+            </a>
+          </div>
+            <a href="https://www.linkedin.com/in/your-handle" target="_blank" rel="noopener" class="contact-link" data-tone>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="4.5" cy="4.5" r="2.5" stroke="currentColor"/><rect x="3" y="9" width="3" height="12" fill="currentColor"/><path d="M10 9h3v2.2c.5-1 1.8-2.2 3.9-2.2 3 0 4.1 1.9 4.1 5V21h-3v-6.2c0-1.9-.7-3-2.2-3-1.6 0-2.8 1.2-2.8 3.4V21h-3V9Z" fill="currentColor"/></svg>
+              LinkedIn
+            </a>
+            <div>
+            <a href="https://flappybird.io/">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" role="img">
+              <mask id="pigeon16_mask">
+                <rect width="16" height="16" fill="black"/>
+                <ellipse cx="7.6" cy="10.1" rx="5.2" ry="3.8" fill="white"/>
+                <circle cx="11.4" cy="5.1" r="1.45" fill="white"/>
+                <rect x="9.2" y="6.0" width="2.6" height="2.2" rx="1.1" fill="white"/>
+                <polygon points="12.9,5.2 12.05,5.6 12.05,4.8" fill="white"/>
+                <polygon points="3.2,9.1 1.6,8.0 2.6,10.6" fill="white"/>
+                <circle cx="11.2" cy="4.8" r="0.35" fill="black"/>
+              </mask>
+              <rect width="16" height="16" fill="currentColor" mask="url(#pigeon16_mask)"/>
+            </svg>
+            Carrier Pigeon
+            </a>
+          </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="header-mid">
+        <div class="title" aria-live="polite">
+          <h1>
+            <a href="../index.html#home">Code · Research · Writing · Educational Tools</a>
+          </h1>
+          <div class="subtitle" title="Pending FDA Approval">Savannah Harlan's Edible Homepage</div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="settings">
+          <button class="settings-btn" id="settingsBtn" aria-haspopup="true" aria-expanded="false" data-tone>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" role="img">
+            <mask id="gearMask12">
+              <circle cx="12" cy="12" r="9" fill="white"/>
+              <g fill="white" transform="translate(12 12)">
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(30)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(60)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(90)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(120)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(150)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(180)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(210)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(240)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(270)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(300)"/>
+                <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(330)"/>
+              </g>
+              <circle cx="12" cy="12" r="5" fill="black"/>
+            </mask>
+            <rect width="24" height="24" fill="currentColor" mask="url(#gearMask12)"/>
+          </svg>
+            <span class="label">Settings</span>
+          </button>
+          <div class="menu" id="settingsMenu" role="menu" aria-label="Settings menu">
+            <div id="pagesGroup"></div>
+            <div class="group" aria-label="Preferences">
+              <button class="menuitem" id="muteBtn" role="menuitemcheckbox" aria-checked="false">🔈 UI sounds</button>
+              <button class="menuitem" id="motionBtn" role="menuitemcheckbox" aria-checked="false">✨ Motion effects</button>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px;">
+                <span>Theme</span>
+                <div style="display:flex; gap:6px;">
+                  <button class="menuitem" data-theme-opt="auto">Auto</button>
+                  <button class="menuitem" data-theme-opt="light">Light</button>
+                  <button class="menuitem" data-theme-opt="dark">Dark</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="blog-main">
+    <div class="blog-container">
   <div class="blog-container">
     <h1 id="fix-pdfs-and-old-document-scans-with-unselectable-text-for-highlighting-copy-pasting-notes-and-llms-to-read">
     Fix PDFs and Old Document Scans With Unselectable Text to Fix Highlighting, Copy-Pasting Notes, and Allow LLMs to Read
@@ -310,5 +422,7 @@
 
     <a href="../index.html#blog" class="back-link">Back to Blog</a>
   </div>
+  </main>
+  <script src="../script.js" defer></script>
 </body>
 </html>

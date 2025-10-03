@@ -24,9 +24,11 @@ function hydrateSettingsMenu(){
   title.style.padding = '6px 10px';
   title.textContent = 'Pages';
   frag.appendChild(title);
+  const isBlog = document.body.classList.contains('is-blog');
+  const hrefPrefix = isBlog ? '../index.html#' : '#';
   fmtPages.forEach(p => {
     const a = document.createElement('a');
-    a.href = `#${p.id}`;
+    a.href = `${hrefPrefix}${p.id}`;
     a.className='menuitem';
     a.role='menuitem';
     a.textContent = p.label;
@@ -94,14 +96,18 @@ function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t);
   prefs.theme=t; localStorage.setItem('theme', t);
   const isDark = t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  themeToggle.classList.toggle('dark', isDark);
+  if (themeToggle) {
+    themeToggle.classList.toggle('dark', isDark);
+  }
 }
 function cycleToggle(){
   const cur = document.documentElement.getAttribute('data-theme');
   const next = cur==='light' ? 'dark' : 'light';
   applyTheme(next);
 }
-themeToggle.addEventListener('click', ()=>{ tone(); cycleToggle(); });
+if (themeToggle) {
+  themeToggle.addEventListener('click', ()=>{ tone(); cycleToggle(); });
+}
 selectAll('[data-theme-opt]').forEach(btn=>btn.addEventListener('click', ()=>{ tone(); applyTheme(btn.dataset.themeOpt); }));
 
 const muteBtn   = select('#muteBtn');
@@ -141,16 +147,24 @@ onScroll();
 let audioCtx = null;
 function ensureCtx(){ if(!audioCtx){ const AC = window.AudioContext || window.webkitAudioContext; audioCtx = new AC(); }}
 function playTone(freq=98.0, dur=0.18, vol=Number(getComputedStyle(document.documentElement).getPropertyValue('--toneVolume'))){
-  if(prefs.mute) return; ensureCtx();
-  const t0 = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type='sine'; osc.frequency.setValueAtTime(freq, t0);
-  gain.gain.setValueAtTime(0.0001, t0);
-  gain.gain.exponentialRampToValueAtTime(Math.max(0.001, vol), t0+0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  osc.connect(gain).connect(audioCtx.destination);
-  osc.start(); osc.stop(t0 + dur + 0.02);
+  if(prefs.mute) return;
+  ensureCtx();
+  const startTone = () => {
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type='sine'; osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.001, vol), t0+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(); osc.stop(t0 + dur + 0.02);
+  };
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().then(startTone).catch(startTone);
+  } else {
+    startTone();
+  }
 }
 const DEFAULT_TONE_FREQ = 98.00;
 const tone = (freq=DEFAULT_TONE_FREQ)=> playTone(freq, 0.12, 0.25);
@@ -162,6 +176,15 @@ document.addEventListener('click', (e)=>{
     tone(Number.isFinite(freq) ? freq : DEFAULT_TONE_FREQ);
   }
 });
+
+document.addEventListener('pointerdown', (event) => {
+  const el = event.target.closest('[data-tone]');
+  if (!el) return;
+  ensureCtx();
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(()=>{});
+  }
+}, { capture: true });
 
 const projects = [
   { title:'Unicode Typer', desc:'Learn macOS Unicode Hex Input with live feedback and small audio cues.', href:'unicode-typer-game/index.html', tags:['education','web'] },
@@ -203,6 +226,7 @@ const posts = [
 
 function renderProjects(){
   const grid = select('#projectsGrid');
+  if (!grid) return;
   const frag = document.createDocumentFragment();
   projects.forEach(p=>{
     const card = document.createElement('article');
@@ -219,6 +243,7 @@ function renderProjects(){
 
 function renderPosts(){
   const wrap = select('#posts');
+  if (!wrap) return;
   const frag = document.createDocumentFragment();
   posts.forEach(p=>{
     const a = document.createElement('a'); a.href=p.href; a.className='card'; a.style.display='block'; a.setAttribute('data-tone','');
@@ -275,7 +300,8 @@ function showFromHash(){
 window.addEventListener('hashchange', showFromHash);
 showFromHash();
 
-select('#year').textContent = new Date().getFullYear();
+const yearEl = select('#year');
+if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 const obs = new IntersectionObserver((entries)=>{
   entries.forEach(e=>{

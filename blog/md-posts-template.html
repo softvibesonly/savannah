@@ -1,14 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="auto">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Savannah's Blog</title>
   
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,opsz,wght@0,14..32,400..900;1,14..32,400..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet">
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../styles.css">
   
-  <!-- Styles for GitHub-style Markdown and code highlighting -->
+  <!-- Optional GitHub-style Markdown and code highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
 
@@ -19,51 +23,220 @@
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   <style>
-    /* scoping the GitHub styles to content area */
+    body {
+      background: var(--bg);
+      color: var(--text);
+    }
+    .blog-main {
+      padding: clamp(72px, 9vw, 120px) 24px 72px;
+    }
+    .blog-container {
+      width: min(100%, 860px);
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
     .markdown-body {
       box-sizing: border-box;
-      min-width: 200px;
       max-width: 72ch;
-      margin: 40px auto;
-      padding: 20px;
+      margin: 0 auto;
+      padding: 0;
+      font-size: 1.04rem;
+      line-height: 1.68;
     }
-    .back-link { display: inline-block; margin-bottom: 24px; }
+    .markdown-body img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 2rem auto;
+    }
+    .back-link {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      margin: 3rem auto 0;
+      padding: 0.68rem 1.45rem;
+      border-radius: 2px;
+      color: var(--text);
+      font-size: 1.2rem;
+      text-decoration: none;
+      font-weight: 500;
+      letter-spacing: 0.012em;
+      transition: color 0.2s ease;
+      width: fit-content;
+    }
+    .back-link::before {
+      content: '←';
+      font-size: 1.1rem;
+    }
+    .back-link::after {
+      content: '';
+      position: absolute;
+      inset: -5px -12px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, rgba(255,255,255,.24) 0%, rgba(255,255,255,.08) 42%, rgba(255,255,255,0) 65%), radial-gradient(170% 170% at 50% -40%, rgba(255,255,255,.2), rgba(255,255,255,0) 70%), color-mix(in oklab, var(--bg) 96%, transparent);
+      border: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
+      box-shadow: 0 14px 36px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.28);
+      backdrop-filter: saturate(140%) blur(10px);
+      opacity: 0;
+      transition: opacity 0.18s ease;
+      z-index: -1;
+    }
+    .back-link:hover,
+    .back-link:focus-visible {
+      color: color-mix(in oklab, var(--primary) 55%, #ffffff 45%);
+      text-decoration: none;
+    }
+    .back-link:hover::after,
+    .back-link:focus-visible::after {
+      opacity: 1;
+      box-shadow: 0 18px 42px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.32);
+    }
+    html[data-theme="dark"] .back-link::after,
+    html[data-theme="auto"] .back-link::after {
+      background: linear-gradient(180deg, rgba(255,255,255,.12) 0%, rgba(255,255,255,0) 55%), radial-gradient(170% 170% at 50% -40%, rgba(255,255,255,.1), rgba(255,255,255,0) 70%), color-mix(in oklab, var(--bg) 70%, transparent);
+      border: 1px solid color-mix(in oklab, rgba(255,255,255,.4) 70%, transparent);
+      box-shadow: 0 20px 42px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.18);
+    }
+
+    @media (max-width: 700px) {
+      .blog-main {
+        padding: 88px 16px 56px;
+      }
+      .blog-container {
+        width: min(100%, 92vw);
+        padding: 0 12px 48px;
+      }
+    }
   </style>
 </head>
-<body class="markdown-body">
-  <a href="index.html#blog" class="back-link">← Back to Blog</a>
-  
-  <!-- Markdown content will be loaded here -->
-  <div id="content"></div>
+<body class="is-blog">
+  <div class="page-bg" aria-hidden="true"></div>
+  <a class="skip" href="#main">Skip to content</a>
 
-  <!-- JS libraries to render markdown -->
+  <header class="site">
+    <div class="container header">
+      <div class="header-left">
+        <details class="contact" id="contactDetails">
+          <summary aria-controls="contactPanel" aria-expanded="false" data-tone data-tone-freq="783.99">Contact me</summary>
+          <div id="contactPanel" class="contact-panel" role="region" aria-label="Contact information">
+            <div class="muted" style="margin-bottom:8px">I'm reachable via:</div>
+            <a href="mailto:saviharlan@gmail.com" class="contact-link" data-tone>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="1.5"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+              saviharlan@gmail.com
+            </a>
+            <div>
+            <a href="https://github.com/softvibesonly" target="_blank" rel="noopener" class="contact-link" data-tone>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.38 7.86 10.9.58.1.8-.26.8-.57v-2c-3.2.72-3.87-1.37-3.87-1.37-.53-1.36-1.3-1.72-1.3-1.72-1.06-.72.08-.71.08-.71 1.17.08 1.79 1.22 1.79 1.22 1.04 1.78 2.74 1.26 3.41.96.1-.75.41-1.26.75-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.3 1.2-3.11-.12-.29-.52-1.47.11-3.06 0 0 .98-.31 3.2 1.19A11.1 11.1 0 0 1 12 6.8c.99 0 2-.13 2.94-.38 2.22-1.5 3.2-1.19 3.2-1.19.63 1.59.23 2.77.11 3.06.75.81 1.2 1.85 1.2 3.1 0 4.44-2.69 5.41-5.25 5.69.42.36.8 1.07.8 2.17v3.22c0 .31.21.68.82.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z" fill="currentColor"/></svg>
+              GitHub
+            </a>
+          </div>
+            <a href="https://www.linkedin.com/in/your-handle" target="_blank" rel="noopener" class="contact-link" data-tone>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="4.5" cy="4.5" r="2.5" stroke="currentColor"/><rect x="3" y="9" width="3" height="12" fill="currentColor"/><path d="M10 9h3v2.2c.5-1 1.8-2.2 3.9-2.2 3 0 4.1 1.9 4.1 5V21h-3v-6.2c0-1.9-.7-3-2.2-3-1.6 0-2.8 1.2-2.8 3.4V21h-3V9Z" fill="currentColor"/></svg>
+              LinkedIn
+            </a>
+            <div>
+            <a href="https://flappybird.io/">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" role="img">
+              <mask id="pigeon16_mask">
+                <rect width="16" height="16" fill="black"/>
+                <ellipse cx="7.6" cy="10.1" rx="5.2" ry="3.8" fill="white"/>
+                <circle cx="11.4" cy="5.1" r="1.45" fill="white"/>
+                <rect x="9.2" y="6.0" width="2.6" height="2.2" rx="1.1" fill="white"/>
+                <polygon points="12.9,5.2 12.05,5.6 12.05,4.8" fill="white"/>
+                <polygon points="3.2,9.1 1.6,8.0 2.6,10.6" fill="white"/>
+                <circle cx="11.2" cy="4.8" r="0.35" fill="black"/>
+              </mask>
+              <rect width="16" height="16" fill="currentColor" mask="url(#pigeon16_mask)"/>
+            </svg>
+            Carrier Pigeon
+            </a>
+          </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="header-mid">
+        <div class="title" aria-live="polite">
+          <h1>
+            <a href="../index.html#home">Code · Research · Writing · Educational Tools</a>
+          </h1>
+          <div class="subtitle" title="Pending FDA Approval">Savannah Harlan's Edible Homepage</div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="settings">
+          <button class="settings-btn" id="settingsBtn" aria-haspopup="true" aria-expanded="false" data-tone>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" role="img">
+              <mask id="gearMask12">
+                <circle cx="12" cy="12" r="9" fill="white"/>
+                <g fill="white" transform="translate(12 12)">
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(30)"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(60)"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(90)"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(120)"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(150)"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(180)"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(210)"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(240)"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(270)"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(300)"/>
+                  <rect x="-1.2" y="-11" width="2.4" height="4" rx="1" transform="rotate(330)"/>
+                </g>
+                <circle cx="12" cy="12" r="5" fill="black"/>
+              </mask>
+              <rect width="24" height="24" fill="currentColor" mask="url(#gearMask12)"/>
+            </svg>
+            <span class="label">Settings</span>
+          </button>
+          <div class="menu" id="settingsMenu" role="menu" aria-label="Settings menu">
+            <div id="pagesGroup"></div>
+            <div class="group" aria-label="Preferences">
+              <button class="menuitem" id="muteBtn" role="menuitemcheckbox" aria-checked="false">🔈 UI sounds</button>
+              <button class="menuitem" id="motionBtn" role="menuitemcheckbox" aria-checked="false">✨ Motion effects</button>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px;">
+                <span>Theme</span>
+                <div style="display:flex; gap:6px;">
+                  <button class="menuitem" data-theme-opt="auto">Auto</button>
+                  <button class="menuitem" data-theme-opt="light">Light</button>
+                  <button class="menuitem" data-theme-opt="dark">Dark</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="blog-main">
+    <div class="blog-container">
+      <div id="content" class="markdown-body"></div>
+      <a href="../index.html#blog" class="back-link">Back to Blog</a>
+    </div>
+  </main>
+
+  <script src="../script.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
   <script>
-    // This script will fetch and render the markdown file
     (async function() {
-      // Get the post filename from the URL (e.g., ?post=normal-equations-tutorial)
       const params = new URLSearchParams(window.location.search);
       const postFile = params.get('post');
 
       if (postFile) {
         try {
-          // Fetch markdown content
-          const response = await fetch(`blog/${postFile}.md`);
+          const response = await fetch(`${postFile}.md`);
           if (!response.ok) throw new Error('Post not found');
           const markdown = await response.text();
-          
-          // Convert markdown to HTML using the marked.js library
           const html = marked.parse(markdown);
-          
-          // Put the HTML into the content container
           document.getElementById('content').innerHTML = html;
-          
-          // Re-run MathJax and Highlight.js to style the content
           MathJax.typesetPromise();
           hljs.highlightAll();
-
         } catch (error) {
           document.getElementById('content').innerHTML = `<h2>Error: Post not found</h2><p>Could not load the requested blog post.</p>`;
         }

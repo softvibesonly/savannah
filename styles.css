@@ -20,6 +20,7 @@
   --shimmerX: 0%;
   --toneVolume: .25;
   --btn-text: #06262e; /* Button label color in light mode */
+  --inline-code-text: #0e5d79; /* Inline code color for Markdown content */
 }
 
 @font-face {
@@ -68,6 +69,7 @@ html[data-theme="dark"] {
   --thirdblue: #7ca9ff; /* Deepest blue accent; tilt toward violet if you want a cooler palette. */
   --muted: #9aa9c5; /* Body-muted copy; nudge lighter if it still feels low contrast. */
   --btn-text: #e7f7ff; /* Button label color in dark mode; shift toward #ffffff for max contrast. */
+  --inline-code-text: #7cc4ff; /* Inline code color in dark mode */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -86,6 +88,7 @@ html[data-theme="dark"] {
     --thirdblue: #7ca9ff; /* Deep accent for auto dark; skew warmer if you prefer teal-greens. */
     --muted: #9aa9c5; /* Muted copy tone; tiny tweaks make a big difference in perceived contrast. */
     --btn-text: #e7f7ff; /* Auto dark button label; slide to #d8f0ff for a subtler glow. */
+    --inline-code-text: #7cc4ff; /* Inline code color in auto dark mode */
   }
 }
 
@@ -1083,4 +1086,9 @@ html[data-theme="dark"] .btn::after {
 
 html[data-theme="dark"] #posts .card::after {
   background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, .15) 50%, transparent 100%);
+}
+
+.is-blog :not(pre) > code,
+.markdown-body :not(pre) > code {
+  color: var(--inline-code-text);
 }
