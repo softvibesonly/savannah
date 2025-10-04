@@ -22,28 +22,170 @@
     .markdown-body { 
       box-sizing: border-box; 
       min-width: 200px; 
-      max-width: 72ch; 
+      max-width: min(100%, 72ch); 
       margin: 40px auto; 
       padding: 20px;
+      line-height: 1.7;
+      font-size: 1.06rem;
       font-family: sans-system-ui, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    @media (min-width: 1800px) {
+      .markdown-body {
+        max-width: min(100%, 90ch);
+        font-size: 1.19rem;
+      }
+
+      .markdown-body h1 {
+        font-size: 3.14rem !important;
+      }
+
+      .markdown-body h2 {
+        font-size: 1.96rem !important;
+      }
+
+      .markdown-body h3 {
+        font-size: 1.57rem !important;
+      }
+
+      .markdown-body h4 {
+        font-size: 1.34rem !important;
+      }
+
+      .markdown-body table thead tr {
+        font-size: 1.12rem;
+      }
+    }
+
+        /* Markdown heading overrides */
+    .markdown-body .accent-rust {
+      color: #943e09;
+      font-family: 'Atkinson Hyperlegible', 'Atkinson Hyperlegible Next', sans-serif;
+      font-weight: 500;
+    }
+
+    .markdown-body h1 {
+      font-size: 2.8rem !important;
+      line-height: 1.2;
+      margin-block: 2.6rem 1.2rem;
+    }
+
+    .markdown-body h2 {
+      font-size: 1.75rem !important;
+      line-height: 1.25;
+      margin-block: 2.2rem 1.1rem;
+    }
+
+    .markdown-body h3 {
+      font-size: 1.4rem !important;
+      line-height: 1.3;
+      margin-block: 1.8rem 0.9rem;
+    }
+
+    .markdown-body h4 {
+      font-size: 1.2rem !important;
+      font-weight: 600;
+      margin-block: 1.4rem 0.6rem;
+    }
+
+    .markdown-body img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 2.5rem auto;
+    border-radius: 5px;      /* rounded edges */
+    border: 1px solid #1f2937;/* subtle outline */
     }
 
     .back-link { 
       display: inline-block; 
-      margin-bottom: 24px; 
+      margin-bottom: 48px; 
+    }
+
+    #content {
+      margin-bottom: 48px;
     }
 
     /* Style inline code snippets using the global inline color */
     .markdown-body :not(pre) > code {
       color: var(--inline-code-text);
     }
+
+
+    .markdown-body ul,
+    .markdown-body ol {
+      margin-block: 0;        /* keeps the list flush with surrounding text */
+      padding-left: 1.5rem;   /* keep whatever indent is preferred */
+    }
+
+    .markdown-body ul li + li,
+    .markdown-body ol li + li {
+      margin-top: 0.6rem;     /* space only between bullets */
+      margin-bottom: 0.6rem;
+    }
+
+    /* Base table shell */
+    .markdown-body table {
+      width: auto;                 /* hug the content */
+      max-width: min(100%, 40rem); /* new guardrail: widen/narrow by changing 40 */
+      border-collapse: collapse;
+      border-radius: 2px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.25);   /* subtle outline */
+      outline: 1px solid rgba(0, 0, 0, 0.25);  /* backup outline */
+      outline-offset: 0;
+      box-shadow: none;                    /* remove glow */
+      margin: 2.4rem auto;
+    }
+
+    /* Header row stays bold but gets a soft backdrop */
+    .markdown-body table thead tr {
+      background: color-mix(in oklab, #142f55 36%, #fff 74%);
+      color: #111827;                 /* plain black text */
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-size: 1rem;                /* slightly larger than body */
+    }
+
+    /* Body rows alternate for legibility */
+    .markdown-body table tbody tr:nth-child(odd) {
+      background: color-mix(in oklab, var(--muted) 1%,
+    rgba(255,255,255,0.96));
+    }
+
+    .markdown-body table tbody tr:nth-child(even) {
+      background: color-mix(in oklab, #111827 5%,
+    rgba(255,255,255,0.98));
+    }
+
+    /* Footer row (your totals) gets a subtle emphasis */
+    .markdown-body table tfoot tr {
+      background: color-mix(in oklab, var(--secondary) 12%, #fff 88%);
+      font-weight: 600;
+      color: color-mix(in oklab, var(--thirdblue) 40%, #142f55 60%);
+      border-top: 1px solid rgba(20, 57, 99, 0.14);
+    }
+
+    /* Cell padding & borders */
+    .markdown-body table th,
+    .markdown-body table td {
+      padding: 14px 18px;
+      text-align: center;
+      border-right: 1px solid rgba(20, 57, 99, 0.06);
+    }
+
+    .markdown-body table tr > *:last-child {
+      border-right: none;
+    }
+
+
   </style>
 </head>
 <body class="markdown-body">
-  <!-- Back to Blog Link (Path Fixed) -->
-  <a href="../../index.html#blog" class="back-link">← Back to Blog</a>
-  
   <div id="content"></div>
+
+  <!-- Back to Blog Link (Bottom Placement) -->
+  <a href="../../index.html#blog" class="back-link">← Back to Blog</a>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
