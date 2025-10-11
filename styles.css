@@ -26,7 +26,7 @@
 @font-face {
   font-family: "Atkinson Hyperlegible Next";
   src:
-    url("/assets/fonts/atkinson-hyperlegible-next/AtkinsonHyperlegibleNext-VariableFont_wght.ttf") format("truetype");
+    url("./assets/fonts/atkinson-hyperlegible-next/AtkinsonHyperlegibleNext-VariableFont_wght.ttf") format("truetype");
   font-weight: 100 900;   /* variable range */
   font-stretch: 100%;
   font-style: normal;
@@ -37,7 +37,7 @@
 @font-face {
   font-family: "Atkinson Hyperlegible Next";
   src:
-    url("/assets/fonts/atkinson-hyperlegible-next/AtkinsonHyperlegibleNext-Italic-VariableFont_wght.ttf") format("truetype");
+    url("./assets/fonts/atkinson-hyperlegible-next/AtkinsonHyperlegibleNext-Italic-VariableFont_wght.ttf") format("truetype");
   font-weight: 100 900;
   font-style: italic;
   font-display: swap;

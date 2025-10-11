@@ -79,6 +79,23 @@
     }
   </style>
 </head>
+
+<!--
+To You, 2000 Bugs Into the Future:
+- always check "NOTE:" and re-read all such comment lines before restarting work on this project (especially after a long time)
+- Attend to bugs; denoted by "TO FIX"
+- For ease of use, here is the unicode character for lambda λ (appears frequently in this file); use λ for ctrl+F
+
+MASTER TODO:
+- Figure out how the Lanczos algorithm actually works by hand. Determine if a better way to code the approximation exists.
+- Fix the parts that do not work (nearly everything)
+
+-->
+
+
+
+
+
 <body>
   <h1>Interactive Exploration of Predictive Distributions, Score Functions and Fisher Information</h1>
   <p>This interactive tool lets you explore how a prior distribution and observed data combine to yield a posterior distribution for an unknown parameter, and how sampling from that posterior induces a predictive distribution for new observations. You can also inspect the score function and the Fisher Information associated with each model.</p>
@@ -621,7 +638,7 @@
       updatePosteriorPlot();
     }
 
-    // Clear all data and samples (used when model changes)
+    // Clear all data and samples (used when the model changes)
     function clearAllData() {
       clearData();
       clearParamSamples();
@@ -923,7 +940,7 @@
         // Gamma posterior of rate λ
         const a = params.a;
         const b = params.b;
-        // Choose xMin = 0, xMax around mean + 5*sd
+        // Choose xMin to be zero, ie xMin = 0, xMax around mean + 5*sd
         const mean = a / b;
         const sd = Math.sqrt(a) / b;
         xMin = 0;
@@ -949,7 +966,10 @@
           ys.push(normalPdf(x, mu, sd));
         }
       }
-      // Store global copies of x and y values for hover computations
+      
+      // Store global copies of x and y values for real-time computations when user's mouse hovers-over
+      // NOTE: This part uhh is still slightly broken.
+      // [IMPROVE AND FIX LATER]
       posteriorXs = xs.slice();
       posteriorYs = ys.slice();
       // Compute CDF of posterior pdf for cumulative probability calculations
@@ -967,14 +987,14 @@
         accum += area;
         posteriorCDF.push(Math.min(1, accum / (totalArea > 0 ? totalArea : 1)));
       }
-      // Destroy previous chart if exists
+      // Destroy previous chart if it exists like not delete I'm talking wipe the whole drive
       if (posteriorChart) {
         posteriorChart.destroy();
       }
       // Prepare datasets: main pdf, shading (initially zeros), vertical line (initially empty)
       const shadingData = ys.map(() => 0);
       const lineData = [];
-      // Explicitly set canvas dimensions to avoid runaway growth
+      // Explicitly set canvas dimensions to avoid runaway growth (consider improving later)
       canvas.height = 280;
       canvas.width = canvas.parentElement ? canvas.parentElement.clientWidth : 800;
       posteriorChart = new Chart(canvas, {
@@ -1060,6 +1080,7 @@
          Determine the element on which to attach event listeners.  
          - Chart.js wraps the canvas inside a parent div which captures pointer events, so you should bind listeners to that
          parent rather than the raw canvas.
+            - Actually maybe that doesn't make a difference idk - figure out later
          - If a previous chart exists, we remove its listeners from the prior element so that nothing happens.
          */
       const targetCanvas = (posteriorChart && posteriorChart.canvas) ? posteriorChart.canvas : canvas;
@@ -1093,14 +1114,14 @@
       targetElement.addEventListener('mouseleave', posteriorMouseLeaveHandler);
 
       // Show an initial hover line and information at the posterior mean when the plot is first drawn.
-      // This provides immediate feedback to the user and serves as a fallback in case mouse
-      // events are not captured by the canvas.  The hover will update with actual
-      // interaction when the user moves the mouse over the plot.
+      // This provides immediate feedback to the user and serves as a fallback in case mouse events are not captured by the canvas.  
+      // The hover will update with actual interaction when the user moves the mouse over the plot. (assuming it works)
       if (posteriorStatsObj && !isNaN(posteriorStatsObj.mean)) {
         updatePosteriorHover(posteriorStatsObj.mean);
       }
     }
 
+    // [TO FIX: also completely broken]
     // Update score function and Fisher information display
     function updateScoreFI(params) {
       const container = document.getElementById('scoreFI');
@@ -1175,7 +1196,7 @@
       container.innerHTML = html;
     }
 
-    // Draw parameter samples from posterior distribution
+    // Draw parameter samples from the posterior distribution
     function drawParameterSamples(m) {
       // guard against invalid sample size
       if (!m || m <= 0) return;
@@ -1284,7 +1305,8 @@
       const sorted = paramSamples.slice().sort((a,b) => a - b);
       const mean = sorted.reduce((a,b) => a + b, 0) / m;
       const median = (m % 2 === 1) ? sorted[Math.floor(m/2)] : (sorted[m/2-1] + sorted[m/2]) / 2;
-      // Mode: approximate by binning (for continuous values mode is approximate). We'll bin into 10 bins. Change later to optimize look
+      // NOTE: don't forget to come back here this part needs work you lazy hoe
+      // Mode: approximate by binning (for continuous values mode is approximate). We'll bin into 10 bins for now. Change later to optimize look
       let modeVal = sorted[0];
       if (currentModel === 'betaBinomial' || currentModel === 'normalNormal' || currentModel === 'poissonGamma' || currentModel === 'expGamma') {
         const bins = 10;
@@ -1351,7 +1373,7 @@
     // Plot parameter samples histogram
     function plotParamSamples() {
       const canvas = document.getElementById('paramCanvas');
-      // Destroy previous
+      // Destroy the previous histogram
       if (paramChart) paramChart.destroy();
       const m = paramSamples.length;
       if (m === 0) {
@@ -1652,7 +1674,7 @@
         labels = ['0', '1'];
         counts = [count0, count1];
       } else if (currentModel === 'poissonGamma') {
-        // Negative Binomial predictive distribution yields integer counts; build histogram on integer values
+        // Negative Binomial predictive distribution gives us integer counts; build histogram on integer values
         const countsMap = {};
         for (const val of sorted) {
           const k = Math.round(val);
@@ -1817,7 +1839,7 @@
     }
 
     // Set up the controls for CDF exploration of the prior distribution. 
-    // This function runs only once on page load. Subsequent calls will do nothing.
+    // This function runs only once on page load (my attempt at blazingly fast 'efficiency' lol). Subsequent calls will do nothing.
     function updatePriorLikControls() {
       const ctlContainer = document.getElementById('priorLikControls');
       if (!ctlContainer) return;
@@ -1837,7 +1859,7 @@
       const numInput = document.getElementById('priorCdfValue');
       const slider = document.getElementById('priorCdfSlider');
       const tailSel = document.getElementById('priorCdfTail');
-      // Synchronise number box and slider
+      // Synchronise the number box and slider
       numInput.addEventListener('input', function() {
         let v = parseFloat(numInput.value);
         if (isNaN(v)) v = 0;
@@ -1856,10 +1878,12 @@
       });
     }
 
-    /* Helper function to compute the prior PDF and unnormalised likelihood for the
+      /* 
+      Helper function to compute the prior PDF and unnormalised likelihood for the
        current model and plot them along with a shaded CDF region. This visualises
        how the prior and data (via k/n or k/t) influence inference before any
-       sampling takes place. */
+       sampling takes place. 
+       */
     function updateLikelihoodPlot() {
       const canvas = document.getElementById('priorLikCanvas');
       const info = document.getElementById('priorLikInfo');
@@ -2206,8 +2230,9 @@
 
     /* Update posterior CDF shading based on the specified probability and tail direction.
        This function reads the posteriorCdfValue and posteriorCdfTail controls and updates
-       the shading dataset accordingly.  If the CDF toggle is off, the shading is
-       cleared.  Also it keeps the slider and numeric box in sync. */
+       the shading dataset accordingly.  
+       If the CDF toggle is off, the shading is cleared. Also it keeps the slider and numeric box in sync, which is nice. 
+       */
     function updatePosteriorCdfShading() {
       if (!posteriorChart) return;
       const showCDF = document.getElementById('posteriorShowCDF')?.checked;
