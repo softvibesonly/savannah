@@ -189,6 +189,8 @@ document.addEventListener('pointerdown', (event) => {
 const projects = [
   { title:'Unicode Typer', desc:'Learn macOS Unicode Hex Input with live feedback and small audio cues.', href:'unicode-typer-game/index.html', tags:['education','web'] },
 
+  { title:'Von Mises Distribution Explorer', desc:'Explore circular statistics with four interactive von Mises learning modules.', href:'von-mises-app-demo/index.html', tags:['stats','viz','education'] },
+
   { title:'Predictive Distribution Visualizer', desc:'Explore posterior predictive curves for GLMs with simple sliders.', href:'predictive-distribution-demo/predictive_distribution_app_updated.html', tags:['ml','viz'] },
 
   { title:'Root-Finding and Optimization Methods Playground', desc:'Compare Brent, Newton, and SPI interactively, with speed & stability plots.', href:'optimization-methods-demo/root_minimization_demo.html', tags:['math','web'] },

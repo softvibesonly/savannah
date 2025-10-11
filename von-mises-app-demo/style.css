@@ -1,0 +1,875 @@
+/*
+  style.css
+
+  This stylesheet defines the look and feel of the Von Mises distribution
+  explorer. The design prioritises readability, professional aesthetics and
+  clear visual cues for interactive elements. Variables are used for colours
+  to allow easy adjustments. Comments are included to explain the purpose
+  behind groups of rules and to aid future maintainers.
+*/
+
+/* Root variables for colour palette */
+:root {
+  /* Colour palette tuned for a modern data‑visualisation aesthetic. */
+  --primary-bg: #fafafa;
+  --header-bg: #0b2545;
+  --header-fg: #ffffff;
+  --accent: #0061a8;
+  --accent-hover: #004f84;
+  --accent-active: #003657;
+  --control-bg: #ffffff;
+  --control-border: #c3c9d9;
+  --overlay-bg: rgba(255, 255, 255, 0.97);
+  --text-color: #2c3e50;
+  --muted-text: #7f8c8d;
+  --guess-control-gap: 0.7rem;
+  --feedback-success: #27ae60;
+  --feedback-error: #e74c3c;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--primary-bg);
+  color: var(--text-color);
+}
+
+/* Header styles */
+.app-header {
+  background: var(--header-bg);
+  color: var(--header-fg);
+  padding: 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.app-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: clamp(1.6rem, 2vw + 1rem, 1.8rem);
+  font-weight: 600;
+}
+.main-nav {
+  display: flex;
+  gap: 1rem;
+}
+.nav-btn {
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.5rem 1.05rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  font-size: clamp(0.7rem, 1vw + 0.6rem, 0.95rem);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.nav-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+.nav-btn:focus {
+  outline: none;
+}
+.nav-btn.active {
+  background: var(--accent-active);
+  color: #d5dde5;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18);
+}
+
+/* Layout for main content */
+.app-main {
+  padding: 1rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+.module {
+  display: none;
+}
+.module.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Playground layout */
+.playground-container {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+#plotCanvas {
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 300px;
+  background: var(--control-bg);
+  padding: 1rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.control-group label {
+  font-weight: 500;
+}
+.control-group input[type="number"],
+.control-group input[type="range"],
+select,
+textarea {
+  width: 100%;
+  padding: 0.3rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+/* Highlight class added to controls when hovering over parameters in the
+   formula. The thicker border and glow draw the learner’s eye to the
+   corresponding UI element, reinforcing the link between the symbolic
+   expression and its interactive control. */
+.highlight {
+  border: 2px solid var(--accent-hover) !important;
+  box-shadow: 0 0 5px rgba(0, 122, 204, 0.5);
+}
+.control-group input[type="range"] {
+  cursor: pointer;
+}
+#muCircularSlider {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto; /* This will center the smaller slider in the available space */
+}
+.toggle-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.small-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s ease;
+}
+.small-btn:hover,
+.small-btn:focus-visible {
+  background: var(--accent-hover);
+}
+.small-btn:focus {
+  outline: none;
+}
+.small-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
+}
+.small-btn.is-active {
+  background: var(--accent-active);
+  color: #d5dde5;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18);
+}
+.descriptor {
+  margin-left: 0.5rem;
+  font-style: italic;
+  color: var(--muted-text);
+}
+.kappa-values {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--muted-text);
+}
+
+/* Visualisation mode radio buttons */
+.vis-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+  margin-top: 0.3rem;
+}
+.vis-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Learning center sidebar styles. */
+.learning-center {
+  position: fixed;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: clamp(320px, 50vw, 600px);
+  max-height: 90vh;
+  background: var(--overlay-bg);
+  border: 1px solid var(--control-border);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  overflow-y: auto;
+  padding: 1.25rem;
+  z-index: 20;
+  transition: transform 0.3s ease;
+}
+.learning-center[hidden] {
+  /* Slide out of view when hidden */
+  transform: translateX(100%);
+}
+.learning-center:not([hidden]) {
+  transform: translateX(0);
+}
+.learning-content h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+.learning-content p {
+  margin-bottom: 0.8rem;
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.learning-content ul,
+.learning-content ol {
+  margin: 0.6rem 0 0.8rem 1.2rem;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+/* Overlay panels for formula and summary */
+.playground-overlay {
+  position: fixed;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: clamp(320px, 45vw, 600px);
+  background: var(--overlay-bg);
+  padding: 1.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--control-border);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  z-index: 30;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 600px) {
+  .playground-overlay {
+    top: 0.75rem;
+    right: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+    padding: 1rem;
+  }
+}
+.playground-overlay h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+.playground-overlay p {
+  margin: 0.3rem 0;
+  font-size: clamp(0.8rem, 0.8rem + 0.2vw, 0.9rem);
+  line-height: 1.4;
+}
+
+.summary-label {
+  color: #286784;
+  font-weight: 600;
+}
+
+#formulaBox {
+  line-height: 1.2;
+}
+
+.math-block {
+  text-align: center;
+  margin: 0.75rem 0;
+  font-size: clamp(1.05rem, 0.95rem + 0.9vw, 1.2rem);
+}
+
+#formulaBox .math-block {
+  font-size: clamp(1.05rem, 1.05rem + 1vw, 1.2rem);
+}
+
+/* Tour styles */
+.tour {
+  max-width: 700px;
+}
+.tour-step {
+  display: none;
+}
+.tour-step.active {
+  display: block;
+}
+.tour-step h3 {
+  margin-top: 0;
+  font-size: 1.3rem;
+}
+
+#rotateCanvas {
+  display: block;
+  margin: 0;
+}
+
+#rotateSlider {
+  display: block;
+  width: 300px;
+  max-width: 100%;
+  margin: 0.75rem 0 0;
+}
+
+.interactive-problem {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.feedback {
+  margin-left: 0.5rem;
+  font-weight: 500;
+}
+.feedback.success {
+  color: var(--feedback-success);
+}
+.feedback.error {
+  color: var(--feedback-error);
+}
+.step-nav {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.dual-plot {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Progress tracker styles for assessment. Displays a row of items that light up when completed. */
+.progress-tracker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+}
+.progress-item {
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  color: var(--text-color);
+  cursor: default;
+}
+.progress-item.complete {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* Proof section styles */
+.proof-container {
+  margin-top: 1rem;
+  background: var(--control-bg);
+  padding: 0.8rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.proof-context {
+  background: #f5f7fb;
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+.proof-context ul {
+  margin: 0.5rem 0 0 1.2rem;
+  padding: 0;
+}
+.proof-context li {
+  margin-bottom: 0.35rem;
+}
+.hint-figure {
+  margin: 0.5rem 0 0.75rem;
+  text-align: center;
+}
+.math-inline {
+  font-family: 'Fira Math', 'STIX Two Math', 'Cambria', serif;
+  font-style: italic;
+}
+.proof-start, .proof-goal {
+  margin-bottom: 1rem;
+}
+.proof-history {
+  margin-top: 1rem;
+  border-top: 1px solid var(--control-border);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.proof-explanation {
+  background: #fdfdfd;
+  border: 1px solid #e1e4eb;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+.proof-explanation h5 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  color: var(--accent);
+}
+.proof-controls {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.proof-full {
+  margin-top: 1rem;
+  background: var(--overlay-bg);
+  padding: 0.8rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+}
+
+/* Ranking selection overlay: show ordering numbers */
+.rankPlot.selected::after {
+  content: attr(data-order);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: bold;
+  pointer-events: none;
+}
+
+/* Close button styling for overlays and sidebars */
+.close-btn {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.4rem;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--muted-text);
+  cursor: pointer;
+}
+.close-btn:hover {
+  color: var(--accent);
+}
+#vectorCanvas,
+#rotateCanvas {
+  width: 300px;
+  height: 300px;
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+}
+
+/* Mean sandbox and bimodal challenge */
+.mean-sandbox,
+.bimodal-challenge {
+  margin-top: 1.2rem;
+  background: var(--control-bg);
+  padding: 0.8rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.mean-sandbox canvas,
+.bimodal-challenge canvas {
+  display: block;
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  margin: 0 0 0.75rem 0;
+}
+
+.mean-sandbox .small-btn,
+.bimodal-challenge .small-btn {
+  display: inline-block;
+  margin-top: 0.25rem;
+}
+
+/* Concentration comparison and related visuals */
+.kappa-comparison {
+  margin-top: 1.2rem;
+  background: var(--control-bg);
+  padding: 0.8rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.kappa-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.kappa-case {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+.kappa-case canvas {
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+}
+.kappa-label {
+  font-size: 0.8rem;
+  color: var(--muted-text);
+}
+.kappa-variance-plot,
+.spinner-analogy {
+  margin-top: 1rem;
+  background: var(--control-bg);
+  padding: 0.8rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.kappa-variance-plot canvas,
+.spinner-analogy canvas {
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+}
+
+/* Error plot container for step 4 */
+#errorPlotContainer {
+  margin-top: 1rem;
+  background: var(--control-bg);
+  padding: 0.8rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+#errorPlotContainer canvas {
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+}
+
+/* Scenario plots layout */
+.scenario-plots {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.scenario-plots canvas {
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Ranking container layout */
+.ranking-container {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.ranking-container canvas {
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ranking-container canvas.selected {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Expert exploration sections */
+.expert-section {
+  margin-bottom: 2rem;
+}
+.comparison-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.comp-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 200px;
+}
+.comp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--overlay-bg);
+  padding: 0.75rem;
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+}
+.comp-block h4 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.comp-slider-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+}
+.comp-slider-group label {
+  font-weight: 600;
+}
+.comp-slider-group input[type='range'] {
+  width: 100%;
+}
+.comp-slider-group input[type='number'] {
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+}
+.comp-param-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.comp-param-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+}
+.comp-param-group label {
+  font-weight: 600;
+}
+.comp-param-group input[type='range'] {
+  width: 100%;
+}
+.comp-param-group input[type='number'] {
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+}
+.comp-summary {
+  font-size: 0.85rem;
+  color: var(--muted-text);
+  margin: 0;
+}
+.expert-section canvas {
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.expert-section textarea {
+  width: 100%;
+  resize: vertical;
+}
+.input-row label {
+  margin-right: 0.5rem;
+  font-weight: 500;
+}
+.results {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  background: var(--overlay-bg);
+  padding: 0.5rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+}
+.bimodal-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 0.9fr));
+  gap: 1rem;
+  margin-top: 1rem;
+  align-items: start;
+}
+.bimodal-group {
+  display: grid;
+  gap: 0.35rem;
+  background: var(--overlay-bg);
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+.bimodal-group h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+}
+.bimodal-group input[type='range'] {
+  width: 100%;
+}
+.bimodal-group input[type='number'] {
+  width: min(90%, 8rem);
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+}
+.dataset-desc {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted-text);
+}
+
+/* Assessment sections */
+.assessment-section {
+  margin-bottom: 2rem;
+}
+.assessment-hint {
+  font-size: 0.85rem;
+  color: var(--muted-text);
+  margin-top: -0.25rem;
+  margin-bottom: 0.75rem;
+}
+.effectn-controls {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+.effectn-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: center;
+}
+.effectn-meta {
+  font-size: 0.85rem;
+  color: var(--muted-text);
+  text-align: center;
+  min-height: 1.2rem;
+}
+
+.guess-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0.75rem 0 0.5rem;
+}
+.assessment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 0.75rem 0;
+}
+
+.assessment-actions + div,
+.assessment-actions + p,
+.assessment-actions + canvas,
+.assessment-actions + .identify-controls,
+.assessment-actions + .bimodal-controls,
+.assessment-actions + .dual-plot,
+.assessment-actions + .scenario-controls {
+  margin-top: 0.5rem;
+}
+
+
+.guess-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.75rem;
+}
+
+.guess-row {
+  display: grid;
+  grid-template-columns: minmax(180px, max-content) fit-content(320px) fit-content(110px);
+  column-gap: var(--guess-control-gap);
+  row-gap: 0.4rem;
+  align-items: center;
+}
+
+.guess-row label {
+  font-weight: 500;
+  justify-self: start;
+}
+
+.guess-row input[type="range"] {
+  width: 100%;
+  max-width: 320px;
+  min-width: 180px;
+  justify-self: start;
+}
+
+.guess-row input[type="number"] {
+  width: 90px;
+}
+
+.identify-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  align-items: center;
+}
+.identify-controls input[type="range"] {
+  width: 100%;
+}
+.identify-controls label {
+  margin-right: 1rem;
+}
+
+@media (max-width: 640px) {
+  .guess-row {
+    grid-template-columns: 1fr;
+  }
+  .guess-row input[type="range"] {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .guess-row input[type="number"] {
+    width: 100%;
+  }
+}
+
+/* Footer */
+.app-footer {
+  background: var(--header-bg);
+  color: var(--header-fg);
+  text-align: center;
+  padding: 0.5rem 0;
+  font-size: 0.8rem;
+}

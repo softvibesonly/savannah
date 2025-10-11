@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<!--
+  Von Mises Distribution Explorer
+
+  This application is a self‑contained web app designed to teach students
+  everything from the basics of circular statistics to advanced concepts
+  surrounding the von Mises distribution. The page is divided into four
+  primary modules which can be switched via the navigation bar at the top.
+  Each module contains interactive elements, mathematical explanations and
+  exercises intended to foster a deep understanding of the material.
+
+  The HTML markup defines the high‑level structure of the app. Styling is
+  provided by `style.css` and all behaviour is implemented in `script.js`.
+  Comments throughout these files describe the rationale behind design
+  decisions and point out pedagogical choices.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Von Mises Distribution Explorer</title>
+  <!-- Import a modern sans‑serif font and KaTeX for math rendering. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <!-- Universal math loader: loads local KaTeX with CDN fallback -->
+  <script defer src="js/math-render.js" data-katex-base="vendor/katex/" data-math-scope="#von-mises-app"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body id="von-mises-app">
+  <header class="app-header">
+    <h1>Von Mises Distribution Explorer</h1>
+    <!-- Main navigation. Each button toggles visibility of one module. -->
+    <nav class="main-nav" aria-label="Primary Navigation">
+      <button data-module="playground" class="nav-btn active">Interactive Playground</button>
+      <button data-module="guided" class="nav-btn">Guided Tour</button>
+      <button data-module="expert" class="nav-btn">Expert Exploration</button>
+      <button data-module="assessment" class="nav-btn">Knowledge Assessment</button>
+    </nav>
+  </header>
+  <main class="app-main">
+    <!-- Module 1: Interactive Playground -->
+    <section id="playground" class="module active">
+      <h2>Interactive Playground</h2>
+      <div class="playground-container">
+        <!-- Canvas used to draw the polar plot, histogram and mean vector. -->
+        <canvas id="plotCanvas" width="600" height="600" aria-label="Von Mises polar plot"></canvas>
+        <div class="controls">
+          <div class="control-group">
+            <label for="muDegInput">Mean Direction μ (°)</label>
+            <!-- Users can enter a value directly, drag the direction ring on the plot or use the sliders below. -->
+            <input type="number" id="muDegInput" min="0" max="360" step="0.1" value="0" />
+            <!-- Toggle linear slider: when checked the linear slider below is enabled -->
+            <div class="input-row">
+              <label for="muLinearToggle" style="font-size: 0.8rem;">
+                <input type="checkbox" id="muLinearToggle" /> Use linear slider
+              </label>
+            </div>
+          <input type="range" id="muDegSlider" min="0" max="360" step="0.1" value="0" disabled />
+          <!-- Circular slider for μ: provides an intuitive ring inside the controls area.
+               Users can drag the handle around to set μ. The canvas below operates similarly
+               to the main plot’s direction ring but on a smaller scale. -->
+          <canvas id="muCircularSlider" width="120" height="120" aria-label="Circular μ slider"></canvas>
+          </div>
+          <div class="control-group">
+            <label for="kappaSlider">Concentration κ:
+              <span id="kappaDescriptor" class="descriptor">Broad</span>
+            </label>
+            <!-- Logarithmic slider for κ spanning 0.01 to 100 (exponent −2 to 2). -->
+            <input type="range" id="kappaSlider" min="-2" max="2" step="0.01" value="0" />
+            <div class="kappa-values">
+              <span>0.01</span>
+              <span>100</span>
+            </div>
+          </div>
+          <div class="control-group">
+            <label for="sampleSize">Sample Size N:</label>
+            <div class="input-row">
+              <input type="range" id="sampleSizeSlider" min="1" max="5000" step="1" value="300" />
+              <input type="number" id="sampleSizeInput" min="1" max="5000" value="300" />
+            </div>
+          </div>
+          <div class="control-group">
+            <label>Visualisation Mode:</label>
+            <div class="vis-options">
+              <label><input type="radio" name="visMode" id="visGradient" value="gradient" checked /> Gradient Bars</label>
+              <label><input type="radio" name="visMode" id="visHeatmap" value="heatmap" /> Heatmap Ring</label>
+              <label><input type="radio" name="visMode" id="visParticles" value="particles" /> Particle Flow</label>
+            </div>
+          </div>
+
+          <!-- Global customisation controls for the PDF curve and distribution parameters -->
+          <div class="control-group">
+            <label>Curve Appearance:</label>
+            <div class="input-row">
+              <label style="font-size: 0.8rem;">Curve&nbsp;Colour <input type="color" id="curveColor" value="#007acc" /></label>
+              <label style="font-size: 0.8rem;">Width <input type="range" id="curveWidth" min="1" max="5" step="0.5" value="2" /></label>
+            </div>
+            <!-- Bessel order is fixed at 0 for a true von Mises density.  We remove the user control to prevent
+                 conceptual errors. A description of I₀ is provided in the formula overlay below. -->
+          </div>
+
+          <!-- Controls specific to Gradient Bar mode -->
+          <div class="control-group gradient-controls" style="display:none;">
+            <label>Gradient Bar Settings:</label>
+            <div class="input-row">
+              <label style="font-size: 0.8rem;">Bar&nbsp;Colour <input type="color" id="barColor" value="#0061a8" /></label>
+              <label style="font-size: 0.8rem;">Opacity <input type="range" id="barOpacity" min="0.1" max="1" step="0.05" value="0.6" /></label>
+            </div>
+          </div>
+
+          <!-- Controls specific to Heatmap Ring mode -->
+          <div class="control-group heatmap-controls" style="display:none;">
+            <label>Heatmap Colour Scale:</label>
+            <div class="input-row">
+              <label style="font-size: 0.8rem;">Low&nbsp;Colour <input type="color" id="heatLowColor" value="#fff7cc" /></label>
+              <label style="font-size: 0.8rem;">High&nbsp;Colour <input type="color" id="heatHighColor" value="#d73027" /></label>
+            </div>
+          </div>
+
+          <!-- Controls specific to Particle Flow mode -->
+          <div class="control-group particle-controls" style="display:none;">
+            <label>Particle Settings:</label>
+            <div class="input-row">
+              <label style="font-size: 0.8rem;">Colour <input type="color" id="particleColor" value="#c03c3c" /></label>
+              <label style="font-size: 0.8rem;">Size <input type="range" id="particleSize" min="1" max="8" step="0.5" value="3" /></label>
+              <label style="font-size: 0.8rem;">Opacity <input type="range" id="particleOpacity" min="0.1" max="1" step="0.05" value="0.5" /></label>
+            </div>
+          </div>
+          <div class="control-group toggle-group">
+            <button id="toggleLearning" class="small-btn">Learning Center</button>
+            <button id="toggleFormula" class="small-btn">Toggle Formula</button>
+            <button id="toggleStats" class="small-btn">Toggle Statistics</button>
+          </div>
+        </div>
+        <!-- Informational overlays hidden by default. -->
+        <div id="formulaBox" class="playground-overlay" hidden>
+          <div class="overlay-content">
+            <button class="close-btn" id="closeFormula" aria-label="Close Formula">×</button>
+            <h3>Von Mises Probability Density Function</h3>
+            <!-- Render the PDF using KaTeX.  The display block keeps the formula centred and prominent. -->
+            <div class="math-block">
+              \[ f(\theta \mid \mu, \kappa) = \frac{\exp\bigl(\kappa \cos(\theta - \mu)\bigr)}{2\pi\,I_0(\kappa)} \]
+            </div>
+            <p>Here, \(\mu\) (mu) is the mean direction and \(\kappa\) (kappa) controls the concentration or spread.</p>
+            <p>As \(\kappa \to 0\), \(I_0(\kappa)\to 1\) and the density tends toward the uniform distribution (or the circle's version of the uniform distribution).</p>
+            <p>As \(\kappa\) becomes large, \(I_0(\kappa)\approx e^{\kappa}/\sqrt{2\pi\kappa}\), cancelling the exponential term in the numerator and ensuring the function remains properly normalised even for highly concentrated distributions.</p>
+            <p>Multiplying the numerator by \(1/I_0(\kappa)\) exactly balances the increasing peak so that the integral over one full revolution is 1.</p>
+            <h4>About the Bessel Function \(I_0(\kappa)\)</h4>
+            <p>The denominator contains \(I_0(\kappa)\), a modified Bessel function of the first kind with order zero. Without this factor, the numerator’s exponential growth would cause the area under the curve to exceed one, which would make the function no longer a probability density.</p>
+            <p>The modified Bessel functions arise in many physical problems involving circular/radial symmetry. The function \(I_0(\kappa)\) is defined by the series expansion shown below.</p>
+            <div class="math-block">
+              \[ I_0(\kappa) = \sum_{m=0}^{\infty} \frac{1}{(m!)^2} \left(\frac{\kappa}{2}\right)^{2m} \]
+            </div>
+            <br>
+          </div>
+        </div>
+        <div id="summaryBox" class="playground-overlay" hidden>
+          <div class="overlay-content">
+            <button class="close-btn" id="closeSummary" aria-label="Close Summary">×</button>
+            <h3>Sample Summary Statistics</h3>
+            <h4>Mean Direction</h4>
+            <p>The mean direction is the angle of the average vector obtained by summing up all the sample points as unit phasors and then taking the argument of that sum (A unit phasor is just a way of representing a direction as an arrow of length 1 pointing on a circle, like a compass needle that only shows you where, but not how far.) It answers the question: “in what direction do the observations tend to cluster?” A value near 90° means the data cluster around the southward direction (pointing down), whereas 270° would indicate a dominant north-pointing trend.</p>
+            <p>
+              Note: the origin (0°) is usually set to the positive part of the x-axis, aka straight to the right.
+            </p>
+            <p><span class="summary-label">Current estimate:</span> <span id="statMean">0°</span></p>
+            <h4>Mean Resultant Length (R)</h4>
+            <p>The mean resultant length \(R\) measures concentration. It is the length of the average vector divided by the number of observations. Values of \(R\) lie between 0 and 1. An \(R\) close to 1 means the sample points lie very close together on the circle (high consistency). An \(R\) near 0 means the sample points are almost uniformly spread (low concentration).</p>
+            <p><span class="summary-label">Current estimate:</span> <span id="statLength">1.00</span></p>
+            <h4>Circular Variance</h4>
+            <p>Circular variance is defined as \(1 - R\). It provides an inverse measure of concentration: when \(R\) is high the variance is low and vice versa. A circular variance near 0 indicates tightly clustered observations. A variance near 1 corresponds to widely dispersed data, almost like a uniform distribution on the circle.</p>
+            <p><span class="summary-label">Current estimate:</span> <span id="statVariance">0.00</span></p>
+          </div>
+        </div>
+        <!-- Learning Center sidebar. Contains extensive lesson content guiding users from intuitive
+             explanations to rigorous derivations. Hidden by default. -->
+        <aside id="learningCenter" class="learning-center" hidden>
+          <button id="closeLearning" class="close-btn" aria-label="Close Learning Center">×</button>
+          <div class="learning-content">
+            <h3>Intuitive Guide</h3>
+            <p>Circular statistics arise whenever measurements wrap around a full turn, like when we're studying the time of day or compass direction. Imagine trying to average 350° and 10° on a linear scale. The average you'd get is 180° which is clearly wrong.</p>
+            <p>
+              Instead, think of the hands of a clock. The <em>mean direction</em>, μ, is where the weighted average of the hands points. The <em>concentration</em>, kappa (κ), measures how tightly the hands hug around μ:
+            </p>
+            <ul>
+              <li>A high κ is like a spinner weighted on one side, almost always pointing the same way.</li>
+              <li>A low κ is like a fair spinner with no preferred direction.</li>
+            </ul>
+            <p>As an intuitive example, consider birds migrating across continents. Each bird chooses a flight direction, but environmental noise causes some spread or variation.</p>
+            <p>
+              Their <strong>circular mean</strong> shows the prevailing migration route, while κ reflects how consistently they follow it. The <strong>mean resultant length</strong>, R, quantifies this consistency: R = 1 means all birds fly exactly the same way; an R near 0 means directions are scattered uniformly.
+            </p>
+            <p>Another analogy is the phase of a circadian cycle (e.g. time when you feel most alert), which wraps around every 24 hours. Computing the average phase from multiple people requires circular statistics. A tightly clustered distribution means most people have similar peak times.</p>
+            <h3>Mathematical Deep Dive</h3>
+            <p>The von Mises probability density function is given by the formula \[ f(\theta \mid \mu, \kappa) = \frac{\exp\bigl(\kappa \cos(\theta - \mu)\bigr)}{2\pi I_0(\kappa)}, \] where <span class="math-symbol">\(I_0\)</span> is the modified Bessel function of the first kind of order 0. As κ→0 the distribution approaches the uniform density 1/(2π); as κ→∞ it approximates a normal distribution on the line with variance 1/κ.</p>
+            <p><strong>Mode, Mean and Median:</strong> For the von Mises distribution the mode, circular mean and median are all equal μ. This is because the density is symmetric about μ. The circular mean is defined via the vector sum of sample phasors: \(\bar{\theta} = \operatorname{atan2}\Bigl(\sum \sin\theta_i, \sum \cos\theta_i\Bigr)\). In the continuous case the mean direction maximises the expected cosine of deviations.</p>
+            <p><strong>Circular Variance and Standard Deviation:</strong> The mean resultant length is \[ R = \left\|\frac{1}{n}\sum_{i=1}^n e^{i\theta_i}\right\|. \] and the circular variance is defined as \(1 - R\). A circular standard deviation can be defined analogously as: \[ \sigma_c = \sqrt{-2\ln R}. \]</p>
+            <p><strong>Mean Resultant Length:</strong> In the von Mises distribution the mean resultant length satisfies \[ R(\kappa) = \frac{I_1(\kappa)}{I_0(\kappa)}, \] where \(I_1\) is the modified Bessel function of order 1. This relationship can be inverted numerically to estimate κ from data.</p>
+            <p><strong>Trigonometric Moments:</strong> The m‑th characteristic function (trigonometric moment) of the von Mises distribution is \[ \phi_m = \frac{I_m(\kappa)}{I_0(\kappa)} e^{im\mu}, \] where \(I_m\) is the modified Bessel function of order m. These moments determine the shape of the distribution and appear in estimation and hypothesis testing.</p>
+            <p><strong>Information Entropy:</strong> The differential entropy of the von Mises distribution is \[ H = -\int_0^{2\pi} f(\theta \mid \mu,\kappa) \ln f(\theta \mid \mu,\kappa)\,d\theta \] Substituting the PDF yields: \[ H = \ln\bigl(2\pi I_0(\kappa)\bigr) - \kappa \frac{I_1(\kappa)}{I_0(\kappa)} \] Entropy decreases as κ increases because the distribution becomes more concentrated. You can see this yourself by playing around with the parameters on this page.</p>
+            <p><strong>Fisher Information:</strong> The Fisher information matrix for the parameters (μ, κ) is diagonal due to orthogonality. The information about μ is \(\mathcal{I}_{\mu\mu} = \kappa R(\kappa)\), while the information about κ involves derivatives of the Bessel functions. Explicitly, \[ \mathcal{I}_{\kappa\kappa} = 1 - \frac{I_2(\kappa)}{I_0(\kappa)} - \left(\frac{I_1(\kappa)}{I_0(\kappa)}\right)^2 \]</p>
+            <p><strong>KL Divergence:</strong> The Kullback-Leibler divergence between two von Mises distributions \(f_1 = \mathrm{VM}(\mu_1,\kappa_1)\) and \(f_2 = \mathrm{VM}(\mu_2,\kappa_2)\) is \[ D_{\mathrm{KL}}(f_1\Vert f_2) = \ln \frac{I_0(\kappa_2)}{I_0(\kappa_1)} + \kappa_1 R(\kappa_1) - \kappa_2 R(\kappa_2) + \kappa_2 \cos(\mu_1 - \mu_2) \] The divergence quantifies how distinguishable two von Mises distributions are.</p>
+            <p><strong>Expected Shortfall:</strong> In a circular context, the expected shortfall can be defined relative to an angular threshold. For example, the expected deviation beyond an angular region around μ can be computed by integrating the tail of the von Mises PDF. This concept is useful when extreme deviations (e.g. wind coming from an unexpected sector) matter more than typical variability.</p>
+            <!-- deep expansion placeholder for test -->
+            <!--
+          <div class="deep-expansion">
+              <p>All of these technical results rest upon properties of modified Bessel functions and circular geometry. In the non‑technical explanation above we built intuition using spinners, clocks and migration. Here, each formula formalises a corresponding intuition: R measures concentration (how long the spinner stays near one angle), the entropy quantifies unpredictability, and the Fisher information determines how precisely we can estimate parameters from finite samples.</p>
+              <h4>Mean Resultant Length (R)</h4>
+              <p>The mean resultant length quantifies the degree of clustering about the mean direction. Starting from the sample resultant vector \(\mathbf{R} = \sum_{i=1}^n (\cos \theta_i, \sin \theta_i)\) and its length \(R = \|\mathbf{R}\|/n\), we derive the population counterpart by computing the expected value of \(\cos(\theta - \mu)\) under the von Mises density. A change of variables \(\phi = \theta - \mu\) and recognition of the modified Bessel function of the first kind leads to the celebrated identity \[ R(\kappa) = \frac{I_1(\kappa)}{I_0(\kappa)} \] This ratio increases smoothly from 0 to 1 as \(\kappa\) grows, providing a direct link between concentration and mean resultant length.</p>
+              <p>To invert the relationship and estimate \(\kappa\) from an observed \(R\), iterative numerical methods such as Newton-Raphson are typically employed. The derivation above clarifies why larger observed \(R\) values correspond to larger concentration parameters.</p>
+              <h4>Trigonometric Moments</h4>
+              <p>The m‑th trigonometric moment (characteristic function) \(\phi_m = \mathbb{E}[e^{im(\theta-\mu)}]\) captures the periodic structure of a circular distribution. For the von Mises law, expanding the complex exponential and using symmetry shows that only the cosine component survives. This yields \[ \phi_m = \frac{I_m(\kappa)}{I_0(\kappa)} e^{im\mu}, \] where \(I_m\) denotes the modified Bessel function of order \(m\). The first moment reduces to \(R(\kappa)e^{i\mu}\), while higher moments encode information about spread and tail behaviour.</p>
+              <p>Understanding these moments is essential for deriving estimators and test statistics in directional statistics. For example, the second moment influences measures of circular skewness and kurtosis, highlighting whether data cluster symmetrically around the mean direction or exhibit a heavier “tail” opposite \(\mu\).</p>
+              <h4>Information Entropy</h4>
+              <p>Entropy measures disorder. Substituting the von Mises PDF into the definition \(H = -\int f(\theta) \ln f(\theta) d\theta\) and noting that \(\int f(\theta) d\theta = 1\) and that \(\int \cos(\theta-\mu) f(\theta) d\theta = R(\kappa)\), one obtains after algebra \[ H = \ln\bigl(2\pi I_0(\kappa)\bigr) - \kappa \frac{I_1(\kappa)}{I_0(\kappa)} \] The entropy decreases as \(\kappa\) increases, reflecting greater predictability when directions cluster tightly.</p>
+              <p>In applications ranging from biology to communications, entropy quantifies variability in timing, orientation or phase. Knowing how it depends on \(\kappa\) helps link observed variability to underlying physical or behavioural mechanisms.</p>
+              <h4>Fisher Information</h4>
+              <p>The Fisher information matrix summarises how much a sample tells us about parameters. Differentiating the log of the von Mises density with respect to \(\mu\) yields \(\partial \ln f / \partial \mu = \kappa \sin(\theta-\mu)\), whose expectation of the square leads, via trigonometric identities and integration, to an information element involving \(R(2\kappa)\). Differentiating with respect to \(\kappa\) gives an expression containing <!-- Wrap the trigonometric difference in KaTeX delimiters to ensure it typesets correctly. --> 
+              <!-- \(\cos(\theta-\mu) - \frac{I_1(\kappa)}{I_0(\kappa)}\); squaring and integrating furnishes \[ \mathcal{I}_{\kappa\kappa} = 1 - \frac{I_2(\kappa)}{I_0(\kappa)} - \left(\frac{I_1(\kappa)}{I_0(\kappa)}\right)^2. \]</p>
+              <p>These derivations underpin variance formulas for maximum likelihood estimators and inform how sample size and concentration affect estimation precision. They reveal, for example, that information about \(\mu\) increases with \(\kappa\), allowing more accurate determination of the mean direction when data are strongly clustered.</p>
+              <h4>Kullback-Leibler Divergence</h4>
+              <p>Comparing two von Mises distributions \(f_1 = \mathrm{VM}(\mu_1,\kappa_1)\) and \(f_2 = \mathrm{VM}(\mu_2,\kappa_2)\) leads to the expression for the KL divergence \[ D_{\mathrm{KL}}(f_1\Vert f_2) = \ln \frac{I_0(\kappa_2)}{I_0(\kappa_1)} + \kappa_1 R(\kappa_1) - \kappa_2 R(\kappa_2) + \kappa_2 \cos(\mu_1 - \mu_2). \] Each term arises naturally when substituting the PDFs into \(\int f_1 \ln(f_1/f_2) d\theta\) and collecting like factors. The cosine term penalises differences in mean direction, while the Bessel ratios reflect concentration mismatches. Only when \(\mu_1 = \mu_2\) and \(\kappa_1 = \kappa_2\) does the divergence vanish.</p>
+              <p>KL divergence helps judge model fit and quantify how surprising one set of directional data is when evaluated under another model. In practise one might compare species’ migration patterns across years or evaluate how well theoretical models describe observed neural tuning curves.</p>
+              <h4>Expected Shortfall</h4>
+              <p>Beyond variance and entropy, risk analysis often cares about rare but severe deviations. For circular data, define a threshold angle \(\theta_c\) and consider the tail region \(|\theta - \mu| \ge \theta_c\). The expected shortfall is then \[ \mathrm{ES}(\theta_c) = \frac{\int_{|\theta-\mu| \ge \theta_c} |\theta - \mu| f(\theta \mid \mu,\kappa) d\theta}{\int_{|\theta-\mu| \ge \theta_c} f(\theta \mid \mu,\kappa) d\theta}, \] which generally requires numerical integration. The dependence on \(\kappa\) arises through both the numerator and the denominator: higher concentration reduces the tail probability but increases the relative magnitude of excursions when they occur.</p>
+              <p>Expected shortfall is valuable in environmental and engineering contexts where extreme directions can cause outsized impacts, such as sudden shifts in wind or wave direction affecting structures. Understanding how concentration modulates these risks complements the more familiar measures of variance and entropy.</p>
+            </div>
+          </div>
+-->
+        </aside>
+      </div>
+    </section>
+    <!-- Module 2: Guided Tour -->
+    <section id="guided" class="module">
+      <h2>Guided Tour</h2>
+      <div class="tour">
+        <!-- Steps are hidden/shown by the script. -->
+        <div id="tourStep1" class="tour-step active">
+          <h3>Step 1: What is Circular Data?</h3>
+          <p>All data can be placed on a straight line. But not all data is going to make sense this way. Some observations, such as wind direction, time of day or animal movement, wrap around after a full turn. Traditional measures like the mean can fail on such data. For example, consider the numbers 350° and 10°. The arithmetic mean is 180°, but clearly both observations are clustered around 0°/360°.</p>
+          <p>When dealing with circular data we must respect the wrap‑around nature of angles. Miscomputing the average wind direction can mean misaligning a turbine, reducing efficiency. Similarly, mis-estimating animal migration routes can make research much harder.</p>
+          <!-- Interactive vector adder: adjust two vectors and observe linear vs circular averages -->
+          <h4>Interactive Vector Adder</h4>
+          <p>Drag the endpoints of the two vectors below to change their angles and lengths. The linear average simply averages the angles numerically, while the circular average adds the vectors and takes the resulting direction.</p>
+          <canvas id="vectorCanvas" width="300" height="300"></canvas>
+          <p><span class="summary-label">Linear mean:</span> <span id="linMeanDisplay">—</span>°, <span class="summary-label">Circular mean:</span> <span id="circMeanDisplay">—</span>°</p>
+          <!-- Rotate to align game -->
+          <h4>Rotate to Align</h4>
+          <p>Rotate the ring below until the scattered points cluster as closely as possible around the top (0°). This illustrates aligning data before computing a mean.</p>
+          <canvas id="rotateCanvas" width="300" height="300"></canvas>
+          <input type="range" id="rotateSlider" min="0" max="360" value="0" />
+          <p><span class="summary-label">Alignment measure:</span> <span id="alignScore">0.00</span></p>
+          <!-- Original average problem -->
+          <div class="interactive-problem">
+            <p><strong>Intuition Check:</strong> What is the correct circular mean of 350° and 10°? Enter your answer below.</p>
+            <input type="number" id="avgInput" placeholder="Answer in degrees" />
+            <button id="avgCheck" class="small-btn">Check Answer</button>
+            <span id="avgFeedback" class="feedback"></span>
+          </div>
+          <!-- Mini quiz with two questions -->
+          <div class="quiz">
+            <h4>Mini Quiz</h4>
+            <p>1. Which of the following is a correct example of circular data?</p>
+            <label><input type="radio" name="quiz1" value="a" /> Height of students in a class</label><br />
+            <label><input type="radio" name="quiz1" value="b" /> Time of day when traffic peaks</label><br />
+            <label><input type="radio" name="quiz1" value="c" /> GDP growth rate</label>
+            <p>2. If data are uniformly distributed around the circle, what is κ likely to be?</p>
+            <label><input type="radio" name="quiz2" value="a" /> Very small</label><br />
+            <label><input type="radio" name="quiz2" value="b" /> Around 1</label><br />
+            <label><input type="radio" name="quiz2" value="c" /> Very large</label>
+            <br />
+            <button id="quizSubmit" class="small-btn">Submit Answers</button>
+            <span id="quizFeedback" class="feedback"></span>
+          </div>
+          <div class="step-nav">
+            <button id="next1" class="small-btn">Next</button>
+          </div>
+        </div>
+        <div id="tourStep2" class="tour-step">
+          <h3>Step 2: The Mean Direction (μ)</h3>
+          <p>The mean direction is the point on the circle around which observations cluster. Use the handle on the circle (the red dot) below to adjust μ and see how it changes the distribution's peak.</p>
+          <canvas id="tourCanvas1" width="400" height="400"></canvas>
+          <!-- Center of Mass Sandbox: allows learners to build the concept of mean direction by placing points around the circle and watching the resulting mean vector move. -->
+          <div class="mean-sandbox">
+            <h4>Center of Mass Sandbox</h4>
+            <p>Click anywhere on the circle below to add data points. Each point represents an observation on the circumference. The red arrow shows the circular mean of your points. As you add more points, watch how the arrow (mean direction) shifts to balance them.</p>
+            <canvas id="sandboxCanvas" width="300" height="300"></canvas>
+            <button id="sandboxClear" class="small-btn">Clear Points</button>
+          </div>
+          <!-- Bimodal challenge: toggles a pre‑defined bimodal distribution to illustrate how the mean can be misleading in multimodal data. -->
+          <div class="bimodal-challenge">
+            <h4>Bimodal Challenge</h4>
+            <p>Some datasets have two dominant directions. Activate the bimodal example to see how the mean points between two peaks, illustrating that the circular mean may not always represent a dominant mode.</p>
+            <!-- Dedicated canvas for the bimodal challenge.  The bimodal sample will be drawn here without
+                 affecting other plots. -->
+            <canvas id="bimodalChallengeCanvas" width="300" height="300"></canvas>
+            <button id="bimodalToggle" class="small-btn">Activate Bimodal Example</button>
+          </div>
+          <div class="step-nav">
+            <button id="prev2" class="small-btn">Back</button>
+            <button id="next2" class="small-btn">Next</button>
+          </div>
+        </div>
+        <div id="tourStep3" class="tour-step">
+          <h3>Step 3: Concentration (κ)</h3>
+          <p>The concentration parameter, κ, controls how sharply the distribution peaks around μ. A small κ results in a nearly flat distribution (uniform), while a large κ produces a narrow spike. Experiment with κ using the slider.</p>
+          <canvas id="tourCanvas2" width="400" height="400"></canvas>
+          <input type="range" id="tourKappa" min="0.01" max="20" step="0.01" value="1" />
+          <label id="tourKappaLabel">κ = 1.00</label>
+          <!-- Side‑by‑side comparison of concentration levels. These three plots stay synchronised with the main κ slider and show how low, medium and high concentration change the distribution shape. -->
+          <div class="kappa-comparison">
+            <h4>Concentration Comparison</h4>
+            <p>Below are three fixed κ levels relative to a given μ. Observe how the spread narrows as κ increases.</p>
+            <div class="kappa-row">
+              <div class="kappa-case">
+                <canvas id="kappaLow" width="180" height="180"></canvas>
+                <div class="kappa-label">Low κ</div>
+              </div>
+              <div class="kappa-case">
+                <canvas id="kappaMedium" width="180" height="180"></canvas>
+                <div class="kappa-label">Medium κ</div>
+              </div>
+              <div class="kappa-case">
+                <canvas id="kappaHigh" width="180" height="180"></canvas>
+                <div class="kappa-label">High κ</div>
+              </div>
+            </div>
+          </div>
+          <!-- Plot showing the non‑linear relationship between κ and circular variance. The line updates as the slider moves. -->
+          <div class="kappa-variance-plot">
+            <h4>κ vs. Circular Variance</h4>
+            <p>The red curve plots the formula \(1 - R(\kappa)\), where \(R(\kappa) = I_1(\kappa) / I_0(\kappa)\) is the mean resultant length of a von Mises sample. Use the κ slider to move the blue vertical marker. The numbers at the bottom of these paragraphs reports the exact variance around whatever point on the curve your mouse is hovering.</p>
+            <p>Circular variance plays the role that variance does on a line: it measures how spread out the angles are around μ. When κ is close to zero the distribution is almost uniform, so the variance is high.</p>
+            <p>As κ grows, the variance falls because the distribution concentrates. This chart gives you a bird’s-eye view of that relationship so you can see why increasing κ in the slider above or below (by pulling it up along the radius) tightens the cloud of angles.</p>
+            <p id="kappaVarianceReadout" class="variance-readout"><span class="summary-label">κ:</span> <span id="kappaVarianceValue">1.00</span>, <span class="summary-label">Circular variance:</span> <span id="kappaVarianceResult">0.571</span></p>
+            <canvas id="kappaVariancePlot" width="400" height="200"></canvas>
+          </div>
+          <!-- Spinner analogy visualiser. A spinner with a weight demonstrates how concentration affects the likelihood of landing near μ. -->
+          <div class="spinner-analogy">
+            <h4>Spinner Analogy</h4>
+            <p>Imagine one of those wheel of fortune spinny things with a weight sliding along the pointer. The red weight always sits on the blue arm at μ = 0°. A larger κ makes the weight heavier and pulls it farther out, while a smaller κ keeps it tiny and close to the hub. Drag the weight or move the κ slider to feel how the mass shifts.</p>
+            <p><strong>Intuition:</strong> the farther that weight sits from the center, the more torque it creates, meaning the spinner is biased toward landing near μ. That bias mirrors what κ does in the von Mises distribution: pushing probability mass toward the mean direction. When κ is small, the weight barely influences the pointer and the distribution stays almost uniform; when κ is large, the weight dominates and the angles cluster tightly around μ.</p>
+            <canvas id="spinnerCanvas" width="200" height="200"></canvas>
+          </div>
+          <p>A small κ implies high unpredictability (uniform distribution) while a large κ implies certainty. The circular variance declines as κ grows, but not linearly.</p>
+          <div class="step-nav">
+            <button id="prev3" class="small-btn">Back</button>
+            <button id="next3" class="small-btn">Next</button>
+          </div>
+        </div>
+        <div id="tourStep4" class="tour-step">
+          <h3>Step 4: Connecting to the Normal Distribution</h3>
+          <p>For high κ, the von Mises distribution resembles a normal distribution when unrolled onto a line. Use the slider to increase κ and compare the circular and linear representations.</p>
+          <div class="dual-plot">
+            <canvas id="tourCanvas3" width="300" height="300"></canvas>
+            <canvas id="tourCanvasLinear" width="300" height="300"></canvas>
+          </div>
+          <input type="range" id="tourKappa2" min="0.1" max="50" step="0.1" value="2" />
+          <label id="tourKappa2Label">κ = 2.0</label>
+          <!-- Additional controls for normal approximation -->
+          <button id="unrollButton" class="small-btn">Unroll</button>
+          <div class="overlay-normal-control">
+            <label><input type="checkbox" id="overlayNormal" /> Overlay Normal PDF</label>
+          </div>
+          <div id="errorPlotContainer">
+            <h4>Approximation Error</h4>
+            <canvas id="approxErrorPlot" width="400" height="200"></canvas>
+          </div>
+          <p id="tour4Text">As κ increases, the unrolled von Mises density converges to a normal distribution with variance \(1/\kappa\). The plot above shows the approximation error across κ values. Checking the overlay will superimpose the normal PDF on the linear plot.</p>
+          <div class="step-nav">
+            <button id="prev4" class="small-btn">Back</button>
+            <button id="finishTour" class="small-btn">Finish</button>
+            <!-- Restart button allows learners to revisit the tour from the beginning without reloading the page. -->
+            <button id="restartTour" class="small-btn">Restart Tour</button>
+          </div>
+        </div>
+        <div id="tourCompletion" class="tour-step">
+          <h3>Tour Complete</h3>
+          <p>You have covered the basics of circular data, the mean direction and concentration, and how the von Mises distribution relates to the normal distribution. Continue exploring in the Interactive Playground or dive deeper in the Expert Exploration section.</p>
+          <div class="step-nav">
+            <button id="restartTourEnd" class="small-btn">Restart Tour</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Module 3: Expert Exploration -->
+    <section id="expert" class="module">
+      <h2>Expert Exploration &amp; Applications</h2>
+      <!-- Distribution Comparison Tool -->
+      <div class="expert-section" id="comparisonSection">
+        <h3>Distribution Comparison</h3>
+        <p>Overlay a second circular distribution to explore differences in shape and concentration. Adjust the baseline von Mises parameters and tune the overlay to see how each model behaves.</p>
+        <div class="comparison-container">
+          <canvas id="comparisonCanvas" width="500" height="500"></canvas>
+          <div class="comp-controls">
+            <div class="comp-block">
+              <h4>Von Mises baseline</h4>
+              <div class="comp-slider-group">
+                <label for="compMuSlider">μ (degrees)</label>
+                <input type="range" id="compMuSlider" min="0" max="360" step="1" value="0" />
+                <input type="number" id="compMuInput" min="0" max="360" step="1" value="0" />
+              </div>
+              <div class="comp-slider-group">
+                <label for="compKappaSlider">κ (concentration)</label>
+                <input type="range" id="compKappaSlider" min="0.01" max="20" step="0.01" value="1" />
+                <input type="number" id="compKappaInput" min="0.01" max="20" step="0.01" value="1" />
+              </div>
+            </div>
+            <div class="comp-block">
+              <h4>Overlay distribution</h4>
+              <label for="compDistType">Type</label>
+              <select id="compDistType">
+                <option value="none">None</option>
+                <option value="wrappedNormal">Wrapped Normal</option>
+                <option value="cardioid">Cardioid</option>
+              </select>
+              <div id="compParams" class="comp-param-groups"></div>
+            </div>
+            <p id="compSummary" class="comp-summary">Overlay disabled - only the von Mises baseline is shown.</p>
+          </div>
+        </div>
+      </div>
+      <!-- Parameter Estimation Sandbox -->
+      <div class="expert-section" id="estimationSection">
+        <h3>Parameter Estimation Sandbox</h3>
+        <p>Paste your own angular data (comma separated, degrees or radians) to estimate the von Mises parameters. The sample will be visualised and fit with the maximum likelihood estimates.</p>
+        <textarea id="dataInput" rows="5" placeholder="Enter angles separated by commas"></textarea>
+        <div class="input-row">
+          <label for="dataUnits">Units:</label>
+          <select id="dataUnits">
+            <option value="degrees">Degrees</option>
+            <option value="radians">Radians</option>
+          </select>
+          <button id="estimateBtn" class="small-btn">Estimate Parameters</button>
+        </div>
+        <div id="estimationResults" class="results" hidden>
+          <p>Estimated μ: <span id="estMu"></span></p>
+          <p>Estimated κ: <span id="estKappa"></span></p>
+        </div>
+        <canvas id="estimationCanvas" width="400" height="400"></canvas>
+      </div>
+      <!-- Real-World Datasets -->
+      <div class="expert-section" id="datasetsSection">
+        <h3>Made-Up (Plausibly Real-World) Datasets</h3>
+        <p>Select a dataset to load, analyse and visualise. These datasets illustrate classic circular data problems.</p>
+        <div class="dataset-list">
+          <select id="datasetSelect">
+            <option value="none">Choose a dataset…</option>
+            <option value="turtles">Turtle Migration Directions</option>
+            <option value="hospital">Hospital Admission Times</option>
+            <option value="wind">Wind Directions</option>
+            <option value="custom">Custom Example</option>
+          </select>
+          <button id="loadDataset" class="small-btn">Load Dataset</button>
+        </div>
+        <div id="datasetDescription" class="dataset-desc"></div>
+        <div id="datasetResults" class="results" hidden>
+          <p>Estimated μ: <span id="dsMu"></span></p>
+          <p>Estimated κ: <span id="dsKappa"></span></p>
+        </div>
+        <canvas id="datasetCanvas" width="400" height="400"></canvas>
+      </div>
+    </section>
+    <!-- Module 4: Knowledge Assessment -->
+    <section id="assessment" class="module">
+      <h2>Knowledge Assessment</h2>
+      <!-- Progress tracker for assessment modes. Each span corresponds to a mode and will be marked complete once the user succeeds. -->
+      <div id="assessmentProgress" class="progress-tracker">
+        <span data-mode="guess" class="progress-item">Guess</span>
+        <span data-mode="identify" class="progress-item">Identify</span>
+        <span data-mode="outlier" class="progress-item">Outlier</span>
+        <span data-mode="bimodal" class="progress-item">Bimodal</span>
+        <span data-mode="hypothesis" class="progress-item">Hypothesis</span>
+        <span data-mode="scenario" class="progress-item">Scenario</span>
+        <span data-mode="estimation" class="progress-item">Estimation</span>
+        <span data-mode="effectn" class="progress-item">Effect of N</span>
+        <span data-mode="proof" class="progress-item">Proof</span>
+        <span data-mode="ranking" class="progress-item">Ranking</span>
+      </div>
+      <!-- Guess the Parameters Game -->
+      <div class="assessment-section" id="guessSection">
+        <h3>Guess the Parameters</h3>
+        <p>A von Mises distribution has been generated. Make a guess for μ and κ by adjusting the sliders below or typing a number into the text box to try and match what you think their true values should be. When you are ready to check your answer, press "Check Answer" to see how close you were.</p>
+        <canvas id="guessCanvas" width="400" height="400"></canvas>
+        <div class="guess-actions">
+          <button id="generateGuess" class="small-btn">Generate New Challenge</button>
+          <button id="checkGuess" class="small-btn">Check Answer</button>
+        </div>
+        <div class="guess-controls">
+          <div class="guess-row">
+            <label for="guessMuSlider">Your μ Guess (degrees):</label>
+            <input type="range" id="guessMuSlider" min="0" max="360" step="0.1" value="0" />
+            <input type="number" id="guessMuInput" min="0" max="360" step="0.1" value="0" />
+          </div>
+          <div class="guess-row">
+            <label for="guessKappaSlider">Your κ Guess:</label>
+            <input type="range" id="guessKappaSlider" min="0.01" max="30" step="0.01" value="1" />
+            <input type="number" id="guessKappaInput" min="0.01" max="30" step="0.01" value="1" />
+          </div>
+        </div>
+        <div id="guessFeedback" class="feedback"></div>
+      </div>
+      <!-- Identify the Distribution Game -->
+      <!-- This one is kind of hard (I haven't figured out how to make it easier yet lmao) -->
+      <div class="assessment-section" id="identifySection">
+        <h3>Identify the Distribution</h3>
+        <p>A dataset has been generated from one of several possible distributions. Inspect the histogram and statistics and choose the correct distribution.</p>
+        <canvas id="identifyCanvas" width="400" height="400"></canvas>
+        <div class="assessment-actions">
+          <button id="generateIdentify" class="small-btn">Generate New Sample</button>
+          <button id="checkIdentify" class="small-btn">Check Answer</button>
+        </div>
+        <div class="identify-controls">
+          <label><input type="radio" name="identifyDist" value="vonmises" /> Von Mises</label>
+          <label><input type="radio" name="identifyDist" value="wrappedNormal" /> Wrapped Normal</label>
+          <label><input type="radio" name="identifyDist" value="wrappedCauchy" /> Wrapped Cauchy</label>
+          <label><input type="radio" name="identifyDist" value="cardioid" /> Cardioid</label>
+          <label><input type="radio" name="identifyDist" value="uniform" /> Uniform</label>
+          <label><input type="radio" name="identifyDist" value="bimodal" /> Bimodal Mixture</label>
+        </div>
+        <div id="identifyFeedback" class="feedback"></div>
+      </div>
+
+      <!-- Outlier Detection -->
+      <div class="assessment-section" id="outlierSection">
+        <h3>Outlier Detection</h3>
+        <p>Identify the outlier data points. Outliers here mean points whose angles differ greatly from the circular mean; think of readings that sit on the opposite side of the compass from everything else.</p>
+        <p class="assessment-hint">The program labels an observation an outlier when it lies more than roughly 60–120° (depending on spread) away from the estimated mean direction. Click near a point to toggle it; points that you have selected will go red. After checking, true outliers are highlighted in orange so you can see what you missed.</p>
+        <canvas id="outlierCanvas" width="400" height="400"></canvas>
+        <p>Select potential outliers by clicking on them. When you have finished making your choices, press "Check Answer" to evaluate the result.</p>
+        <div class="assessment-actions">
+          <button id="generateOutlier" class="small-btn">Generate Sample</button>
+          <button id="checkOutlier" class="small-btn">Check Answer</button>
+        </div>
+        <div id="outlierFeedback" class="feedback"></div>
+      </div>
+
+      <!-- Bimodal Fit Challenge -->
+      <div class="assessment-section" id="bimodalSection">
+        <h3>Bimodal Fit Challenge</h3>
+        <p>A sample has been drawn from a mixture of two von Mises distributions. Use the controls below to fit both modes.</p>
+        <canvas id="bimodalCanvas" width="400" height="400"></canvas>
+        <div class="assessment-actions">
+          <button id="generateBimodal" class="small-btn">Generate Sample</button>
+          <button id="checkBimodal" class="small-btn">Check Answer</button>
+        </div>
+        <div class="bimodal-controls">
+          <div class="bimodal-group">
+            <h4>First Mode</h4>
+            <label for="fitMu1Slider">μ₁ (°)</label>
+            <input type="range" id="fitMu1Slider" min="0" max="360" step="1" value="0" />
+            <input type="number" id="fitMu1Input" min="0" max="360" step="1" value="0" />
+            <label for="fitKappa1Slider">κ₁</label>
+            <input type="range" id="fitKappa1Slider" min="0.1" max="20" step="0.1" value="1" />
+            <input type="number" id="fitKappa1Input" min="0.1" max="20" step="0.1" value="1" />
+          </div>
+          <div class="bimodal-group">
+            <h4>Second Mode</h4>
+            <label for="fitMu2Slider">μ₂ (°)</label>
+            <input type="range" id="fitMu2Slider" min="0" max="360" step="1" value="180" />
+            <input type="number" id="fitMu2Input" min="0" max="360" step="1" value="180" />
+            <label for="fitKappa2Slider">κ₂</label>
+            <input type="range" id="fitKappa2Slider" min="0.1" max="20" step="0.1" value="1" />
+            <input type="number" id="fitKappa2Input" min="0.1" max="20" step="0.1" value="1" />
+          </div>
+        </div>
+        <div id="bimodalFeedback" class="feedback"></div>
+      </div>
+
+      <!-- Hypothesis Testing -->
+      <div class="assessment-section" id="hypothesisSection">
+        <h3>Hypothesis Testing</h3>
+        <p>Two datasets have been generated. Determine whether their mean directions differ significantly. The provided p-value comes from the Watson-Williams test.</p>
+        <div class="dual-plot">
+          <canvas id="hypothesisCanvasA" width="250" height="250"></canvas>
+          <canvas id="hypothesisCanvasB" width="250" height="250"></canvas>
+        </div>
+        <p>p-value: <span id="wwPValue">—</span></p>
+        <div class="assessment-actions">
+          <button id="generateHypothesis" class="small-btn">Generate Data</button>
+          <button id="checkHypothesis" class="small-btn">Check Answer</button>
+        </div>
+        <div class="hypothesis-controls">
+          <label><input type="radio" name="hypothesisDecision" value="reject" /> Reject null hypothesis</label>
+          <label><input type="radio" name="hypothesisDecision" value="fail" /> Fail to reject</label>
+        </div>
+        <div id="hypothesisFeedback" class="feedback"></div>
+      </div>
+
+      <!-- Real‑World Scenarios -->
+      <div class="assessment-section" id="scenarioSection">
+        <h3>Real‑World Scenarios</h3>
+        <p>A scenario will be described. Choose which of the three plots best matches the data.</p>
+        <p id="scenarioText">—</p>
+        <div class="scenario-plots">
+          <canvas id="scenarioPlot1" width="220" height="220"></canvas>
+          <canvas id="scenarioPlot2" width="220" height="220"></canvas>
+          <canvas id="scenarioPlot3" width="220" height="220"></canvas>
+        </div>
+        <div class="assessment-actions">
+          <button id="generateScenario" class="small-btn">New Scenario</button>
+          <button id="checkScenario" class="small-btn">Check Answer</button>
+        </div>
+        <div class="scenario-controls">
+          <label><input type="radio" name="scenarioChoice" value="1" /> Plot 1</label>
+          <label><input type="radio" name="scenarioChoice" value="2" /> Plot 2</label>
+          <label><input type="radio" name="scenarioChoice" value="3" /> Plot 3</label>
+        </div>
+        <div id="scenarioFeedback" class="feedback"></div>
+      </div>
+
+      <!-- Parameter Estimation Challenge (temporarily disabled)
+      <div class="assessment-section" id="estimationSection2">
+        <h3>Parameter Estimation Challenge</h3>
+        <p>Below is a list of 50 angles (degrees). Estimate the mean direction μ and concentration κ without using the built‑in estimator. A quick polar sketch is shown to help you reason about the cluster before submitting your estimates.</p>
+        <button id="generateEstimateChallenge" class="small-btn">Generate Data</button>
+        <div class="estimate-challenge-grid">
+          <pre id="estimateChallengeData" class="dataset-desc">—</pre> <canvas id="estimateChallengePlot" width="260" height="260" aria-label="Scatter of challenge angles"></canvas> </div> <div class="input-row"> <label>μ estimate (°): <input type="number" id="estChallengeMu" /></label> <label>κ estimate: <input type="number" id="estChallengeKappa" /></label> <button id="checkEstimateChallenge" class="small-btn">Check Answer</button> </div> <div id="estimateChallengeFeedback" class="feedback"></div> </div> --> <!-- Effect of Sample Size --> <div class="assessment-section" id="effectNSection"> <h3>Concentration vs. Sample Size</h3> <p>Two samples come from different von Mises distributions. One has many observations but a broad spread; the other has fewer observations but is tightly clustered. Which sample gives the more reliable mean direction?</p>
+        <div class="dual-plot">
+          <div class="effectn-panel">
+            <canvas id="effectNSampleA" width="250" height="250"></canvas>
+            <div class="effectn-meta" id="effectNMetaA">—</div>
+          </div>
+          <div class="effectn-panel">
+            <canvas id="effectNSampleB" width="250" height="250"></canvas>
+            <div class="effectn-meta" id="effectNMetaB">—</div>
+          </div>
+        </div>
+        <p class="assessment-hint">Tip: the more reliable estimate balances both concentration (κ) and sample size (N). A small, sharply concentrated sample can rival or beat a large, diffuse one.</p>
+        <div class="effectn-controls">
+          <label><input type="radio" name="effectNChoice" value="A" /> Sample A</label>
+          <label><input type="radio" name="effectNChoice" value="B" /> Sample B</label>
+        </div>
+        <div class="assessment-actions">
+          <button id="generateEffectN" class="small-btn">Generate Pair</button>
+          <button id="checkEffectN" class="small-btn">Check Answer</button>
+        </div>
+        <div id="effectNFeedback" class="feedback"></div>
+      </div>
+
+      <!-- Interactive Proof -->
+      <div class="assessment-section" id="proofSection">
+        <h3>Interactive Proof</h3>
+        <p>This interactive proof guides you through the derivation of the mean resultant length <em>R(κ)</em> for the von Mises distribution.</p>
+      <div class="proof-container">
+        <div class="proof-start">
+          <h4>Starting Point</h4>
+          <p>The mean resultant length is defined by the magnitude of the expected unit phasor:</p>
+          <p>\[ R = \left| \mathbb{E}\big[ e^{i(\Theta - \mu)} \big] \right|. \]</p>
+        </div>
+        <div class="proof-goal">
+          <h4>Goal</h4>
+          <p>Show that this simplifies to:</p>
+          <p>\[ R(\kappa) = \frac{I_1(\kappa)}{I_0(\kappa)}. \]</p>
+        </div>
+        <div class="proof-context">
+          <h4>Helpful Reminders</h4>
+          <ul>
+            <li><strong>Phasor:</strong> a point on the unit circle represented by \(e^{i\theta}\). Its real part is \(\cos\theta\) and imaginary part is \(\sin\theta\).</li>
+            <li><strong>Unit phasor:</strong> a phasor with length 1. Averaging many unit phasors shows how concentrated the directions are.</li>
+            <li><strong>Mean resultant length \(R\):</strong> the length of the average unit phasor. \(R=1\) means all angles agree; \(R=0\) means they are spread evenly.</li>
+            <li><strong>Expected unit phasor:</strong> take the mean of \(e^{i(\Theta-\mu)}\) over the von Mises PDF. Its magnitude is \(R\).</li>
+          </ul>
+        </div>
+        <!-- Step container dynamically filled by script -->
+        <div id="proofSteps"></div>
+        <div id="proofHistory" class="proof-history"></div>
+        <div class="proof-controls">
+          <button id="nextProofStep" class="small-btn">Next Step</button>
+          <button id="hintBtn" class="small-btn">Hint</button>
+          <button id="showFullProof" class="small-btn">Show Full Derivation</button>
+        </div>
+          <div id="proofHint" class="feedback"></div>
+          <div id="fullProof" class="proof-full" hidden></div>
+        </div>
+      </div>
+
+      <!-- Concentration Ranking -->
+      <div class="assessment-section" id="rankingSection">
+        <h3>Concentration Ranking</h3>
+        <p>Four plots of von Mises distributions with different κ values are shown below. Select them in order from lowest to highest concentration by clicking them one after another.</p>
+        <div id="rankingContainer" class="ranking-container">
+          <canvas class="rankPlot" id="rankPlot1" width="180" height="180"></canvas>
+          <canvas class="rankPlot" id="rankPlot2" width="180" height="180"></canvas>
+          <canvas class="rankPlot" id="rankPlot3" width="180" height="180"></canvas>
+          <canvas class="rankPlot" id="rankPlot4" width="180" height="180"></canvas>
+        </div>
+        <div class="assessment-actions">
+          <button id="generateRanking" class="small-btn">Generate Plots</button>
+          <button id="checkRanking" class="small-btn">Check Answer</button>
+        </div>
+        <div id="rankingFeedback" class="feedback"></div>
+      </div>
+    </section>
+  </main>
+  <footer class="app-footer">
+    <p>© 2025 Von Mises Explorer. For Teaching and Educational Use.</p>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
