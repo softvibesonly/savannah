@@ -205,6 +205,11 @@ const projects = [
 ];
 
 const posts = [
+  { title:'Does Junk Mail Help or Hurt Canada Post?', 
+    date:'2025-10-11', 
+    href:'blog/canada-post-junk-mail.html', 
+    type: 'post' },
+
   { title:'Why hyperlegible UI matters for ML tools', 
     date:'2025-08-18', 
     href:'blog/hyperlegible-ui.html', 
