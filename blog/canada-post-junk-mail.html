@@ -23,7 +23,12 @@
     body { background: var(--bg); color: var(--text); }
     .blog-main { padding: clamp(72px, 9vw, 120px) 24px 72px; }
     .blog-container { width: min(100%, 860px); margin: 0 auto; padding: 0 20px 60px; }
-    .markdown-body { box-sizing: border-box; max-width: 72ch; margin: 0 auto; padding: 0; font-size: 1.04rem; line-height: 1.68; }
+    .markdown-body { box-sizing: border-box; max-width: 72ch; margin: 0 auto; padding: 0; font-size: 1.04rem; }
+    .markdown-body p { line-height: 1.54; margin: 0.55rem 0; }
+    .markdown-body li { line-height: 1.54; }
+    .markdown-body h2 { margin-top: 1.7rem; margin-bottom: 0.55rem; line-height: 1.22; }
+    .markdown-body h3 { margin-top: 1.4rem; margin-bottom: 0.45rem; line-height: 1.25; }
+    .markdown-body h4 { margin-top: 1.2rem; margin-bottom: 0.4rem; font-weight: 600; }
     .markdown-body h1 { font-size: 3.0rem !important; line-height: 1.2; margin-block: 2.2rem 1.0rem; }
     .markdown-body img { max-width: 100%; height: auto; display: block; margin: 2rem auto; }
     .back-link { position: relative; display:flex; align-items:center; justify-content:center; gap:.45rem; margin:3rem auto 0; padding:.68rem 1.45rem; border-radius:2px; color:var(--text); font-size:1.2rem; text-decoration:none; font-weight:500; letter-spacing:.012em; transition:color .2s ease; width:fit-content; }
@@ -139,4 +144,3 @@
   </script>
 </body>
 </html>
-

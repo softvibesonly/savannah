@@ -14,7 +14,7 @@
   Comments throughout these files describe the rationale behind design
   decisions and point out pedagogical choices.
 -->
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,7 +27,15 @@
 </head>
 <body id="von-mises-app">
   <header class="app-header">
-    <h1>Von Mises Distribution Explorer</h1>
+    <div class="header-top">
+      <h1>Von Mises Distribution Explorer</h1>
+      <div class="header-actions">
+        <button id="themeToggle" class="toggle" type="button" aria-label="Flip dark mode">
+          <span class="knob" aria-hidden="true"></span>
+        </button>
+        <span class="speaker-icon" aria-hidden="true">🔊</span>
+      </div>
+    </div>
     <!-- Main navigation. Each button toggles visibility of one module. -->
     <nav class="main-nav" aria-label="Primary Navigation">
       <button data-module="playground" class="nav-btn active">Interactive Playground</button>
@@ -693,7 +701,10 @@
     </section>
   </main>
   <footer class="app-footer">
-    <p>© 2025 Von Mises Explorer. For Teaching and Educational Use.</p>
+    <div class="footer-inner">
+      <p class="footer-meta">© 2025 Von Mises Explorer. For Teaching and Educational Use.</p>
+      <a class="footer-link" href="../index.html#blog">Let me out → Back to blog</a>
+    </div>
   </footer>
   <script src="script.js"></script>
 </body>

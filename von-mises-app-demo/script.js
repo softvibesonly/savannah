@@ -13,6 +13,133 @@ USEFUL STUFF (copy and paste)
 // Numerical constants
 const TAU = 2 * Math.PI;
 
+// Theme + audio controls ----------------------------------------------------
+const rootEl = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+const THEME_KEY = 'vonMisesTheme';
+const themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+let currentTheme = rootEl.getAttribute('data-theme') || 'light';
+let userPersistedTheme = false;
+
+let audioCtx = null;
+function ensureAudioContext() {
+  if (!(window.AudioContext || window.webkitAudioContext)) return null;
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new Ctx();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+  return audioCtx;
+}
+
+function playTone(freq, attack, decay, volume = 0.3) {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.frequency.value = freq;
+  osc.type = 'sine';
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  const now = ctx.currentTime;
+  const peak = Math.max(0, Math.min(volume, 1));
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(peak, now + attack);
+  gain.gain.linearRampToValueAtTime(0, now + attack + decay);
+  osc.start(now);
+  osc.stop(now + attack + decay + 0.05);
+}
+
+function playToggleThump() {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  const thumpOsc = ctx.createOscillator();
+  const thumpGain = ctx.createGain();
+  const thumpFilter = ctx.createBiquadFilter();
+  thumpOsc.type = 'triangle';
+  thumpOsc.frequency.setValueAtTime(68, now);
+  thumpOsc.frequency.exponentialRampToValueAtTime(42, now + 0.28);
+  thumpFilter.type = 'lowpass';
+  thumpFilter.frequency.setValueAtTime(320, now);
+  thumpFilter.Q.setValueAtTime(0.75, now);
+  thumpGain.gain.setValueAtTime(0.0001, now);
+  thumpGain.gain.exponentialRampToValueAtTime(0.55, now + 0.05);
+  thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+  thumpOsc.connect(thumpFilter).connect(thumpGain).connect(ctx.destination);
+
+  const subOsc = ctx.createOscillator();
+  const subGain = ctx.createGain();
+  subOsc.type = 'sine';
+  subOsc.frequency.setValueAtTime(34, now);
+  subGain.gain.setValueAtTime(0.0001, now);
+  subGain.gain.exponentialRampToValueAtTime(0.25, now + 0.06);
+  subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+  subOsc.connect(subGain).connect(ctx.destination);
+
+  thumpOsc.start(now);
+  subOsc.start(now);
+  thumpOsc.stop(now + 0.5);
+  subOsc.stop(now + 0.4);
+}
+
+function applyTheme(theme, persist = false) {
+  currentTheme = theme === 'dark' ? 'dark' : 'light';
+  rootEl.setAttribute('data-theme', currentTheme);
+  if (themeToggle) {
+    themeToggle.classList.toggle('dark', currentTheme === 'dark');
+    themeToggle.setAttribute('aria-pressed', currentTheme === 'dark' ? 'true' : 'false');
+    const label = currentTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    themeToggle.setAttribute('aria-label', label);
+    themeToggle.setAttribute('title', label);
+  }
+  if (persist) {
+    userPersistedTheme = true;
+    try {
+      localStorage.setItem(THEME_KEY, currentTheme);
+    } catch (err) {
+      // Ignore storage failures (private mode, quota, etc.)
+    }
+  }
+}
+
+(function initialiseTheme() {
+  let storedTheme = null;
+  try {
+    storedTheme = localStorage.getItem(THEME_KEY);
+  } catch (err) {
+    storedTheme = null;
+  }
+  if (storedTheme === 'light' || storedTheme === 'dark') {
+    userPersistedTheme = true;
+    applyTheme(storedTheme);
+  } else {
+    applyTheme(themeMediaQuery.matches ? 'dark' : 'light');
+  }
+})();
+
+themeMediaQuery.addEventListener('change', (event) => {
+  if (!userPersistedTheme) {
+    applyTheme(event.matches ? 'dark' : 'light');
+  }
+});
+
+function toggleThemeWithSound() {
+  playToggleThump();
+  const next = currentTheme === 'dark' ? 'light' : 'dark';
+  applyTheme(next, true);
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener('pointerdown', () => { ensureAudioContext(); });
+  themeToggle.addEventListener('click', toggleThemeWithSound);
+}
+
+document.addEventListener('pointerdown', () => { ensureAudioContext(); }, { once: true, capture: true });
+
 // Global customisation parameters for the PDF curve and visualisation.
 // These values are bound to UI controls in the playground and lets the user play around w the color and the width.
 
@@ -930,35 +1057,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('KaTeX render error:', err);
       }
     }
-  }
-
-  // Audio feedback setup
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  /*
-Play a short tone to provide auditory feedback for UI actions. Each
-call creates a new oscillator and gain envelope so multiple clicks
-do not interfere with one another. The attack controls how quickly
-the tone reaches full volume and decay controls how quickly it
-fades out.
-
-freq (number): The tone frequency in hertz
-attack (number): Attack time in seconds
-decay (number): Decay time in seconds
-*/
-  function playTone(freq, attack, decay, volume = 0.3) {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.frequency.value = freq;
-    osc.type = 'sine';
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    const now = audioCtx.currentTime;
-    const peak = Math.max(0, Math.min(volume, 1));
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(peak, now + attack);
-    gain.gain.linearRampToValueAtTime(0, now + attack + decay);
-    osc.start(now);
-    osc.stop(now + attack + decay + 0.05);
   }
 
 // The global DPI fix was removed so canvases can be scaled when they
