@@ -1,0 +1,93 @@
+# Have You Ever Wondered What All of the Weird Option (⌥ + Key) Entries on the Mac Keyboard Are?
+
+![Scatter of option-key symbols on a Mac keyboard](assets/hero.png)
+
+I recently started writing on stuff involving formal logic and I was surprised to find that at least one of the more common symbols used, “**¬**” (negation), is actually easily accessible on the default Canadian MacOS keyboard through the option “**⌥**” key.
+
+This got me to take a look at the other input characters accessible using the option key and it’s kind of interesting what’s on there.
+
+I mean, some of these characters obviously make sense. Like: 
+
+**∞ ∑ ÷ ≈ ∫**
+
+These characters are clearly very helpful to those of us who do math or science and regularly prefer to take notes in plaintext rather than LaTeX.
+
+And then there are the weirder ones which are, still, if you’re familiar with those fields, easy enough to understand why they are there (because they come up so often).
+
+For example, **§,** which is *both a cool potential tattoo idea* as well as the standard, fairly common symbol used to mean “section” in legal texts and other documents.
+
+*e.g.* sections 13-14 of Some Act might be cited as “**§§13-14 …**”
+
+And of course there is **¶** - the “Pilcrow”. Which is, admittedly, much more obscure—bordering on cryptic (and the name doesn’t help - I mean what even is a Pilcrow?) Yet it’s commonly used to denote a new paragraph, often enough that at least some of you will know it.¶
+
+*(see, I just used it right there above)* 
+
+But this is about the only reason I could possibly imagine why it would have been included as one of the alt-key defaults on the standard Mac keyboard. Someone was clearly using it enough at Apple that it was worth the time.
+
+However these aren’t really all that interesting. 
+
+What *is* interesting are the ones which, to me, were completely foreign and I discovered only by blindly mashing all of the keys on my keyboard to see what other default option/alternate characters would come at.
+
+These range from downright bizarre to ‘is this *really* tiny (letter a) part of an eye test?’ 
+
+No, really, like why is one entire key of my keyboard even devoted to producing reeally small letter “a”s? And what the heck is:
+
+- •
+- ª
+- †
+- Or  ¡
+
+The last of which literally just looks like a regular “i” but… shorter?
+
+## History, Typography, Romance Languages
+
+Turns out some of these make sense while others are just kind of not really usable at all in practice.
+
+### **œ** and **æ**
+
+These are just the snobby ligature marks that combine two letters for stylistic or phonetic reasons. They were used a bunch in old (”Early Modern”) English but today the only people who would really still use them are likely French speakers.
+
+Except, they already have their own, separate variant of the Canadian keyboard. So it’s at least sort of interesting to wonder why Apple bothered including them by default.
+
+### **ª** and **º** and **¡**
+
+I initially thought the really small “o” was meant to be a degree symbol for temperature but it turns out these are ‘feminine ordinal indicators’ which are apparently used in some romance languages like Spanish and Portuguese for their version of abbreviating first (1st), second (2nd), and third (3rd) as in: *1ª*
+
+Though, why characters that would only be used in Spanish and Portuguese appear on the English Canadian keyboard layout is sort of unclear to me. However, a general guess is that it may have something to do with the large numbers of those romance-language-speaking diaspora here in Canada.
+
+Which also explains the last character. That ‘tiny i’? It’s just an inverted exclamation mark that they use in Spanish to start exclamatory sentences - which is funny if you think about, viz. the implication that the Spanish don’t like the be surprised, even by exclamation marks.
+
+### **†**
+
+Yes, I also thought this was a quaint little protestant symbol but it turns out to just be a reference marker (called a “dagger” or sometimes “obelisk”) used to mark ‘second-level’ footnotes or annotations when the standard numeric footnotes are no longer enough to give you an adrenaline rush.
+
+Interestingly, it was also used in medieval texts by editors to indicate questionable passages or corrections made to a text. I can’t be sure exactly but I think I’ve also seen it used a few times for this same purpose in a modern context.
+
+### •
+
+This one is kind of funny. It’s meant to be the ‘bullet’ kind of symbol that you use for bullet points. I had no idea this was even on the keyboard, I’ve just been googling the dot symbol and copy and pasting it into documents and code my whole life.
+
+### ˙
+
+Finally, this is the strangest one. Your eyes do not deceive you. This is, in fact, another (even smaller) dot. Allegedly this is called the “*Dot Above (Combining Diacritic)*” and pressing `[SOME LETTER] + [˙]` is supposed to result in a dot appearing above that letter. 
+
+As in pressing `e` + `˙` should create **ė** which would be really cool… if it worked. It seems that for whatever reason, at least on the default MacOS Keyboard, this behaviour is broken and the combining diacritic key is literally just, well, there.
+
+But hey, at least now if you ever need a free key to map something important to like a macro (or an even smaller dot), you’ll know where to look. 
+
+---
+
+### **Summary Table (for the lazy)**
+
+| Symbol | Name | Meaning / Usage |
+| --- | --- | --- |
+| `¡` | **Inverted Exclamation Mark** | Used in Spanish to start exclamatory sentences: “¡Hola!” |
+| `§` | **Section Sign** | Refers to sections in legal or academic documents (e.g., § 3.2) |
+| `¶` | **Pilcrow / Paragraph Sign** | Marks the start of a new paragraph in old typesetting or proofreading |
+| `•` | **Bullet** | Standard bullet point used in lists |
+| `ª` | **Feminine Ordinal Indicator** | Used in Spanish, Portuguese, Catalan for abbreviating "1st", "2nd" in feminine form (e.g., 1ª vez = 1st time [fem]) |
+| `œ` | **Latin Ligature OE** | Appears in some French words (e.g., “œuvre”, “cœur”) and also old English words (that used/borrowed/stole French words) |
+| `∂` | **Partial Derivative Symbol** | Common in calculus for multivariable functions (∂f/∂x) |
+| `˙` | **Dot Above (Combining Diacritic)** | Used in linguistics and phonetics to indicate special pronunciations.<br><strong>Note:</strong> this key’s behaviour is broken on the default Mac keyboard, so it does not combine by default. |
+| `ƒ` | **Function Symbol (Florin)** | Originally the Dutch Florin currency (which no one cares about); also used heavily in math as shorthand for “function,” e.g., ƒ(x). |
+| `™` | **Trademark Symbol** | Indicates a trademark. Generally used ironically, I’m pretty sure. |

@@ -1059,6 +1059,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  const escapeLink = document.getElementById('escapeLink');
+  if (escapeLink) {
+    const exitVariants = [
+      'Let me ouuut → Return to polite society',
+      'Request extraction → Back to blog'
+    ];
+    const copy = exitVariants[Math.floor(Math.random() * exitVariants.length)];
+    escapeLink.textContent = copy;
+    escapeLink.setAttribute('aria-label', 'Back to blog');
+    if (!escapeLink.hasAttribute('title') && escapeLink.dataset.hover) {
+      escapeLink.setAttribute('title', escapeLink.dataset.hover);
+    }
+  }
+
 // The global DPI fix was removed so canvases can be scaled when they
 // are created or first used. Calling fixCanvasDPI after drawing would clear
 // the artwork, so constructors and setup code handle the adjustment instead.

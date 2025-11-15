@@ -205,6 +205,11 @@ const projects = [
 ];
 
 const posts = [
+  { title:'Have You Ever Wondered What All of the Weird Option Key Symbols Are?', 
+    date:'2025-11-15', 
+    href:'blog/ever-wondered-weird-option-key-characters', 
+    type: 'post' },
+
   { title:'Does Junk Mail Help or Hurt Canada Post?', 
     date:'2025-10-11', 
     href:'blog/canada-post-junk-mail/index.html', 
