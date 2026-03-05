@@ -205,6 +205,11 @@ const projects = [
 ];
 
 const posts = [
+  { title:'How to Extract PDF Notes Made from Preview on MacOS', 
+    date:'2026-03-04', 
+    href:'blog/extract-pdf-notes-preview-macos.html', 
+    type: 'post' },
+
   { title:'Have You Ever Wondered What All of the Weird Option Key Symbols Are?', 
     date:'2025-11-15', 
     href:'blog/ever-wondered-weird-option-key-characters', 

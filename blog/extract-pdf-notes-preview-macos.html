@@ -1,0 +1,1134 @@
+<!doctype html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>How to Extract PDF Notes Made from Preview on MacOS | Savannah's Blog</title><link rel="stylesheet" href="../styles.css"/><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+/* Override strong tags inside headings to maintain consistent weight */
+h1 strong,
+h2 strong,
+h3 strong {
+	font-weight: 600;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.collection-content td {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.callout img.notion-static-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.callout p {
+	margin: 0;
+}
+
+.callout h1,
+.callout h2,
+.callout h3 {
+	margin: 0 0 0.6rem;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+blockquote.quote-large {
+	font-size: 1.25em;
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", "Noto Sans Arabic", "Noto Sans Hebrew", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.highlight-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.highlight-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.highlight-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.highlight-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.highlight-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.highlight-default_background {
+	color: rgba(44, 44, 43, 1);
+}
+.highlight-gray_background {
+	background: rgba(42, 28, 0, 0.07);
+}
+.highlight-brown_background {
+	background: rgba(139, 46, 0, 0.086);
+}
+.highlight-orange_background {
+	background: rgba(224, 101, 1, 0.129);
+}
+.highlight-yellow_background {
+	background: rgba(211, 168, 0, 0.137);
+}
+.highlight-teal_background {
+	background: rgba(0, 100, 45, 0.09);
+}
+.highlight-blue_background {
+	background: rgba(0, 124, 215, 0.094);
+}
+.highlight-purple_background {
+	background: rgba(102, 0, 178, 0.078);
+}
+.highlight-pink_background {
+	background: rgba(197, 0, 93, 0.086);
+}
+.highlight-red_background {
+	background: rgba(223, 22, 0, 0.094);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(125, 122, 117, 1);
+	fill: rgba(125, 122, 117, 1);
+}
+.block-color-brown {
+	color: rgba(159, 118, 90, 1);
+	fill: rgba(159, 118, 90, 1);
+}
+.block-color-orange {
+	color: rgba(210, 123, 45, 1);
+	fill: rgba(210, 123, 45, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 148, 52, 1);
+	fill: rgba(203, 148, 52, 1);
+}
+.block-color-teal {
+	color: rgba(80, 148, 110, 1);
+	fill: rgba(80, 148, 110, 1);
+}
+.block-color-blue {
+	color: rgba(56, 125, 201, 1);
+	fill: rgba(56, 125, 201, 1);
+}
+.block-color-purple {
+	color: rgba(154, 107, 180, 1);
+	fill: rgba(154, 107, 180, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(207, 81, 72, 1);
+	fill: rgba(207, 81, 72, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(240, 239, 237, 1);
+}
+.block-color-brown_background {
+	background: rgba(245, 237, 233, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 235, 222, 1);
+}
+.block-color-yellow_background {
+	background: rgba(249, 243, 220, 1);
+}
+.block-color-teal_background {
+	background: rgba(232, 241, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(229, 242, 252, 1);
+}
+.block-color-purple_background {
+	background: rgba(243, 235, 249, 1);
+}
+.block-color-pink_background {
+	background: rgba(250, 233, 241, 1);
+}
+.block-color-red_background {
+	background: rgba(252, 233, 231, 1);
+}
+.select-value-color-default { background-color: rgba(42, 28, 0, 0.07); }
+.select-value-color-gray { background-color: rgba(28, 19, 1, 0.11); }
+.select-value-color-brown { background-color: rgba(127, 51, 0, 0.156); }
+.select-value-color-orange { background-color: rgba(196, 88, 0, 0.203); }
+.select-value-color-yellow { background-color: rgba(209, 156, 0, 0.282); }
+.select-value-color-green { background-color: rgba(0, 96, 38, 0.156); }
+.select-value-color-blue { background-color: rgba(0, 118, 217, 0.203); }
+.select-value-color-purple { background-color: rgba(92, 0, 163, 0.141); }
+.select-value-color-pink { background-color: rgba(183, 0, 78, 0.152); }
+.select-value-color-red { background-color: rgba(206, 24, 0, 0.164); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+
+a.back-link { display:block; max-width:72ch; margin: 24px auto 0; padding: 0 20px; text-decoration:none; }
+article.page { max-width:72ch; margin: 12px auto 48px; padding: 20px; background: var(--bg); color: var(--text); border-radius: 12px; }
+.post-date { color: var(--muted); margin-top: 0; margin-bottom: 1.3rem; }
+</style></head><body><a href="../index.html#blog" class="back-link">&larr; Back to Blog</a><article id="31ace139-3ca2-8039-9e6d-e6d5da9a439d" class="page sans"><header><h1 class="page-title" dir="auto">How to Extract PDF Notes Made from Preview on MacOS</h1><p class="post-date" dir="auto">Published: March 4, 2026</p><p class="page-description" dir="auto"></p></header><div class="page-body"><div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-80c2-b19b-f8e5e2c9495d" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/135d19f3-b159-4c1a-b1af-64f8d44e342b.png"><img style="width:385.05287896592245px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/135d19f3-b159-4c1a-b1af-64f8d44e342b.png"/></a><figcaption>900 Compute Clusters vs 1 Ungodly Foul Adobe PDF Standard. Who will win? (source: Polymarket) </figcaption></figure></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8077-83dd-d5ba4a31a979" class="">For whatever reason the PDF standard still has not reached a point where the format natively encodes—in a systematic and predictable way—notes that have been taken/made on the document itself in a simple and accessible method.</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-805f-9587-ee16e567cd9a" class="">What I mean by this is that if you take notes on a PDF, there&#x27;s multiple ways you can take notes. Even through just the native macOS Preview (PDF viewer) app, for instance, notes can be:</p></div><div style="display:contents" dir="auto"><ol type="1" id="31ace139-3ca2-808a-8437-e393c1469e01" class="numbered-list" start="1"><li><strong> Attached to highlights or annotations that correspond, obviously, to specific parts of text on the page</strong> (call these “notes”)<div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-80ba-9f66-e2639ac49c41" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/image.png"><img style="width:576px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/image.png"/></a><figcaption>Figure 1.1 This is a ‘note’ on MacOS</figcaption></figure></div></li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="31ace139-3ca2-80a1-a4b9-e37055640461" class="numbered-list" start="2"><li><strong>Alternatively, macOS&#x27;s Preview also allows you to simply you go into tools, and here you again have multiple options</strong>:<div style="display:contents" dir="auto"><ol type="a" id="31ace139-3ca2-80a8-be61-d6bda2f67155" class="numbered-list" start="1"><li>you can choose to annotate using a speech bubble, OR, </li></ol></div><div style="display:contents" dir="auto"><ol type="a" id="31ace139-3ca2-8014-8c0f-c8294d329b03" class="numbered-list" start="2"><li>a text field that you will superimpose on top of the original document.</li></ol></div></li></ol></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8001-8aa6-c6b9103a79d8" class="">
+</p></div><div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-80fc-9e4b-fc5c5851449e" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_7.48.41_PM.png"><img style="width:576px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_7.48.41_PM.png"/></a><figcaption>Figure 1.2 This is another way to take notes on MacOS (genuinely, it is)</figcaption></figure></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-808d-af20-d6d23c0f91e5" class="">
+</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8095-8e2e-debe07810fae" class="">This is likely part of the problem with what makes ‘taking notes’ on files in the PDF format so frustrating. And of course there are other, further layers of inconsistency and non-standardization. For example, notes you might have made on MacOS’s <em>Preview</em>, which are completely visible when using the app, become a complete mess the moment you send to someone who opens the document on Chrome or Firefox (like normal people).</p></div><div style="display:contents" dir="auto"><ul id="31ace139-3ca2-80af-b76e-f974b5686d45" class="bulleted-list"><li style="list-style-type:disc">On Google Chrome, for instance, as Figure 1.3 shows, notes appear in little bounded boxes with hard-coded dimensions and a preset font size.</li></ul></div><div style="display:contents" dir="auto"><ul id="31ace139-3ca2-804a-b3d4-d212b203c6b7" class="bulleted-list"><li style="list-style-type:disc">Thus if your notes are long (as mind tend to be), your notes will quite literally be cut-off halfway through and there is no way to actually read them in Chrome’s built-in PDF reader</li></ul></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80e0-b5eb-d07664a094af" class="">
+</p></div><div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-80ce-8df6-cd5d1ab98f78" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_9.06.30_PM.png"><img style="width:709.96875px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_9.06.30_PM.png"/></a><figcaption>Figure 1.3 Notes on a PDF written in Preview being cut-off when the PDF is viewed on Google Chrome</figcaption></figure></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-800c-a882-cb806ca9d897" class="">I guess what frustrates me is that, <em>while this may be a complete confabulation</em>, I genuinely have a strong memory of being overjoyed last year when for the first time after Gemini Pro 2.5 was released, it was the first time I could upload a PDF to a language model, and it would be able to see all of my notes completely—And I made extensive use of that new capability once I noticed it had finally become possible.</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80dd-ba63-dc15a1f6dd79" class="">However, for whatever reason, since that time, this ability either appears to have been deprecated, maybe because it&#x27;s too costly for models to have. I mean, that&#x27;s not really a convincing reason, but all I can say with certainty is that somehow, now, in early 2026, none of the leading frontier models are able to do this any longer (the optimist in me says not to cry ‘enshittification’ just yet 🫩)</p></div><div style="display:contents" dir="auto"><h2 id="31ace139-3ca2-805f-9566-c0caf7f9573a" class="">Reading PDF Notes: Harder than Humanity’s Last Exam?</h2></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8055-aa1b-c7f7b8dd6474" class="">Given all that’s been happening recently, and the pace of improvement, it can be easy to feel like everything hard has already been accomplished, everything important is pending just across the horizon, and anything else is just a matter of more post-training. Now that models are becoming so good relative to each other, there’s been a lot of concern about benchmark saturation, and now that they’re becoming so good relative to us, there’s even more concern about whether we can meaningfully continue to write harder tests to challenge language models. </p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80f9-b64c-e649d8aa11d8" class="">With all this in mind, I hereby present, my greatest achievement and contribution to mankind, my very own, magnum opus 🧐, the <strong>Savannah Harlan™ ‘Can You Read My PDF Notes’-Eval</strong>.</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-804f-9140-f1b7d49049c9" class="">This is the way it works:</p></div><div style="display:contents" dir="auto"><ol type="1" id="31ace139-3ca2-808e-8588-e2a6903bca6e" class="numbered-list" start="1"><li>You upload a PDF with notes that you have taken to an LLM (web interface, API, desktop app, doesn’t matter)</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="31ace139-3ca2-80f3-97cd-fbcf3d637287" class="numbered-list" start="2"><li>You ask the LLM if it can see your notes</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="31ace139-3ca2-80aa-a163-ca2e95335c1e" class="numbered-list" start="3"><li>Realize gradually that it cannot</li></ol></div><div style="display:contents" dir="auto"><ol type="1" id="31ace139-3ca2-80da-b21d-dd2ecd3f3116" class="numbered-list" start="4"><li><em>(optional)</em> Marvel at how far we have come since not being able to count the number of “r”s in strawberry</li></ol></div><div style="display:contents" dir="auto"><h2 id="31ace139-3ca2-8002-8c88-e67f5ba122e4" class=""><strong>Results</strong></h2></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8069-a33d-f778e1e1ed59" class="">All participants were language models randomly assigned to help Savannah on one of three different PDF reading task scenarios. The experiment was conducted under a double-blind setup, where neither the participants (models) nor the head researcher (me) knew that there was an experiment—in the latter case, this was largely because I genuinely thought this was a solved problem/capability for models and I did not expect any of them to fail. </p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8037-86ef-ea7fb8e3053e" class="">Each scenario began with: <strong>(i) a description (”prompt”) of the task,</strong> <strong>(ii) a PDF document required to complete the task</strong>, and <strong>(iii) a desperate attempt at eliciting latent PDF-reading capabilities from said model(s)</strong> that have apparently already won gold at the International Mathematical Olympiad AND solved Erdős problems.</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8020-810f-d8946f9368bf" class="">After the scenarios were presented, participants were then asked about their success on the task, and their own self-perceptions of their success and/or failure. Results were robust across all models tested, and significant up to the 9 sigma level.</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80ff-8d92-f1a41b64f0c1" class="">The performance of models were initially graded on a 0-100 point scale. Raw point values were then rescaled using z-score normalization to systematize the analysis. Fortunately, all of the models scored absolutely zero on the evaluation lol and could not read a damn thing, therefore it turned out that feature scaling was both unnecessary and practically un-observable.</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-804f-b5f7-d99409284543" class="">
+</p></div><div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-803c-8bb4-cb91aa2f62f9" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_7.54.41_PM.png"><img style="width:624px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_7.54.41_PM.png"/></a><figcaption>Figure 2.1 Opus 4.5 mistakenly assuming it had succeeded in the hardest evaluation to date</figcaption></figure></div><div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-80c2-a4cf-ffcfd5de03dd" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_9.40.59_PM.png"><img style="width:709.953125px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_9.40.59_PM.png"/></a><figcaption>Figure 2.1.1 Opus 4.5 being unable to read notes on a PDF</figcaption></figure></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80e3-8864-e937c290b17e" class="">
+</p></div><div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-802e-83bf-f15680fa9aca" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_8.18.09_PM.png"><img style="width:709.984375px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_8.18.09_PM.png"/></a><figcaption>Figure 2.2 GPT-5.2 Thinking being unable to read notes on a PDF</figcaption></figure></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80a3-b04e-d899f4331bac" class="">
+</p></div><div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-80a4-afe7-e730650e7b67" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_8.19.09_PM.png"><img style="width:709.984375px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_8.19.09_PM.png"/></a><figcaption>Figure 2.3 Gemini 3 Pro Preview being unable to read notes on a PDF</figcaption></figure></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-806b-8766-d9b2c80373b1" class="">
+</p></div><div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-80a5-86d8-d3277004da42" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_8.24.52_PM.png"><img style="width:709.96875px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_8.24.52_PM.png"/></a><figcaption>Figure 2.4 Kimi K2.5 Thinking being unable to read notes on a PDF</figcaption></figure></div><div style="display:contents" dir="auto"><h2 id="31ace139-3ca2-80c7-99cf-cc591c3a77e3" class="">Discussion</h2></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80f7-a1a2-e156cea5ddd1" class="">The results suggest that while the benchmarks may be close to saturation, the true ceiling is our creativity to re-imagine annoying, blatantly-mundane, everyday tasks as the rightfully deserved focus of LLM evaluations. At the very least, this is promising news, if only for the hope it suggests, that Humanity’s Last Exam (HLE) may not really be our last exam after all.</p></div><div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-8073-979a-c549cec57bb8" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/CYR-MYPDF-Eval-Results.png"><img style="width:2661px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/CYR-MYPDF-Eval-Results.png"/></a><figcaption>Figure 3.1 Results from the CYR-MYPDF-Eval</figcaption></figure></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8075-92fb-e899cc02b228" class="">The robustness of the results are counterweighted by laziness and the lack of any effort to make multiple attempts for a ‘sample size’. As such, all data represents only a first and final attempt before the experimenter became depressed and gave up completely. Also due to income constraints situating the research team beneath the poverty line, there was insufficient funding for API credits, meaning that all models were evaluated through their respective webapps at default hyperparameter values.</p></div><div style="display:contents" dir="auto"><ul id="31ace139-3ca2-80ae-b1d4-e7ca229118a1" class="bulleted-list"><li style="list-style-type:disc">For sake of simplicity, this was assumed to be temperature = 1.</li></ul></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80ea-a26d-d01efbf7f1c8" class="">Despite the lack of effort invested in this paper, it is somewhat noteworthy that the results were as consistent as they were, across 3 (closed-source) US frontier models, and 1 (open-weight) Chinese frontier model.</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80e5-b58a-d13c5a70a872" class="">The fact that all models failed the evaluation with a maximum score of 0, a range of 0, a median of 0, and a harmonic mean of 0, we hereby conclude that present-day models do not yet have the ability to fully understand and operate the malicious, satanically-inspired, maximally-antagonistic poison that is Adobe’s <em>Portable Document Format.</em></p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8028-a352-fe1b58a8c5e1" class="">This paper addresses a pressing, current issue identified in the literature on LLM evals and benchmark saturation by proposing a novel yet easy-to-conduct evaluation that has practical implications for practical, everyday use, and downstream consequences for the economic impact of non-agentic artificial intelligence/LLMs.</p></div><div style="display:contents" dir="auto"><h2 id="31ace139-3ca2-806d-98e2-f2f2397ade1a" class=""><strong>Conclusion</strong></h2></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8059-8d45-d146960e477b" class="">With any luck, like nuclear waste, we may one day in the near-future hope to find a physical process by which such contaminants can be safely destroyed or repurposed.</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8083-a049-d5e08643addb" class="">Until then, while it may be true that you cannot get coffee if you are dead, it should be said, you also cannot get coffee if you’re, like, <em>really</em> incredibly stupid (like <em>can’t even hold a mug stupid</em>). Of course the spiky way that artificial intelligence is progressing right now, we might still see this problem hanging around in a year’s time, even after they’ve all pushed past <a href="https://metr.org/time-horizons/">30 days on the METR graph.</a></p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-808a-8e61-fdcbf070af55" class="">
+</p></div><div style="display:contents" dir="auto"><hr id="31ace139-3ca2-8086-9ade-e9dc37e196ec"/></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80ca-ba29-e392091ecf66" class="">
+</p></div><div style="display:contents" dir="auto"><h2 id="31ace139-3ca2-804e-a2cf-ca06a2f0dffb" class="">Appendix A. How to Let LLMs Read Your PDF Notes</h2></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8026-ada0-c23dec69acba" class="">There is no easy way, you must extract them. Or wait until the capability returns, I guess. For now, below is the code for a Python script I ran and used to pull my notes out that may be adapted for your own purposes.</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-800f-891e-c8fbe62b99e6" class=""><strong>Note</strong>: the script pulls notes out and presents them in the following format</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8043-9e23-da707b77554f" class="">[Note ID/index]</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8067-8f01-f928df120c2b" class="">[Page Number that Note is From]</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8035-a4e0-fe135037698b" class="">[Context]</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-808c-a2de-fdebf8c427a5" class="">[Actual Note]</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80f3-8e5a-cef33fea9d16" class="">[Highlighted Text]</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-808c-ae7b-ff0574153c2b" class="">
+</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80fd-ac87-f767e95c88db" class="">
+</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-8026-b506-fe60940b0d17" class=""><strong>Below is a screenshot example of what notes extracted using this method will look like:</strong></p></div><div style="display:contents" dir="ltr"><figure id="31ace139-3ca2-80d4-b2e1-f24821f395c5" class="image"><a href="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_9.25.27_PM.png"><img style="width:709.984375px" src="How%20to%20Extract%20PDF%20Notes%20Made%20from%20Preview%20on%20MacO/Screenshot_2026-03-04_at_9.25.27_PM.png"/></a><figcaption>Figure A1.1 I’m crying you guys the code actually worked 😭</figcaption></figure></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80ab-a789-fd2bd933ae69" class="">
+</p></div><div style="display:contents" dir="auto"><p id="31ace139-3ca2-80d7-9be7-da8567b08ec6" class="">
+</p></div><div style="display:contents" dir="auto"><h3 id="31ace139-3ca2-8037-aff2-ed232dd96e84" class=""><strong>Python Code</strong></h3></div><div style="display:contents" dir="auto"><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerPolicy="no-referrer"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" integrity="sha512-tN7Ec6zAFaVSG3TpNAKtk4DOHNpSwKHxxrsiw4GHKESGPs5njn/0sMCUMl2svV4wo4BK/rCP7juYz+zx+l6oeQ==" crossorigin="anonymous" referrerPolicy="no-referrer"/><pre id="31ace139-3ca2-80cc-baf9-f2bfeb3aa3f1" class="code code-wrap"><code class="language-Python" style="white-space:pre-wrap;word-break:break-all">#!/usr/bin/env python3
+&quot;&quot;&quot;Extract macOS Preview PDF notes with paragraph context into a .txt file.
+
+Dependencies expected on PATH:
+- qpdf
+- pdftotext
+
+Usage:
+  ./extract_pdf_preview_notes.py &quot;/path/to/file.pdf&quot;
+  ./extract_pdf_preview_notes.py &quot;/path/to/file.pdf&quot; -o &quot;/path/to/output.txt&quot;
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+import xml.etree.ElementTree as ET
+from typing import Dict, List, Optional, Tuple
+
+
+BBox = Tuple[float, float, float, float]
+
+
+def run_cmd(cmd: List[str]) -&gt; str:
+    try:
+        return subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(
+            f&quot;Command failed: {&#x27; &#x27;.join(cmd)}\n{exc.output.strip()}&quot;
+        ) from exc
+
+
+def decode_qpdf_string(value: object) -&gt; str:
+    if not isinstance(value, str):
+        return &quot;&quot;
+    if value.startswith(&quot;u:&quot;) or value.startswith(&quot;b:&quot;):
+        return value[2:]
+    return value
+
+
+def intersects(a: BBox, b: BBox, margin: float = 0.8) -&gt; bool:
+    ax0, ay0, ax1, ay1 = a
+    bx0, by0, bx1, by1 = b
+    return not (
+        ax1 &lt; bx0 - margin
+        or bx1 &lt; ax0 - margin
+        or ay1 &lt; by0 - margin
+        or by1 &lt; ay0 - margin
+    )
+
+
+def center_distance(a: BBox, b: BBox) -&gt; float:
+    ax0, ay0, ax1, ay1 = a
+    bx0, by0, bx1, by1 = b
+    acx, acy = (ax0 + ax1) / 2.0, (ay0 + ay1) / 2.0
+    bcx, bcy = (bx0 + bx1) / 2.0, (by0 + by1) / 2.0
+    return (acx - bcx) ** 2 + (acy - bcy) ** 2
+
+
+def closest_block(blocks: List[dict], target: Optional[BBox]) -&gt; Optional[dict]:
+    if not blocks or target is None:
+        return None
+    best = None
+    best_distance = None
+    for block in blocks:
+        d = center_distance(block[&quot;bbox&quot;], target)
+        if best_distance is None or d &lt; best_distance:
+            best_distance = d
+            best = block
+    return best
+
+
+def is_candidate_note_annotation(annotation: dict) -&gt; bool:
+    subtype = annotation.get(&quot;/Subtype&quot;)
+    contents = decode_qpdf_string(annotation.get(&quot;/Contents&quot;, &quot;&quot;)).strip()
+    if not contents:
+        return False
+    # Exclude navigation/auxiliary annotations that are not user note content.
+    excluded = {&quot;/Link&quot;, &quot;/Popup&quot;, &quot;/Widget&quot;}
+    if subtype in excluded:
+        return False
+    # Include common preview/user-annotation types.
+    included = {
+        &quot;/Highlight&quot;,
+        &quot;/Underline&quot;,
+        &quot;/StrikeOut&quot;,
+        &quot;/Squiggly&quot;,
+        &quot;/Text&quot;,
+        &quot;/FreeText&quot;,
+        &quot;/Ink&quot;,
+        &quot;/Stamp&quot;,
+        &quot;/Caret&quot;,
+        &quot;/Type1&quot;,
+    }
+    return subtype in included or subtype is not None
+
+
+def default_output_path(input_pdf: str) -&gt; str:
+    base, _ext = os.path.splitext(input_pdf)
+    return f&quot;{base} - Extracted Notes.txt&quot;
+
+
+def build_object_map(qpdf_data: dict) -&gt; Dict[str, object]:
+    objects: Dict[str, object] = {}
+    for bucket in qpdf_data[&quot;qpdf&quot;][1:]:
+        for key, value in bucket.items():
+            if key.startswith(&quot;obj:&quot;):
+                objects[key[4:]] = value.get(&quot;value&quot;)
+    return objects
+
+
+def resolve_annotation_refs(page_dict: dict, objects: Dict[str, object]) -&gt; List[str]:
+    annots = page_dict.get(&quot;/Annots&quot;)
+    if annots is None:
+        return []
+    if isinstance(annots, str):
+        annots = objects.get(annots)
+    if isinstance(annots, list):
+        return [ref for ref in annots if isinstance(ref, str)]
+    return []
+
+
+def extract_notes_from_objects(qpdf_data: dict) -&gt; List[dict]:
+    objects = build_object_map(qpdf_data)
+    notes: List[dict] = []
+
+    for page in qpdf_data[&quot;pages&quot;]:
+        page_num = page[&quot;pageposfrom1&quot;]
+        page_ref = page[&quot;object&quot;]
+        page_dict = objects.get(page_ref)
+        if not isinstance(page_dict, dict):
+            continue
+
+        media = page_dict.get(&quot;/MediaBox&quot;)
+        page_height = (
+            float(media[3]) - float(media[1])
+            if isinstance(media, list) and len(media) == 4
+            else 0.0
+        )
+
+        annot_refs = resolve_annotation_refs(page_dict, objects)
+        for annot_ref in annot_refs:
+            annot = objects.get(annot_ref)
+            if not isinstance(annot, dict):
+                continue
+            if not is_candidate_note_annotation(annot):
+                continue
+
+            contents = decode_qpdf_string(annot.get(&quot;/Contents&quot;, &quot;&quot;)).strip()
+            subtype = annot.get(&quot;/Subtype&quot;)
+            author = decode_qpdf_string(annot.get(&quot;/T&quot;, &quot;&quot;)).strip()
+
+            quads_top: List[BBox] = []
+            quad_points = annot.get(&quot;/QuadPoints&quot;)
+            if isinstance(quad_points, list) and len(quad_points) &gt;= 8 and page_height:
+                for i in range(0, len(quad_points) - 7, 8):
+                    pts = quad_points[i : i + 8]
+                    xs = [float(pts[0]), float(pts[2]), float(pts[4]), float(pts[6])]
+                    ys = [float(pts[1]), float(pts[3]), float(pts[5]), float(pts[7])]
+                    y_top_min = page_height - max(ys)
+                    y_top_max = page_height - min(ys)
+                    quads_top.append((min(xs), y_top_min, max(xs), y_top_max))
+
+            rect_top: Optional[BBox] = None
+            rect = annot.get(&quot;/Rect&quot;)
+            if isinstance(rect, list) and len(rect) == 4 and page_height:
+                x0, y0, x1, y1 = map(float, rect)
+                rect_top = (
+                    min(x0, x1),
+                    page_height - max(y0, y1),
+                    max(x0, x1),
+                    page_height - min(y0, y1),
+                )
+
+            notes.append(
+                {
+                    &quot;page&quot;: page_num,
+                    &quot;annot_ref&quot;: annot_ref,
+                    &quot;subtype&quot;: subtype,
+                    &quot;author&quot;: author,
+                    &quot;contents&quot;: contents,
+                    &quot;quads_top&quot;: quads_top,
+                    &quot;rect_top&quot;: rect_top,
+                }
+            )
+
+    return notes
+
+
+def parse_bbox_layout(pdf_path: str) -&gt; Dict[int, dict]:
+    with tempfile.TemporaryDirectory() as td:
+        xml_path = os.path.join(td, &quot;doc.xml&quot;)
+        subprocess.check_call([&quot;pdftotext&quot;, &quot;-bbox-layout&quot;, pdf_path, xml_path])
+        raw = open(xml_path, &quot;rb&quot;).read().decode(&quot;utf-8&quot;, errors=&quot;ignore&quot;)
+        # pdftotext can inject illegal XML control chars in word text.
+        raw = re.sub(r&quot;[\x00-\x08\x0B\x0C\x0E-\x1F]&quot;, &quot;&quot;, raw)
+
+    root = ET.fromstring(raw)
+
+    def local(tag: str) -&gt; str:
+        return tag.split(&quot;}&quot;, 1)[-1]
+
+    page_data: Dict[int, dict] = {}
+    pages_xml = [node for node in root.iter() if local(node.tag) == &quot;page&quot;]
+
+    for idx, page in enumerate(pages_xml, start=1):
+        blocks = []
+        words = []
+        for block in [node for node in page.iter() if local(node.tag) == &quot;block&quot;]:
+            try:
+                bx0 = float(block.attrib[&quot;xMin&quot;])
+                by0 = float(block.attrib[&quot;yMin&quot;])
+                bx1 = float(block.attrib[&quot;xMax&quot;])
+                by1 = float(block.attrib[&quot;yMax&quot;])
+            except Exception:
+                continue
+
+            block_words = []
+            line_texts = []
+            for line in [node for node in block if local(node.tag) == &quot;line&quot;]:
+                line_words = []
+                for word in [node for node in line if local(node.tag) == &quot;word&quot;]:
+                    text = (word.text or &quot;&quot;).strip()
+                    if not text:
+                        continue
+                    # Defensive sanitization for any remaining control bytes.
+                    text = re.sub(r&quot;[\x00-\x1F]&quot;, &quot;&quot;, text).strip()
+                    if not text:
+                        continue
+                    try:
+                        wx0 = float(word.attrib[&quot;xMin&quot;])
+                        wy0 = float(word.attrib[&quot;yMin&quot;])
+                        wx1 = float(word.attrib[&quot;xMax&quot;])
+                        wy1 = float(word.attrib[&quot;yMax&quot;])
+                    except Exception:
+                        continue
+                    record = {&quot;text&quot;: text, &quot;bbox&quot;: (wx0, wy0, wx1, wy1)}
+                    words.append(record)
+                    block_words.append(record)
+                    line_words.append(record)
+
+                if line_words:
+                    line_words.sort(key=lambda w: w[&quot;bbox&quot;][0])
+                    line_texts.append(&quot; &quot;.join(w[&quot;text&quot;] for w in line_words))
+
+            block_text = re.sub(r&quot;\s+&quot;, &quot; &quot;, &quot; &quot;.join(line_texts)).strip()
+            if block_text:
+                blocks.append(
+                    {
+                        &quot;bbox&quot;: (bx0, by0, bx1, by1),
+                        &quot;text&quot;: block_text,
+                        &quot;words&quot;: block_words,
+                    }
+                )
+
+        page_data[idx] = {&quot;blocks&quot;: blocks, &quot;words&quot;: words}
+    return page_data
+
+
+def map_notes_to_context(notes: List[dict], page_data: Dict[int, dict]) -&gt; List[dict]:
+    for note in notes:
+        data = page_data.get(note[&quot;page&quot;], {&quot;blocks&quot;: [], &quot;words&quot;: []})
+        blocks = data[&quot;blocks&quot;]
+        words = data[&quot;words&quot;]
+
+        regions: List[BBox] = note[&quot;quads_top&quot;][:]
+        if not regions and note[&quot;rect_top&quot;] is not None:
+            regions = [note[&quot;rect_top&quot;]]
+
+        hits = [w for w in words if any(intersects(w[&quot;bbox&quot;], r) for r in regions)]
+
+        unique_hits = []
+        seen = set()
+        for word in sorted(hits, key=lambda w: (round(w[&quot;bbox&quot;][1], 3), w[&quot;bbox&quot;][0])):
+            key = (word[&quot;text&quot;], tuple(round(v, 3) for v in word[&quot;bbox&quot;]))
+            if key in seen:
+                continue
+            seen.add(key)
+            unique_hits.append(word)
+
+        highlighted_text = re.sub(
+            r&quot;\s+&quot;, &quot; &quot;, &quot; &quot;.join(word[&quot;text&quot;] for word in unique_hits)
+        ).strip()
+
+        chosen_block = None
+        if unique_hits and blocks:
+            best_count = -1
+            for block in blocks:
+                block_word_ids = set(id(w) for w in block[&quot;words&quot;])
+                overlap = sum(1 for w in unique_hits if id(w) in block_word_ids)
+                if overlap &gt; best_count:
+                    best_count = overlap
+                    chosen_block = block
+            if best_count &lt;= 0:
+                chosen_block = None
+
+        if chosen_block is None:
+            target = note[&quot;rect_top&quot;] or (regions[0] if regions else None)
+            chosen_block = closest_block(blocks, target)
+
+        context = chosen_block[&quot;text&quot;] if chosen_block else &quot;&quot;
+        if len(context) &lt; 40 and blocks:
+            larger_blocks = [b for b in blocks if len(b[&quot;text&quot;]) &gt;= 40]
+            target = note[&quot;rect_top&quot;] or (regions[0] if regions else None)
+            fallback = closest_block(larger_blocks, target)
+            if fallback is not None:
+                context = fallback[&quot;text&quot;]
+
+        note[&quot;context&quot;] = context
+        note[&quot;highlighted_text&quot;] = highlighted_text
+
+    notes.sort(
+        key=lambda n: (
+            n[&quot;page&quot;],
+            (n[&quot;rect_top&quot;][1] if n[&quot;rect_top&quot;] is not None else 1e9),
+        )
+    )
+    return notes
+
+
+def write_output(notes: List[dict], input_pdf: str, output_path: str) -&gt; None:
+    lines = [
+        &quot;Extracted PDF Notes&quot;,
+        f&quot;Source PDF: {input_pdf}&quot;,
+        f&quot;Total Notes Found: {len(notes)}&quot;,
+        &quot;&quot;,
+    ]
+    for idx, note in enumerate(notes, start=1):
+        lines.append(f&quot;Note {idx}&quot;)
+        lines.append(f&quot;Page: {note[&#x27;page&#x27;]}&quot;)
+        if note.get(&quot;subtype&quot;):
+            lines.append(f&quot;Annotation Type: {note[&#x27;subtype&#x27;]}&quot;)
+        if note.get(&quot;author&quot;):
+            lines.append(f&quot;Author: {note[&#x27;author&#x27;]}&quot;)
+        lines.append(&quot;Context:&quot;)
+        lines.append(
+            note[&quot;context&quot;]
+            if note.get(&quot;context&quot;)
+            else &quot;[Context could not be reliably determined for this annotation.]&quot;
+        )
+        lines.append(&quot;Actual Note:&quot;)
+        lines.append(note[&quot;contents&quot;])
+        if note.get(&quot;highlighted_text&quot;):
+            lines.append(&quot;Highlighted Text:&quot;)
+            lines.append(note[&quot;highlighted_text&quot;])
+        lines.append(&quot;&quot;)
+
+    with open(output_path, &quot;w&quot;, encoding=&quot;utf-8&quot;) as handle:
+        handle.write(&quot;\n&quot;.join(lines).rstrip() + &quot;\n&quot;)
+
+
+def parse_args() -&gt; argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=&quot;Extract macOS Preview PDF notes/comments with context.&quot;
+    )
+    parser.add_argument(&quot;input_pdf&quot;, help=&quot;Path to the PDF to extract notes from.&quot;)
+    parser.add_argument(
+        &quot;-o&quot;,
+        &quot;--output&quot;,
+        help=&quot;Output .txt path (default: &#x27;&lt;input basename&gt; - Extracted Notes.txt&#x27;).&quot;,
+    )
+    return parser.parse_args()
+
+
+def main() -&gt; int:
+    args = parse_args()
+    input_pdf = os.path.abspath(args.input_pdf)
+    output_path = os.path.abspath(args.output) if args.output else default_output_path(input_pdf)
+
+    if not os.path.isfile(input_pdf):
+        print(f&quot;Error: input PDF not found: {input_pdf}&quot;, file=sys.stderr)
+        return 1
+
+    try:
+        qpdf_json = run_cmd(
+            [&quot;qpdf&quot;, &quot;--json&quot;, &quot;--json-key=qpdf&quot;, &quot;--json-key=pages&quot;, input_pdf]
+        )
+        qpdf_data = json.loads(qpdf_json)
+        notes = extract_notes_from_objects(qpdf_data)
+        page_data = parse_bbox_layout(input_pdf)
+        notes = map_notes_to_context(notes, page_data)
+        write_output(notes, input_pdf, output_path)
+    except RuntimeError as err:
+        print(str(err), file=sys.stderr)
+        return 1
+    except subprocess.CalledProcessError as err:
+        print(f&quot;Command failed: {&#x27; &#x27;.join(err.cmd)}&quot;, file=sys.stderr)
+        return 1
+    except Exception as err:
+        print(f&quot;Unexpected error: {err}&quot;, file=sys.stderr)
+        return 1
+
+    print(f&quot;Wrote: {output_path}&quot;)
+    print(f&quot;Notes extracted: {len(notes)}&quot;)
+    return 0
+
+
+if __name__ == &quot;__main__&quot;:
+    raise SystemExit(main())</code></pre></div></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
