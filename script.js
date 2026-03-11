@@ -205,6 +205,11 @@ const projects = [
 ];
 
 const posts = [
+  { title:'‘Human Slop’ and a Captive Audience: Why No Book will Ever Have to Go Unread Again',
+    date:'2026-03-11',
+    href:'blog/human-slop-captive-audience.html',
+    type: 'post' },
+
   { title:'How to Extract PDF Notes Made from Preview on MacOS', 
     date:'2026-03-04', 
     href:'blog/extract-pdf-notes-preview-macos.html', 
