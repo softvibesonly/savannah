@@ -747,7 +747,7 @@ article.page {
 	--post-h1-size: calc(2.08rem + 3pt);
 	--post-h2-size: calc(1.56rem + 2.25pt);
 	--post-h3-size: calc(1.352rem + 1.95pt);
-	--post-paragraph-spacing: calc(0.5em + 3pt);
+	--post-paragraph-spacing: 0.9em;
 	max-width: 82ch;
 	margin: 12px auto 56px;
 	padding: 28px 32px 40px;
@@ -783,6 +783,11 @@ figcaption,
 .page-body p {
 	margin-top: var(--post-paragraph-spacing);
 	margin-bottom: var(--post-paragraph-spacing);
+}
+
+.page-body figure.image,
+.page-body figure.image figcaption {
+	text-align: left;
 }
 
 .page-body h2 {
