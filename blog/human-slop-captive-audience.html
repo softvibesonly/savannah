@@ -743,6 +743,11 @@ a.back-link {
 }
 
 article.page {
+	--post-body-size: calc(1.04rem + 1.5pt);
+	--post-h1-size: calc(2.08rem + 3pt);
+	--post-h2-size: calc(1.56rem + 2.25pt);
+	--post-h3-size: calc(1.352rem + 1.95pt);
+	--post-paragraph-spacing: calc(0.5em + 3pt);
 	max-width: 82ch;
 	margin: 12px auto 56px;
 	padding: 28px 32px 40px;
@@ -753,7 +758,7 @@ article.page {
 
 .page-title {
 	margin-bottom: 0.45em;
-	font-size: clamp(2.2rem, 4vw, 3.15rem);
+	font-size: var(--post-h1-size);
 	line-height: 1.08;
 }
 
@@ -771,15 +776,22 @@ figcaption,
 .page-body,
 .page-body p,
 .page-body li {
-	font-size: 1.04rem;
+	font-size: var(--post-body-size);
 	line-height: 1.72;
 }
 
+.page-body p {
+	margin-top: var(--post-paragraph-spacing);
+	margin-bottom: var(--post-paragraph-spacing);
+}
+
 .page-body h2 {
+	font-size: var(--post-h2-size);
 	margin-top: 2.35rem;
 }
 
 .page-body h3 {
+	font-size: var(--post-h3-size);
 	margin-top: 1.9rem;
 }
 
@@ -809,6 +821,10 @@ figcaption,
 	}
 
 	article.page {
+		--post-body-size: 1.04rem;
+		--post-h1-size: 2.08rem;
+		--post-h2-size: 1.56rem;
+		--post-h3-size: 1.352rem;
 		padding: 22px 18px 30px;
 		margin-bottom: 40px;
 	}
