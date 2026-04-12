@@ -1,0 +1,63 @@
+# How To Make The Dock on the Bottom of Your MacOS Screen Stop Moving
+
+![Fig 1. An illustration of the problem](assets/hero.png)
+
+Fig 1. An illustration of the problem
+
+Or: *How to make your mouse stop moving the dock on the bottom of your screen on MacOS*
+
+## **Background**
+
+MacOS is incredibly annoying in many ways. Luckily, Microsoft has become much worse since Windows 10 so MacOS is now still the least annoying operating system for normal people to use.
+
+Except for one thing.
+
+If you ever have two or more screens like me, you’ll notice something peculiar. On MacOS, whenever your mouse hovers over the very bottom of another screen for too long, your dock will suddenly move from whatever screen/monitor it was at, to the current screen your mouse is on.
+
+This is obviously annoying for many reasons, mainly, that vanilla MacOS does not provide any simple toggle in its settings to disable this behaviour.
+
+## An understudied Deathblow to AI Safety Research Productivity
+
+After several months of intense study, triple-blind research, and deep reflection, I’ve come to the conclusion that this seemingly trivial matter has existential stakes for AI safety.
+
+The amount of fellow AI safety researchers I have observed (actually just one, Rauno Arike) who refuse to functionally use two screens at the same time because of this maddening UX problem has made me realize that the unnoticed productivity losses from this may even come to rival that of Malaria or having to use Bing search.
+
+Using two screens at the same time is more than a first-world luxury. If a monitor is like a piece of paper in that it is a scratchpad that holds information and helps offload cognitive demand from working memory, having two screens is basically twice the real estate for storing information in a place that is not your head. Seemingly trivial tasks like having to switch between active windows on the same screen, or switching between open apps on a crowded screen are all opportunities for working memory to lapse, and the default mode network to distract you on an errant journey through imagination. (at least for people with ADHD like me)
+
+## The Solution: DockAnchor ✨
+
+A simple open-source app that fixes this problem by restoring the functionality that is your god-given right to choose where the damn taskbar *sorry* ‘dock’ appears on your screen.
+
+![image.png](assets/dockanchor-app.png)
+
+### How Do I Install it?
+
+1. Go to this link: https://github.com/bwya77/DockAnchor?tab=readme-ov-file
+
+2. (***optional***) Get Claude Mythos to check the code for vulnerabilities and spyware (since this app technically requires monitoring your mouse movement)
+
+3. Scroll down to the ‘**Download**’ part of the page and choose your favourite installation method. If you don’t know what `rm -rf` is, click on the “**Download Apple Signed App**” button.
+
+![image.png](assets/dockanchor-download.png)
+
+3(a). Now click on the part of the page where it shows you the name of the file/app “**DockAnchor.zip**”
+
+![image.png](assets/dockanchor-zip.png)
+
+5. Go to your downloads folder, double click the .zip file, and the actual app should appear.
+
+6. Delete the .zip file (it’s useless now)
+
+7. Drag the app from your **Downloads** folder into your **Applications** folder, both of which should be on the sidebar of Finder (your file navigation app).
+
+![image.png](assets/dockanchor-applications.png)
+
+8. Double click the app (inside of your Applications folder) to open it, then give it the required permissions in the ‘*Accessibility*’ part of the MacOS “**Settings**” app, and restart the app by closing it completely and re-opening it.
+
+9. If everything works, you should now be able to play around with customizing your dock’s behaviour in the settings for this app (see below). 
+
+![image.png](assets/dockanchor-settings.png)
+
+# Acknowledgements
+
+All praise goes to Bradley Wyatt (”bwya77”), the hero who made who built this app. May he one day receive the Order of Canada and be recognized by the Governor-General for his indisputable contributions to humanity’s flourishing.

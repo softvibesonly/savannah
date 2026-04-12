@@ -3,6 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    (() => {
+      try {
+        const savedTheme = localStorage.getItem('theme');
+        document.documentElement.setAttribute('data-theme', savedTheme || 'auto');
+      } catch {
+        document.documentElement.setAttribute('data-theme', 'auto');
+      }
+    })();
+  </script>
   <title>Does Junk Mail Help or Hurt Canada Post? | Savannah's Blog</title>
   <meta name="description" content="Exploring whether junk mail helps or hurts Canada Post by driving daily delivery obligations, route time, and costs — and the tradeoffs if junk mail were eliminated." />
 

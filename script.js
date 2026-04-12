@@ -205,6 +205,11 @@ const projects = [
 ];
 
 const posts = [
+  { title:'How To Make The Dock on the Bottom of Your MacOS Screen Stop Moving',
+    date:'2026-04-12',
+    href:'blog/how-to-make-macos-dock-stop-moving',
+    type: 'post' },
+
   { title:'‘Human Slop’ and a Captive Audience: Why No Book will Ever Have to Go Unread Again',
     date:'2026-03-11',
     href:'blog/human-slop-captive-audience.html',
