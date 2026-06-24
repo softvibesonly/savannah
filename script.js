@@ -205,6 +205,11 @@ const projects = [
 ];
 
 const posts = [
+  { title:'Is Alignment Falsifiable? Middle Alignment, An Alignment Taxonomy, and Breaking The Problem Down Into Steps',
+    date:'2026-06-23',
+    href:'assets/papers/Is_Alignment_Falsifiable_Working_Paper_Draft_2.5.pdf',
+    type: 'paper' },
+
   { title:'How To Make The Dock on the Bottom of Your MacOS Screen Stop Moving',
     date:'2026-04-12',
     href:'blog/how-to-make-macos-dock-stop-moving',
