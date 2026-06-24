@@ -205,6 +205,11 @@ const projects = [
 ];
 
 const posts = [
+  { title:'A Time-Series Analysis: The Duration and Impact of Productivity Gains From New Technology',
+    date:'2026-06-24',
+    href:'assets/papers/A_Time-Series_Analysis_Productivity_Gains_New_Technology.pdf',
+    type: 'research note' },
+
   { title:'Is Alignment Falsifiable? Middle Alignment, An Alignment Taxonomy, and Breaking The Problem Down Into Steps',
     date:'2026-06-23',
     href:'assets/papers/Is_Alignment_Falsifiable_Working_Paper_Draft_2.5.pdf',
