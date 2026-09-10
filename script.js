@@ -205,85 +205,177 @@ const projects = [
 ];
 
 const posts = [
+  { title:'Is Canada’s Focus on Eliminating U.S. Automotive Tariffs Dragging Us Back Into The 20th Century?',
+    date:'2026-07-25',
+    href:'assets/papers/Canadas_Focus_on_US_Automotive_Tariffs.pdf',
+    type: 'research note',
+    tags: ['Math & Data', 'Policy & Law'] },
+
   { title:'A Time-Series Analysis: The Duration and Impact of Productivity Gains From New Technology',
     date:'2026-06-24',
     href:'assets/papers/A_Time-Series_Analysis_Productivity_Gains_New_Technology.pdf',
-    type: 'research note' },
+    type: 'research note',
+    tags: ['Math & Data', 'Policy & Law'] },
 
   { title:'Is Alignment Falsifiable? Middle Alignment, An Alignment Taxonomy, and Breaking The Problem Down Into Steps',
     date:'2026-06-23',
     href:'assets/papers/Is_Alignment_Falsifiable_Working_Paper_Draft_2.5.pdf',
-    type: 'paper' },
+    type: 'paper',
+    tags: ['AI', 'Policy & Law'] },
 
   { title:'How To Make The Dock on the Bottom of Your MacOS Screen Stop Moving',
     date:'2026-04-12',
     href:'blog/how-to-make-macos-dock-stop-moving',
-    type: 'post' },
+    type: 'post',
+    tags: ['macOS', 'Tutorials'] },
 
   { title:'‘Human Slop’ and a Captive Audience: Why No Book will Ever Have to Go Unread Again',
     date:'2026-03-11',
     href:'blog/human-slop-captive-audience.html',
-    type: 'post' },
+    type: 'post',
+    tags: ['AI', 'Culture & Writing'] },
 
   { title:'How to Extract PDF Notes Made from Preview on MacOS', 
     date:'2026-03-04', 
     href:'blog/extract-pdf-notes-preview-macos.html', 
-    type: 'post' },
+    type: 'post',
+    tags: ['AI', 'macOS', 'Tutorials'] },
 
   { title:'Have You Ever Wondered What All of the Weird Option Key Symbols Are?', 
     date:'2025-11-15', 
     href:'blog/ever-wondered-weird-option-key-characters', 
-    type: 'post' },
+    type: 'post',
+    tags: ['macOS', 'Tutorials', 'Design & Accessibility'] },
 
   { title:'Does Junk Mail Help or Hurt Canada Post?', 
     date:'2025-10-11', 
     href:'blog/canada-post-junk-mail/index.html', 
-    type: 'post' },
+    type: 'post',
+    tags: ['Math & Data', 'Policy & Law'] },
 
   { title:'Why hyperlegible UI matters for ML tools', 
     date:'2025-08-18', 
     href:'blog/hyperlegible-ui.html', 
-    type: 'blog' },
+    type: 'blog',
+    tags: ['AI', 'Design & Accessibility'] },
 
   { title:'Evolving Legal Frameworks in the Post-Generative AI Era: User Data, AI Training Permissions, and Platform Policies at Google, Meta, and X', 
     date:'2025-08-18', 
     href:'assets/papers/Evolving_Legal_Frameworks_GenAI_Era_Draft1.1.pdf', 
-    type: 'paper' },
+    type: 'paper',
+    tags: ['AI', 'Policy & Law'] },
 
   { title:'The Normal Equations (Simple Lesson): Part 1', 
     date:'2025-09-18', 
     href:'blog/normal-equations-lesson', 
-    type: 'post' },
+    type: 'post',
+    tags: ['Math & Data', 'Tutorials'] },
 
   { title:'Fix PDFs with Unselectable Text using OCR', 
     date:'2025-10-16', 
     href:'blog/fix-unselectable-pdfs-ocr.html', 
-    type: 'tangent' },
+    type: 'tangent',
+    tags: ['macOS', 'Tutorials'] },
 ];
+
+const postTopics = [
+  'AI',
+  'macOS',
+  'Tutorials',
+  'Math & Data',
+  'Policy & Law',
+  'Culture & Writing',
+  'Design & Accessibility',
+];
+
+let activePostTopic = 'All';
+
+function topicSlug(topic){
+  return topic.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function resolveLocalPreviewHref(href){
+  if (window.location.protocol !== 'file:' || !href) return href;
+  if (/^(?:[a-z]+:)?\/\//i.test(href) || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('#')) {
+    return href;
+  }
+
+  const hashIndex = href.indexOf('#');
+  const hash = hashIndex >= 0 ? href.slice(hashIndex) : '';
+  const hrefWithoutHash = hashIndex >= 0 ? href.slice(0, hashIndex) : href;
+  const queryIndex = hrefWithoutHash.indexOf('?');
+  const query = queryIndex >= 0 ? hrefWithoutHash.slice(queryIndex) : '';
+  const path = queryIndex >= 0 ? hrefWithoutHash.slice(0, queryIndex) : hrefWithoutHash;
+  const lastSegment = path.split('/').pop() || '';
+  const looksLikeFile = lastSegment.includes('.');
+
+  if (looksLikeFile) {
+    return href;
+  }
+
+  const normalizedPath = path.endsWith('/') ? path : `${path}/`;
+  return `${normalizedPath}index.html${query}${hash}`;
+}
 
 function renderProjects(){
   const grid = select('#projectsGrid');
   if (!grid) return;
   const frag = document.createDocumentFragment();
   projects.forEach(p=>{
+    const resolvedHref = resolveLocalPreviewHref(p.href);
     const card = document.createElement('article');
     card.className = 'card';
     card.innerHTML = `
       <h3 style="margin:0 0 6px">${p.title}</h3>
       <p class="muted" style="margin:0 0 12px">${p.desc}</p>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">${p.tags.map(t=>`<span class="pill">${t}</span>`).join('')}</div>
-      <a class="btn" href="${p.href}" ${p.href.startsWith('http')? 'target="_blank" rel="noopener"':''} data-tone>Open</a>`;
+      <a class="btn" href="${resolvedHref}" ${resolvedHref.startsWith('http')? 'target="_blank" rel="noopener"':''} data-tone>Open</a>`;
     frag.appendChild(card);
   });
   grid.replaceChildren(frag);
+}
+
+function renderPostFilters(){
+  const wrap = select('#postFilters');
+  if (!wrap) return;
+
+  const frag = document.createDocumentFragment();
+  ['All', ...postTopics].forEach(topic => {
+    const count = topic === 'All' ? posts.length : posts.filter(post => post.tags.includes(topic)).length;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'post-filter';
+    button.classList.toggle('is-active', topic === activePostTopic);
+    button.dataset.postFilter = topic;
+    button.setAttribute('aria-pressed', String(topic === activePostTopic));
+    button.innerHTML = `<span>${topic}</span><span class="post-filter-count">${count}</span>`;
+    button.addEventListener('click', () => {
+      if (activePostTopic === topic) return;
+      activePostTopic = topic;
+      tone();
+      renderPostFilters();
+      renderPosts();
+    });
+    frag.appendChild(button);
+  });
+  wrap.replaceChildren(frag);
 }
 
 function renderPosts(){
   const wrap = select('#posts');
   if (!wrap) return;
   const frag = document.createDocumentFragment();
-  posts.forEach(p=>{
-    const a = document.createElement('a'); a.href=p.href; a.className='card'; a.style.display='block'; a.setAttribute('data-tone','');
+  const visiblePosts = activePostTopic === 'All'
+    ? posts
+    : posts.filter(post => post.tags.includes(activePostTopic));
+
+  visiblePosts.forEach((p, index)=>{
+    const a = document.createElement('a');
+    a.href = resolveLocalPreviewHref(p.href);
+    a.className='card';
+    a.style.display='block';
+    a.style.setProperty('--post-order', index);
+    a.setAttribute('data-tone','');
     a.innerHTML = `
       <div class="post-meta muted">
         <span>${p.date}</span>
@@ -291,13 +383,24 @@ function renderPosts(){
         <span class="post-type">${p.type}</span>
       </div>
       <h3 style="margin:4px 0 6px">${p.title}</h3>
+      <div class="post-tags">
+        ${p.tags.map(tag => `<span class="post-tag" data-post-tag="${topicSlug(tag)}">${tag}</span>`).join('')}
+      </div>
       <div class="muted">Read →</div>`;
     frag.appendChild(a);
   });
   wrap.replaceChildren(frag);
+
+  const status = select('#postFilterStatus');
+  if (status) {
+    status.textContent = activePostTopic === 'All'
+      ? `Showing all ${visiblePosts.length} entries.`
+      : `Showing ${visiblePosts.length} ${visiblePosts.length === 1 ? 'entry' : 'entries'} tagged ${activePostTopic}.`;
+  }
 }
 
 renderProjects();
+renderPostFilters();
 renderPosts();
 
 function showFromHash(){

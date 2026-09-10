@@ -37,15 +37,26 @@
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   <style>
+    @font-face {
+      font-family: "Alatsi";
+      src:
+        url("../../assets/fonts/Alatsi/Alatsi-Regular.woff2") format("woff2"),
+        url("../../assets/fonts/Alatsi/Alatsi-Regular.ttf") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
     body { background: var(--bg); color: var(--text); }
     .blog-main { padding: 28px 24px 48px; }
     .blog-container { width: min(100%, 1100px); margin: 0 auto; padding: 0 20px 60px; }
     .markdown-body {
+      --dock-body-size: 1.06rem;
       box-sizing: border-box;
       margin: 0 auto;
       padding: 20px;
       line-height: 1.7;
-      font-size: 1.06rem;
+      font-size: var(--dock-body-size);
       font-family: sans-system-ui, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
       max-width: min(100%, 1100px);
       display: grid;
@@ -53,22 +64,106 @@
       text-align: left; /* Prevent inherited centering */
     }
     .markdown-body h1 {
-      font-size: 2.95rem !important;
-      line-height: 1.16;
-      margin-block: 1.6rem 0.8rem;
+      font-family: sans-system-ui, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+      font-size: 2.3rem !important;
+      line-height: 1.2;
+      margin-block: 2rem 0.95rem;
       font-weight: 700;
       letter-spacing: .002em;
+    }
+    .markdown-body .post-title {
+      font-family: "Playpen Sans", "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: clamp(2.55rem, 4.6vw, 3.2rem) !important;
+      line-height: 1.13;
+      margin-block: 1.7rem 1.3rem;
+      font-weight: 800;
+      font-variation-settings: "wght" 800;
+      color: var(--primarymuted);
+      letter-spacing: .002em;
+      animation: dock-title-breathe 0.8s ease-in-out infinite alternate;
     }
     .markdown-body > * { grid-column: 2; width: 100%; max-width: none; }
     .markdown-body .post-title,
     .markdown-body .hero-media { grid-column: 1 / -1; width: 100%; max-width: 980px; margin-left: auto; margin-right: auto; }
+    .markdown-body .post-title {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 1.8rem;
+    }
+    .markdown-body .hero-media {
+      position: relative;
+      margin-top: 0.7rem;
+      margin-bottom: 1.15rem;
+      padding: 12px;
+      border-radius: 11.5px;
+      background: color-mix(in oklab, var(--bg) 94%, #ffffff 6%);
+      border: 2px solid color-mix(in oklab, var(--text) 80%, #000 20%);
+      box-shadow:
+        12px 12px 30px rgba(15, 23, 42, 0.16),
+        2px 2px 0 rgba(15, 23, 42, 0.12);
+    }
     .markdown-body .hero-media img {
       width: 100%;
       height: auto;
+      margin: 0;
+      border-radius: 6.5px;
     }
-    .markdown-body h2 { font-size: 1.75rem !important; line-height: 1.25; margin-block: 1.8rem 0.9rem; text-align: left; }
-    .markdown-body h3 { font-size: 1.4rem !important; line-height: 1.3; margin-block: 1.4rem 0.6rem; text-align: left; }
+    .markdown-body h2 {
+      font-family: "Patrick Hand", "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", sans-serif;
+      font-size: 1.9rem !important;
+      line-height: 1.25;
+      margin-block: 1.8rem 0.9rem;
+      text-align: left;
+      color: var(--secondary);
+      letter-spacing: .01em;
+    }
+    .markdown-body h3 {
+      font-family: "Alatsi", "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", sans-serif;
+      font-size: 1.4rem !important;
+      line-height: 1.3;
+      margin-block: 1.4rem 0.6rem;
+      text-align: left;
+      color: var(--primarymutedlight);
+      letter-spacing: .01em;
+    }
     .markdown-body img { max-width: 100%; height: auto; display: block; margin: 2rem auto; border-radius: 5px; }
+    .markdown-body .image-caption {
+      margin-top: -0.25rem;
+      margin-bottom: 1.45rem;
+      font-family: "CMU Serif", Georgia, serif;
+      font-style: italic;
+      font-size: 1.48rem;
+      line-height: 1.45;
+      color: color-mix(in oklab, var(--text) 62%, var(--muted) 38%);
+      text-align: left;
+    }
+    .markdown-body .hero-media + .image-caption {
+      grid-column: 1 / -1;
+      width: 100%;
+      max-width: 980px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    @media (max-width:700px){
+      .markdown-body .hero-media {
+        padding: 9px;
+        box-shadow:
+          8px 8px 20px rgba(15, 23, 42, 0.14),
+          2px 2px 0 rgba(15, 23, 42, 0.1);
+      }
+    }
+    @keyframes dock-title-breathe {
+      from { color: var(--primarymuted); }
+      to { color: var(--thirdblue); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .markdown-body .post-title {
+        animation: none;
+      }
+    }
+    body.motion-off .markdown-body .post-title {
+      animation: none;
+    }
     /* GitHub-like neutral table colors; keep structure and sizing */
     .markdown-body table { width: 100%; border-collapse: collapse; margin: 2rem 0; border: 1px solid #d0d7de; border-radius: 6px; overflow: hidden; background: #fff; }
     .markdown-body th, .markdown-body td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #d0d7de; }
@@ -190,6 +285,71 @@
   <main id="main" class="blog-main">
     <div class="blog-container">
       <div id="content" class="markdown-body"></div>
+      <script id="embedded-markdown" type="text/plain">
+# How To Make The Dock on the Bottom of Your MacOS Screen Stop Moving
+
+![Fig 1. An illustration of the problem](assets/hero.png)
+
+Fig 1. An illustration of the problem
+
+Or: *How to make your mouse stop moving the dock on the bottom of your screen on MacOS*
+
+## **Background**
+
+MacOS is incredibly annoying in many ways. Luckily, Microsoft has become much worse since Windows 10 so MacOS is now still the least annoying operating system for normal people to use.
+
+Except for one thing.
+
+If you ever have two or more screens like me, you’ll notice something peculiar. On MacOS, whenever your mouse hovers over the very bottom of another screen for too long, your dock will suddenly move from whatever screen/monitor it was at, to the current screen your mouse is on.
+
+This is obviously annoying for many reasons, mainly, that vanilla MacOS does not provide any simple toggle in its settings to disable this behaviour.
+
+## An understudied Deathblow to AI Safety Research Productivity
+
+After several months of intense study, triple-blind research, and deep reflection, I’ve come to the conclusion that this seemingly trivial matter has existential stakes for AI safety.
+
+The amount of fellow AI safety researchers I have observed (actually just one, Rauno Arike) who refuse to functionally use two screens at the same time because of this maddening UX problem has made me realize that the unnoticed productivity losses from this may even come to rival that of Malaria or having to use Bing search.
+
+Using two screens at the same time is more than a first-world luxury. If a monitor is like a piece of paper in that it is a scratchpad that holds information and helps offload cognitive demand from working memory, having two screens is basically twice the real estate for storing information in a place that is not your head. Seemingly trivial tasks like having to switch between active windows on the same screen, or switching between open apps on a crowded screen are all opportunities for working memory to lapse, and the default mode network to distract you on an errant journey through imagination. (at least for people with ADHD like me)
+
+## The Solution: DockAnchor ✨
+
+A simple open-source app that fixes this problem by restoring the functionality that is your god-given right to choose where the damn taskbar *sorry* ‘dock’ appears on your screen.
+
+![image.png](assets/dockanchor-app.png)
+
+### How Do I Install it?
+
+1. Go to this link: https://github.com/bwya77/DockAnchor?tab=readme-ov-file
+
+2. (***optional***) Get Claude Mythos to check the code for vulnerabilities and spyware (since this app technically requires monitoring your mouse movement)
+
+3. Scroll down to the ‘**Download**’ part of the page and choose your favourite installation method. If you don’t know what `rm -rf` is, click on the “**Download Apple Signed App**” button.
+
+![image.png](assets/dockanchor-download.png)
+
+3(a). Now click on the part of the page where it shows you the name of the file/app “**DockAnchor.zip**”
+
+![image.png](assets/dockanchor-zip.png)
+
+5. Go to your downloads folder, double click the .zip file, and the actual app should appear.
+
+6. Delete the .zip file (it’s useless now)
+
+7. Drag the app from your **Downloads** folder into your **Applications** folder, both of which should be on the sidebar of Finder (your file navigation app).
+
+![image.png](assets/dockanchor-applications.png)
+
+8. Double click the app (inside of your Applications folder) to open it, then give it the required permissions in the ‘*Accessibility*’ part of the MacOS “**Settings**” app, and restart the app by closing it completely and re-opening it.
+
+9. If everything works, you should now be able to play around with customizing your dock’s behaviour in the settings for this app (see below). 
+
+![image.png](assets/dockanchor-settings.png)
+
+# Acknowledgements
+
+All praise goes to Bradley Wyatt (”bwya77”), the hero who made who built this app. May he one day receive the Order of Canada and be recognized by the Governor-General for his indisputable contributions to humanity’s flourishing.
+</script>
       <a href="../../index.html#blog" class="back-link">Back to Blog</a>
     </div>
   </main>
@@ -200,30 +360,18 @@
   <script>
     (async function() {
       const { origin, pathname, protocol } = window.location;
+      const contentEl = document.getElementById('content');
+      const embeddedMarkdownEl = document.getElementById('embedded-markdown');
       const lastSlashIndex = pathname.lastIndexOf('/');
       const lastSegment = lastSlashIndex >= 0 ? pathname.slice(lastSlashIndex + 1) : pathname;
       const looksLikeFile = lastSegment.includes('.');
       const normalizedPath = pathname.endsWith('/')
         ? pathname
         : (looksLikeFile ? pathname.slice(0, lastSlashIndex + 1) : `${pathname}/`);
+      const embeddedMarkdown = embeddedMarkdownEl ? embeddedMarkdownEl.textContent.replace(/^\n/, '') : '';
 
-      if (protocol === 'file:') {
-        const msg = document.createElement('div');
-        msg.innerHTML = `
-          <h2>Local preview needs a web server</h2>
-          <p>Browsers block loading sibling files for security when an HTML file is opened directly. Start a quick server (e.g., run <code>python3 -m http.server</code> from the project root) and visit <code>http://localhost:8000/blog/how-to-make-macos-dock-stop-moving/</code>.</p>
-          <p class="muted">Once served over HTTP(S), the markdown will load normally.</p>`;
-        document.getElementById('content').replaceChildren(msg);
-        return;
-      }
-
-      const resourceHref = `${origin}${normalizedPath}index.txt`;
-
-      try {
-        const response = await fetch(resourceHref, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
-        const markdown = await response.text();
-        const container = document.getElementById('content');
+      async function renderMarkdown(markdown) {
+        const container = contentEl;
         container.innerHTML = marked.parse(markdown);
 
         const heading = container.querySelector('h1');
@@ -240,15 +388,52 @@
           heroImg.parentElement.classList.add('hero-media');
         }
 
+        container.querySelectorAll('p').forEach((paragraph) => {
+          const previous = paragraph.previousElementSibling;
+          if (!previous || paragraph.querySelector('img')) return;
+          const previousIsImageOnlyParagraph =
+            previous.matches('p') &&
+            previous.querySelector('img') &&
+            previous.textContent.trim() === '' &&
+            previous.childElementCount === 1;
+          if (previousIsImageOnlyParagraph && paragraph.textContent.trim()) {
+            paragraph.classList.add('image-caption');
+          }
+        });
+
         if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
           await MathJax.typesetPromise();
         }
         if (window.hljs) {
           hljs.highlightAll();
         }
+      }
+
+      if (protocol === 'file:' && embeddedMarkdown.trim()) {
+        await renderMarkdown(embeddedMarkdown);
+        return;
+      }
+
+      if (protocol === 'file:') {
+        const msg = document.createElement('div');
+        msg.innerHTML = `
+          <h2>Local preview needs a web server</h2>
+          <p>Browsers block loading sibling files for security when an HTML file is opened directly. Start a quick server (e.g., run <code>python3 -m http.server</code> from the project root) and visit <code>http://localhost:8000/blog/how-to-make-macos-dock-stop-moving/</code>.</p>
+          <p class="muted">Once served over HTTP(S), the markdown will load normally.</p>`;
+        contentEl.replaceChildren(msg);
+        return;
+      }
+
+      const resourceHref = `${origin}${normalizedPath}index.txt`;
+
+      try {
+        const response = await fetch(resourceHref, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+        const markdown = await response.text();
+        await renderMarkdown(markdown);
       } catch (error) {
         console.error('Failed to load blog markdown:', error);
-        document.getElementById('content').innerHTML = `
+        contentEl.innerHTML = `
           <h2>Error: Post not found</h2>
           <p>Could not load the requested blog post.</p>
           <p class="muted">Attempted path: ${resourceHref}</p>`;

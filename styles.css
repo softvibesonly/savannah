@@ -43,6 +43,151 @@
   font-display: swap;
 }
 
+/* Additional self-hosted accents; available for use without changing the site globally. */
+@font-face {
+  font-family: "Patrick Hand";
+  src:
+    url("./assets/fonts/patrick-hand/PatrickHand-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "pathand";
+  src:
+    url("./assets/fonts/patrick-hand/PatrickHand-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "phand";
+  src:
+    url("./assets/fonts/patrick-hand/PatrickHand-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Shadows Into Light";
+  src:
+    url("./assets/fonts/shadows-into-light/ShadowsIntoLight-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "shadowsintolight";
+  src:
+    url("./assets/fonts/shadows-into-light/ShadowsIntoLight-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "sintol";
+  src:
+    url("./assets/fonts/shadows-into-light/ShadowsIntoLight-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Playpen Sans";
+  src:
+    url("./assets/fonts/playpen-sans/PlaypenSans-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "playpensans";
+  src:
+    url("./assets/fonts/playpen-sans/PlaypenSans-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "CMU Serif";
+  src:
+    url("./assets/fonts/cmu-serif/cmunrm.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "CMU Serif";
+  src:
+    url("./assets/fonts/cmu-serif/cmunti.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "CMU Serif";
+  src:
+    url("./assets/fonts/cmu-serif/cmunbx.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "CMU Serif";
+  src:
+    url("./assets/fonts/cmu-serif/cmunbi.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "cmuserif";
+  src:
+    url("./assets/fonts/cmu-serif/cmunrm.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "cmuserif";
+  src:
+    url("./assets/fonts/cmu-serif/cmunti.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "cmuserif";
+  src:
+    url("./assets/fonts/cmu-serif/cmunbx.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "cmuserif";
+  src:
+    url("./assets/fonts/cmu-serif/cmunbi.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 /*  Global polish & accessibility  */
 :where(a, button, [role="button"], summary):focus-visible {
   outline: var(--ring);
@@ -612,6 +757,131 @@ h2:hover {
   color: var(--muted);
   margin-inline: auto; 
   font-size: 1.1rem;   
+}
+
+.post-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 30px 0 8px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in oklab, var(--primary) 28%, var(--border));
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--primary) 10%, var(--bg)), var(--bg) 48%),
+    var(--bg);
+  box-shadow: 0 3px 16px rgba(0, 0, 0, .04);
+}
+
+.post-filter-label {
+  flex: 0 0 auto;
+  color: var(--secondarymuted);
+  font-size: .72rem;
+  font-weight: 750;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.post-filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.post-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 9px 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--bg) 92%, var(--primary) 8%);
+  color: var(--secondarymuted);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 620;
+  cursor: pointer;
+  transition: border-color .18s ease, background-color .18s ease, color .18s ease, transform .18s ease;
+}
+
+.post-filter:hover {
+  border-color: color-mix(in oklab, var(--primarymuted) 45%, var(--border));
+  color: var(--primarymuted);
+  transform: translateY(-1px);
+}
+
+.post-filter.is-active {
+  border-color: var(--primarymuted);
+  background: var(--primarymuted);
+  color: #f4fbfc;
+}
+
+.post-filter-count {
+  display: inline-grid;
+  min-width: 1.4em;
+  min-height: 1.4em;
+  place-items: center;
+  padding-inline: .25em;
+  border-radius: 999px;
+  background: color-mix(in oklab, currentColor 12%, transparent);
+  font-size: .72rem;
+  line-height: 1;
+}
+
+.post-filter.is-active .post-filter-count {
+  background: color-mix(in oklab, var(--bg) 20%, transparent);
+}
+
+.post-filter-status {
+  min-height: 1.25em;
+  margin: 0 2px 12px;
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 14px;
+}
+
+.post-tag {
+  --tag-color: var(--primarymutedlight);
+  padding: 3px 8px;
+  border: 1px solid color-mix(in oklab, var(--tag-color) 38%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--tag-color) 9%, var(--bg));
+  color: color-mix(in oklab, var(--tag-color) 76%, var(--text));
+  font-size: .72rem;
+  font-weight: 650;
+  letter-spacing: .01em;
+}
+
+.post-tag[data-post-tag="macos"] { --tag-color: #287f8a; }
+.post-tag[data-post-tag="tutorials"] { --tag-color: #a65b32; }
+.post-tag[data-post-tag="math-and-data"] { --tag-color: #287052; }
+.post-tag[data-post-tag="policy-and-law"] { --tag-color: #976f18; }
+.post-tag[data-post-tag="culture-and-writing"] { --tag-color: #a04f4f; }
+.post-tag[data-post-tag="design-and-accessibility"] { --tag-color: #466a91; }
+
+@keyframes post-filter-reveal {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#posts .card {
+  animation: post-filter-reveal .24s ease-out both;
+  animation-delay: calc(var(--post-order, 0) * 24ms);
+}
+
+@media (max-width: 680px) {
+  .post-filter-bar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
 }
 
 .grid {
