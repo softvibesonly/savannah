@@ -209,7 +209,7 @@ const posts = [
     date:'2026-07-25',
     href:'assets/papers/Canadas_Focus_on_US_Automotive_Tariffs.pdf',
     type: 'research note',
-    tags: ['Math & Data', 'Policy & Law'] },
+    tags: ['Policy & Law'] },
 
   { title:'A Time-Series Analysis: The Duration and Impact of Productivity Gains From New Technology',
     date:'2026-06-24',
