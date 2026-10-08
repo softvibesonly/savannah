@@ -205,6 +205,12 @@ const projects = [
 ];
 
 const posts = [
+  { title:'Addressing the Negative Economic Externalities Caused By Misaligned Artificial Intelligence: A Strict Liability Regime for AI Cybersecurity Attacks',
+    date:'2026-10-07',
+    href:'assets/papers/A_Strict_Liability_Regime_for_AI_Cybersecurity_Attacks_Harlan_2026.pdf',
+    type: 'paper',
+    tags: ['AI', 'Policy & Law'] },
+
   { title:'Is Canada’s Focus on Eliminating U.S. Automotive Tariffs Dragging Us Back Into The 20th Century?',
     date:'2026-07-25',
     href:'assets/papers/Canadas_Focus_on_US_Automotive_Tariffs.pdf',
